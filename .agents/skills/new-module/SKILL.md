@@ -1,25 +1,25 @@
 ---
 name: new-module
-description: "Create a new business module with service layer and API routes following the ShipAny module pattern. Use when the user needs new backend functionality — a new service, a new data model, a new API. Triggers on: 'add a module for...', 'I need backend for...', 'create a service for...'"
+description: "Create a new business module with service layer and API routes following this TanStack Start SaaS engine's module pattern. Use when the user needs backend functionality: a new service, data model, API route, CRUD flow, or server-side business logic."
 argument-hint: "<module name and what it does>"
 user-invocable: true
 ---
 
 # New Module — $ARGUMENTS
 
-Create a new module following the ShipAny module pattern.
+Create a new module following this project's module pattern.
 
 ## Step 1: Analyze Requirements
 
 From "$ARGUMENTS", determine:
 - **Module name** (lowercase, e.g., `projects`, `notifications`, `webhooks`)
-- **What data it manages** — check if the existing 19 tables in `schema.ts` cover it, or if new tables are needed
+- **What data it manages** — check the current dialect schema in `src/config/db/schema.ts` and templates to see if existing tables cover it, or if new tables are needed
 - **CRUD operations** needed (create, list, get, update, delete)
 - **Business logic** beyond CRUD (validation, side effects, cross-service calls)
 
 ## Step 2: Check Schema
 
-The existing schema has 19 tables. Check if any can be reused:
+Check the current schema before adding tables. Built-in reusable tables may include:
 - `post` + `taxonomy` — generic content system (can store any content type via `type` field)
 - `config` — key-value settings
 - `credit` — any point/balance system

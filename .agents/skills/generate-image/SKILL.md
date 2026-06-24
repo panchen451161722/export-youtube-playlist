@@ -1,6 +1,6 @@
 ---
 name: generate-image
-description: "Generate an AI image (hero visual, feature illustration, empty-state graphic, blog cover, etc.) from a text prompt using Pollinations.ai. Free, no API key. Saves to public/imgs/generated/ and returns a Next.js-ready URL like /imgs/generated/<file>.png that can be dropped into <Image src=...> immediately. Use whenever a page or block needs a decorative visual and the user hasn't provided one."
+description: "Generate an AI image (hero visual, feature illustration, empty-state graphic, blog cover, etc.) from a text prompt using Pollinations.ai. Use when a page or block needs a decorative bitmap visual and the user has not provided one. Saves to public/imgs/generated/ and returns a public URL like /imgs/generated/<file>.png for plain img usage."
 argument-hint: "<image description — subject, style, mood; optionally: size, slug>"
 user-invocable: true
 ---
@@ -44,14 +44,15 @@ JSON on stdout:
 
 On failure: `{"error": "<reason>"}`. Surface the error and stop — do **not** retry in a loop.
 
-Drop the `url` into JSX directly — `next/image` and plain `<img>` both work because the file is under `public/`:
+Drop the `url` into JSX directly with a plain `<img>` because the file is under `public/`:
 
 ```tsx
-<Image
+<img
   src="/imgs/generated/hero-bg-1714512000000.png"
   alt="..."
   width={1280}
   height={720}
+  loading="lazy"
 />
 ```
 
@@ -60,7 +61,7 @@ Drop the `url` into JSX directly — `next/image` and plain `<img>` both work be
 Pipe JSON args into the script via Bash. Use a single-quoted heredoc to avoid shell-escaping pitfalls:
 
 ```bash
-node .claude/skills/generate-image/main.mjs <<'JSON'
+node .agents/skills/generate-image/main.mjs <<'JSON'
 {"prompt":"modern AI assistant interface, glowing neural network on dark gradient, no text","style":"digital_art","width":1280,"height":720,"slug":"hero-bg"}
 JSON
 ```
@@ -68,10 +69,10 @@ JSON
 Or one-liner:
 
 ```bash
-echo '{"prompt":"isometric illustration of cloud servers, pastel palette","width":800,"height":600,"slug":"feature-cloud"}' | node .claude/skills/generate-image/main.mjs
+echo '{"prompt":"isometric illustration of cloud servers, pastel palette","width":800,"height":600,"slug":"feature-cloud"}' | node .agents/skills/generate-image/main.mjs
 ```
 
-Run from the project root so the `public/imgs/generated/` directory resolves correctly. Requires Node 18+ (for built-in `fetch`) — the same Node ShipAny already needs to run `pnpm dev`. No extra runtime, no `npm install`.
+Run from the project root so the `public/imgs/generated/` directory resolves correctly. Requires Node 18+ for built-in `fetch`; no extra runtime, no `npm install`.
 
 ## Recommended sizes
 
@@ -98,6 +99,6 @@ Run from the project root so the `public/imgs/generated/` directory resolves cor
 
 - One image per call. Don't loop unless the user explicitly asks for variations.
 - Pollinations.ai is free but rate-limited; if a call errors, surface the message and stop.
-- Files land under `public/imgs/generated/` and are served by Next.js automatically. They are NOT gitignored — commit the ones you keep.
+- Files land under `public/imgs/generated/` and are served as TanStack Start public assets. They are NOT gitignored — commit the ones you keep.
 - For deterministic regeneration (e.g. tweaking the prompt slightly while keeping composition), reuse the same `seed`.
 - The script is plain Node (Node 18+ for built-in `fetch`), uses only Node stdlib — no `npm install`, no Python required.

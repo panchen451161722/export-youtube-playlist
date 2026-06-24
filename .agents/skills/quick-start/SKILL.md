@@ -1,6 +1,6 @@
 ---
 name: quick-start
-description: "Build a complete SaaS project from a brief, reference URL, or content source. Handles everything: project config, pixel-perfect landing page (cloned from reference or generated), content extraction, dashboard pages, module wiring. Use when the user says they want to build something, gives a reference URL, provides a GitHub repo, or describes a product idea. Triggers on: 'new project', 'build a site for...', 'make it look like...', 'clone this...', 'I want to build...', any URL + product description combo."
+description: "Build or reshape a product on this TanStack Start SaaS engine from a brief, reference URL, or content source. Use when the user says they want to build a new product/site, gives a reference URL, provides a GitHub repo, describes a product idea, or wants the landing page, dashboard pages, modules, config, and content wired together."
 argument-hint: "<what to build — product brief, reference URL, content source URL, or all three>"
 user-invocable: true
 ---
@@ -73,8 +73,8 @@ DATABASE_URL=<connection string>
 Default `DATABASE_URL` values:
 - SQLite: `file:data/local.db`
 - Turso: `libsql://<db>.turso.io` (also set `DATABASE_AUTH_TOKEN`)
-- PostgreSQL: `postgresql://user:pass@localhost:5432/dbname`
-- MySQL: `mysql://user:pass@localhost:3306/dbname`
+- PostgreSQL: `postgresql://localhost:5432/dbname` (add credentials only in your local env file when required)
+- MySQL: `mysql://localhost:3306/dbname` (add credentials only in your local env file when required)
 
 > **Turso:** `DATABASE_AUTH_TOKEN` is required — without it both the runtime
 > and `pnpm db:push`/`db:generate` fail to authenticate against the remote
@@ -130,7 +130,7 @@ placeholder files (no code change needed):
 
 1. **Letter** = first character of the app name, uppercased (e.g. `Acme` → `A`). For a
    CJK-only name, use the first character as-is, or the initial of its English name if one exists.
-2. **Color** = the theme's primary color (read `--primary` from `src/app/globals.css`); fall
+2. **Color** = the theme's primary color (read `--primary` from `src/styles/globals.css`); fall
    back to `#0a0a0a` background + `#ffffff` letter. Ensure the letter contrasts the background.
 3. Write `public/logo.svg` and `public/favicon.svg` from this template (swap the letter,
    `fill`, and text color; favicon uses a larger `font-size` so the glyph reads at 16px):
@@ -220,7 +220,7 @@ Workflow:
    - `blocks/pricing.tsx` — wraps `PricingTable` with tier config
    - `blocks/faq.tsx` — add if applicable (use shadcn Accordion)
    - `blocks/cta.tsx` — final CTA section
-   - `blocks/footer.tsx` — wraps `SiteFooter`. **Keep `SiteFooter` from `components/site-footer.tsx`** — it already mounts the `BuiltWithShipAny` badge (links to `https://shipany.ai/?utm_source=<app_hostname>` (hostname only, e.g. `yourdomain.com`)) in the bottom bar. If you replace `SiteFooter` with a custom footer, you MUST still render `<BuiltWithShipAny />` from `@/components/built-with-shipany` somewhere in it. Never strip the attribution.
+   - `blocks/footer.tsx` — wraps `SiteFooter`. Keep `SiteFooter` from `components/site-footer.tsx` unless the user's design requires a custom footer. Do not add template attribution or import removed branding components; the footer should reflect the user's product, legal links, locale selector, and support/contact links.
 
 3. **Rewrite `index.tsx`** — pure composition, ~15 lines (the route's `component`). Example:
    ```tsx
@@ -307,19 +307,10 @@ Connect landing page elements to modules:
 
 ## Git Remotes
 
-This project starts as a clone of the ShipAny Next template — rewire the remotes
-before handing off:
-
-1. **Wire the template as `upstream`** (enables `/sync-upstream` for future
-   template updates — local changes win on conflict):
-   ```bash
-   git remote get-url upstream 2>/dev/null \
-     || git remote add upstream git@github.com:shipany-ai/shipany-tanstack.git
-   ```
-2. **Point `origin` at the user's own repository.** If `origin` still points at
-   `shipany-ai/shipany-tanstack`, ask the user for their new repo URL and run
-   `git remote set-url origin <their-repo-url>`. If they haven't created one
-   yet, include the command in the completion report for them to run later.
+Do not rewrite remotes or add a template upstream unless the user explicitly asks for
+repository setup. If the user asks for Git handoff, inspect `git remote -v` first,
+then set `origin` only to the repository URL they provide. Leave any existing
+`upstream` untouched unless the user specifically wants template-sync behavior.
 
 ---
 
@@ -334,10 +325,8 @@ Report:
 - Modules kept/removed/wired
 - Assets downloaded (count)
 - Build status
-- Git remotes: origin (user's repo) + upstream (template); `/sync-upstream`
-  pulls future template updates, keeping their changes on conflict
+- Git remotes: only mention changes you actually made; do not claim template sync unless configured at the user's request
 - Remaining TODOs for the user:
-  - `git remote set-url origin <url>` if not done yet
   - API keys to configure (Stripe, Resend, etc.)
   - Content to customize
   - `pnpm dev` to start iterating

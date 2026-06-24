@@ -52,7 +52,7 @@ For any code that builds LLM prompts (`src/core/ai/`, AI task handlers):
   concatenated into system prompts or tool instructions without delimiting/labeling.
 - LLM output used to perform privileged actions (tool calls, db writes, shell) without
   validation — an injected instruction in the content becomes code execution.
-- Skill/agent instruction files (`.claude/`, `*.mdx` content rendered to agents) that
+- Skill/agent instruction files (`.agents/`, `*.mdx` content rendered to agents) that
   could carry embedded instructions from third-party sources.
 
 ## 4. Auth & access control

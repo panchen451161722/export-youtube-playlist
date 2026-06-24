@@ -512,7 +512,7 @@ DO change:
 - Footer copyright and links
 - Meta descriptions and page titles
 
-**Footer attribution (required):** Whatever footer you build — whether you reuse `SiteFooter` from `@/components/site-footer` or write a custom one to match the original site — it MUST render `<BuiltWithShipAny />` from `@/components/built-with-shipany`. The badge links to `https://shipany.ai/?utm_source=<app_hostname>` (hostname only, e.g. `yourdomain.com`) and is part of the template attribution. Place it in the bottom bar of the footer. Never strip it, even when matching the original site's footer exactly — drop it next to the cloned copyright line instead.
+**Footer branding:** Whatever footer you build — whether you reuse `SiteFooter` from `@/components/site-footer` or write a custom one to match the original site — it should reflect the user's product. Do not add template attribution or import removed branding components. Keep required legal, locale, support, and product links from the target/content brief.
 
 ### 6.3 Theme Color (if specified)
 
@@ -530,7 +530,7 @@ The clone replaces the original site's branding with the user's product, so the
 original site's downloaded favicon/logo (from the Foundation "Favicons & Meta" step)
 must not ship. Replace them with the user's product mark.
 
-The ShipAny template ships **placeholder** `public/logo.svg` + `public/favicon.svg`
+The project template ships **placeholder** `public/logo.svg` + `public/favicon.svg`
 (a single letter on a rounded square), already wired: `app_logo` defaults to `/logo.svg`
 (`src/config/index.ts`) and the root route head (`src/routes/__root.tsx`) links the
 favicon → `/favicon.svg`. There is no committed `logo.png`/`favicon.ico`.
@@ -541,7 +541,7 @@ favicon → `/favicon.svg`. There is no committed `logo.png`/`favicon.ico`.
   placeholder files (no code change needed):
   1. **Letter** = first character of the product name, uppercased (`Acme` → `A`; CJK-only
      name → first character, or its English initial if one exists).
-  2. **Color** = the theme's primary color (read `--primary` from `src/app/globals.css`),
+  2. **Color** = the theme's primary color (read `--primary` from `src/styles/globals.css`),
      falling back to `#0a0a0a` bg + `#ffffff` letter. Ensure the letter contrasts.
   3. Write `public/logo.svg` + `public/favicon.svg` (favicon uses a larger `font-size` so
      the glyph reads at 16px):
@@ -569,18 +569,10 @@ SVG favicons work in all modern browsers. For a classic `.ico`, convert with
 
 ## Completion
 
-If this clone runs inside a fresh ShipAny Next project (origin still points at
-`shipany-ai/shipany-tanstack`), rewire the git remotes:
-
-```bash
-git remote get-url upstream 2>/dev/null \
-  || git remote add upstream git@github.com:shipany-ai/shipany-tanstack.git
-```
-
-Then ask the user for their own repository URL and run
-`git remote set-url origin <their-repo-url>` (or include the command in the
-report if they haven't created the repo yet). `/sync-upstream` pulls future
-template updates, keeping their changes on conflict.
+Do not rewrite Git remotes or add a template upstream unless the user explicitly asks
+for repository setup. If they ask for Git handoff, inspect `git remote -v`, set
+`origin` only to the repository URL they provide, and leave any existing `upstream`
+untouched unless they specifically want template-sync behavior.
 
 When done, report:
 - Total sections built
@@ -589,5 +581,5 @@ When done, report:
 - Total assets downloaded (images, videos, SVGs, fonts)
 - Build status (`pnpm build` result)
 - Visual QA results (any remaining discrepancies)
-- Git remotes wired (origin → user's repo, upstream → template) if applicable
+- Git remotes changed, only if you actually changed them
 - Any known gaps or limitations

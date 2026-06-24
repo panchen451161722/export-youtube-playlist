@@ -15,10 +15,10 @@ logic flaws). Both must pass before committing.
 
 ```bash
 # before staging (scans staged + unstaged + untracked vs HEAD):
-python3 .claude/skills/security-scan/scripts/scan_staged.py --worktree
+python3 .agents/skills/security-scan/scripts/scan_staged.py --worktree
 
 # after staging (scans exactly what will be committed):
-python3 .claude/skills/security-scan/scripts/scan_staged.py
+python3 .agents/skills/security-scan/scripts/scan_staged.py
 ```
 
 Exit 1 = HIGH findings (block). It checks: secret patterns in added lines, forbidden

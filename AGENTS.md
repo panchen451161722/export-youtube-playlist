@@ -413,11 +413,10 @@ Or use skills: `/new-module`, `/new-page`, `/new-static-page`
 
 ## Agent Skills
 
-Project skills live in `.claude/skills/` (canonical) with cross-agent symlinks
-at `.agents/skills`, `.codex/skills`, and `.cursor/skills` — all four resolve to
-the same files (SKILL.md open standard, agentskills.io). If your agent runtime
-doesn't auto-discover skills, read `.claude/skills/<name>/SKILL.md` and follow
-it when the task matches:
+Project skills live in `.agents/skills/` as the single source of truth so Codex
+can discover them immediately after a fresh clone, including on Windows checkouts
+where Git symlinks may be disabled. If your agent runtime doesn't auto-discover
+skills, read `.agents/skills/<name>/SKILL.md` and follow it when the task matches:
 
 | Skill               | When to use                                                                                                                         |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
