@@ -5,6 +5,12 @@ import { getAdminConfigs, saveConfigs } from '@/modules/config/service';
 import { hasPermission } from '@/modules/rbac/service';
 import { respData, respErr, respOk } from '@/lib/resp';
 
+const noStore = {
+  headers: {
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
+  },
+};
+
 async function GET({ request }: { request: Request }) {
   try {
     const auth = getAuth();
@@ -16,7 +22,7 @@ async function GET({ request }: { request: Request }) {
 
     // Masked + protected-keys-stripped view — never send raw configs to a client.
     const configs = await getAdminConfigs();
-    return respData(configs);
+    return respData(configs, noStore);
   } catch (error: any) {
     return respErr(error.message || 'Internal error');
   }
@@ -38,7 +44,7 @@ async function POST({ request }: { request: Request }) {
     if (!body || typeof body !== 'object') return respErr('Invalid body');
 
     await saveConfigs(body);
-    return respOk();
+    return respOk(noStore);
   } catch (error: any) {
     return respErr(error.message || 'Internal error');
   }

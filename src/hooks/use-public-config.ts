@@ -10,7 +10,8 @@ export type PublicConfig = Record<string, string>;
 export function usePublicConfig() {
   return useQuery({
     queryKey: ['public-config'],
-    queryFn: () => apiGet<PublicConfig>('/api/config/public'),
-    staleTime: 5 * 60_000,
+    queryFn: () =>
+      apiGet<PublicConfig>('/api/config/public', { cache: 'no-store' }),
+    staleTime: 0,
   });
 }

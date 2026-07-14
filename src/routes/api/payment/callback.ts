@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { envConfigs } from '@/config';
+import { getAllConfigs } from '@/modules/config/service';
 import { handlePaymentCallback } from '@/modules/payment/service';
 
 /**
@@ -13,11 +13,12 @@ import { handlePaymentCallback } from '@/modules/payment/service';
  */
 function resolveSameOriginRedirect(
   input: string | null,
-  fallbackUrl: string
+  fallbackUrl: string,
+  baseUrl: string
 ): string {
   if (!input) return fallbackUrl;
   try {
-    const appUrl = new URL(envConfigs.app_url || 'http://localhost:3000');
+    const appUrl = new URL(baseUrl);
     const target = new URL(input, appUrl);
     if (target.origin !== appUrl.origin) return fallbackUrl;
     return target.toString();
@@ -30,7 +31,9 @@ async function GET({ request }: { request: Request }) {
   const url = new URL(request.url);
   const orderNo = url.searchParams.get('order_no');
   const redirect = url.searchParams.get('redirect');
-  const fallback = `${envConfigs.app_url}/settings/billing`;
+  const configs = await getAllConfigs();
+  const appUrl = configs.app_url || 'http://localhost:3000';
+  const fallback = `${appUrl}/settings/billing`;
 
   try {
     if (orderNo) {
@@ -42,7 +45,9 @@ async function GET({ request }: { request: Request }) {
 
   return new Response(null, {
     status: 302,
-    headers: { Location: resolveSameOriginRedirect(redirect, fallback) },
+    headers: {
+      Location: resolveSameOriginRedirect(redirect, fallback, appUrl),
+    },
   });
 }
 

@@ -31,7 +31,7 @@ export async function getDbConfigs(): Promise<ConfigMap> {
     const rows = await db().select().from(config);
     const result: ConfigMap = {};
     for (const row of rows) {
-      if (!row.name || !row.value) continue;
+      if (!row.name || row.value === null || row.value === undefined) continue;
 
       if (isEncryptedSecret(row.value)) {
         const plain = await decryptSecret(row.value);
@@ -211,15 +211,18 @@ export interface CustomConfig {
 
 /**
  * Custom (user-defined) configs: DB-stored key/value pairs that aren't part
- * of any predefined setting or env key. Values are returned decrypted —
- * admin-only, never expose this to non-admins.
+ * of any predefined setting or env key. Secret-like values are masked before
+ * returning to the admin UI.
  */
 export async function getCustomConfigs(): Promise<CustomConfig[]> {
   const reserved = reservedConfigKeys();
   const dbConfigs = await getDbConfigs();
   return Object.entries(dbConfigs)
     .filter(([name]) => !reserved.has(name))
-    .map(([key, value]) => ({ key, value }))
+    .map(([key, value]) => ({
+      key,
+      value: isSecretConfigKey(key) && value ? maskConfigValue(value) : value,
+    }))
     .sort((a, b) => a.key.localeCompare(b.key));
 }
 
@@ -251,12 +254,14 @@ export async function replaceCustomConfigs(
   const toDelete = existingCustom.filter((k) => !keep.has(k));
 
   const entries = await Promise.all(
-    clean.map(
-      async ([name, value]): Promise<[string, string]> =>
-        isSecretConfigKey(name)
-          ? [name, await encryptSecret(value)]
-          : [name, value]
-    )
+    clean
+      .filter(([, value]) => !isMaskedConfigValue(value))
+      .map(
+        async ([name, value]): Promise<[string, string]> =>
+          isSecretConfigKey(name)
+            ? [name, await encryptSecret(value)]
+            : [name, value]
+      )
   );
 
   await db().transaction(async (tx: any) => {
@@ -291,7 +296,8 @@ export function filterPublicConfigs(
 ): ConfigMap {
   const result: ConfigMap = {};
   for (const key of publicKeys) {
-    if (configs[key]) {
+    if (PROTECTED_CONFIG_KEYS.has(key) || isSecretConfigKey(key)) continue;
+    if (key in configs) {
       result[key] = configs[key];
     }
   }

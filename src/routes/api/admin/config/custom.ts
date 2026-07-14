@@ -9,6 +9,12 @@ import {
 import { hasPermission } from '@/modules/rbac/service';
 import { respData, respErr, respOk } from '@/lib/resp';
 
+const noStore = {
+  headers: {
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
+  },
+};
+
 async function GET({ request }: { request: Request }) {
   try {
     const auth = getAuth();
@@ -19,7 +25,7 @@ async function GET({ request }: { request: Request }) {
     if (!isAdmin) return respErr('Forbidden');
 
     const configs = await getCustomConfigs();
-    return respData(configs);
+    return respData(configs, noStore);
   } catch (error: any) {
     return respErr(error.message || 'Internal error');
   }
@@ -43,7 +49,7 @@ async function POST({ request }: { request: Request }) {
       : [];
 
     await replaceCustomConfigs(configs);
-    return respOk();
+    return respOk(noStore);
   } catch (error: any) {
     return respErr(error.message || 'Internal error');
   }

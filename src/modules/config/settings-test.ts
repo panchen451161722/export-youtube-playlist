@@ -74,8 +74,12 @@ function need(configs: Record<string, string>, keys: string[]): string | null {
   return missing.length ? `Missing config: ${missing.join(', ')}` : null;
 }
 
-function successUrl(group: string) {
-  return `${envConfigs.app_url}/admin/settings?test=${group}`;
+function configuredAppName(configs: Record<string, string>) {
+  return configs.app_name || envConfigs.app_name;
+}
+
+function configuredSuccessUrl(group: string, configs: Record<string, string>) {
+  return `${configs.app_url || envConfigs.app_url || 'http://localhost:3000'}/admin/settings?test=${group}`;
 }
 
 // --- Resend ---------------------------------------------------------------
@@ -94,8 +98,8 @@ async function testResend(
 
   const result = await provider.sendEmail({
     to: inputs.to,
-    subject: `[${envConfigs.app_name}] Test email`,
-    text: `This is a test email from ${envConfigs.app_name} admin settings. If you received it, Resend is configured correctly.`,
+    subject: `[${configuredAppName(configs)}] Test email`,
+    text: `This is a test email from ${configuredAppName(configs)} admin settings. If you received it, Resend is configured correctly.`,
   });
 
   if (!result.success) {
@@ -137,8 +141,8 @@ async function testStripe(
       currency: (inputs.currency || 'usd').toLowerCase(),
     },
     description: inputs.description || 'Test checkout',
-    successUrl: successUrl('stripe'),
-    cancelUrl: successUrl('stripe'),
+    successUrl: configuredSuccessUrl('stripe', configs),
+    cancelUrl: configuredSuccessUrl('stripe', configs),
   };
 
   const session = await provider.createPayment({ order });
@@ -173,8 +177,8 @@ async function testCreem(
     orderNo: getUniSeq('TEST'),
     productId: inputs.productId,
     description: inputs.description || 'Test checkout',
-    successUrl: successUrl('creem'),
-    cancelUrl: successUrl('creem'),
+    successUrl: configuredSuccessUrl('creem', configs),
+    cancelUrl: configuredSuccessUrl('creem', configs),
   };
 
   const session = await provider.createPayment({ order });
@@ -213,8 +217,8 @@ async function testPaypal(
       currency: (inputs.currency || 'USD').toUpperCase(),
     },
     description: inputs.description || 'Test checkout',
-    successUrl: successUrl('paypal'),
-    cancelUrl: successUrl('paypal'),
+    successUrl: configuredSuccessUrl('paypal', configs),
+    cancelUrl: configuredSuccessUrl('paypal', configs),
   };
 
   const session = await provider.createPayment({ order });
@@ -253,7 +257,7 @@ async function testAlipay(
     orderNo: getUniSeq('TEST'),
     price: { amount: Number(inputs.amount) || 1, currency: 'CNY' },
     description: inputs.description || 'Test checkout',
-    successUrl: successUrl('alipay'),
+    successUrl: configuredSuccessUrl('alipay', configs),
   };
 
   const session = await provider.createPayment({ order });

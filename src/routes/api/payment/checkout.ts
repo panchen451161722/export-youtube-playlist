@@ -1,7 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import { getAuth } from '@/core/auth';
-import { envConfigs } from '@/config';
 import { getPricingProduct } from '@/config/pricing';
 import { getAllConfigs } from '@/modules/config/service';
 import { createCheckout } from '@/modules/payment/service';
@@ -10,11 +9,12 @@ import { respData, respErr } from '@/lib/resp';
 
 function safeSameOriginPath(
   input: string | undefined | null,
-  fallbackPath: string
+  fallbackPath: string,
+  baseUrl: string
 ): string {
   if (!input) return fallbackPath;
   try {
-    const appUrl = new URL(envConfigs.app_url || 'http://localhost:3000');
+    const appUrl = new URL(baseUrl);
     const candidate = new URL(input, appUrl);
     if (candidate.origin !== appUrl.origin) return fallbackPath;
     return candidate.pathname + candidate.search + candidate.hash;
@@ -64,8 +64,12 @@ async function POST({ request }: { request: Request }) {
     const chargeAmount = testAmount > 0 ? testAmount : product.priceInCents;
 
     // Build success/cancel URLs — only accept same-origin redirects.
-    const baseUrl = envConfigs.app_url || 'http://localhost:3000';
-    const safeRedirectPath = safeSameOriginPath(redirect, '/settings/billing');
+    const baseUrl = configs.app_url || 'http://localhost:3000';
+    const safeRedirectPath = safeSameOriginPath(
+      redirect,
+      '/settings/billing',
+      baseUrl
+    );
     const finalRedirect = redirect
       ? `${baseUrl}/auth-callback?redirect=${encodeURIComponent(`${baseUrl}${safeRedirectPath}`)}`
       : `${baseUrl}/settings/billing`;

@@ -183,14 +183,17 @@ export function getAuth(configs?: Record<string, string>) {
     ? configs.email_verification_enabled === 'true' &&
       isEmailConfigured(configs)
     : false;
+  const appName = configs?.app_name || envConfigs.app_name;
+  const appUrl = configs?.app_url || envConfigs.app_url;
+  const authUrl = configs?.auth_url || envConfigs.auth_url || appUrl;
 
   const instance = betterAuth({
-    appName: envConfigs.app_name,
-    baseURL: envConfigs.auth_url || envConfigs.app_url,
+    appName,
+    baseURL: authUrl,
     secret: envConfigs.auth_secret,
     trustedOrigins: (request) => {
       const origins: string[] = [];
-      if (envConfigs.app_url) origins.push(envConfigs.app_url);
+      if (appUrl) origins.push(appUrl);
       try {
         const origin = request?.headers?.get?.('origin');
         if (origin && new URL(origin).hostname === 'localhost')
@@ -295,7 +298,7 @@ export function getAuth(configs?: Record<string, string>) {
                 const logoUrl = logo.startsWith('http')
                   ? logo
                   : logo
-                    ? `${envConfigs.app_url || ''}${logo.startsWith('/') ? '' : '/'}${logo}`
+                    ? `${all.app_url || appUrl || ''}${logo.startsWith('/') ? '' : '/'}${logo}`
                     : undefined;
                 const result = await emailCtx.provider.sendEmail({
                   to: user.email,

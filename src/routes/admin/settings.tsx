@@ -105,6 +105,7 @@ function AdminSettingsPage() {
     onSuccess: () => {
       toast.success(m['admin.settings.save_success']());
       queryClient.invalidateQueries({ queryKey: ['admin-config'] });
+      queryClient.invalidateQueries({ queryKey: ['public-config'] });
     },
     onError: (err: any) => {
       toast.error(err?.message || m['admin.settings.save_error']());
@@ -117,6 +118,7 @@ function AdminSettingsPage() {
     onSuccess: () => {
       toast.success(m['admin.settings.save_success']());
       queryClient.invalidateQueries({ queryKey: ['admin-config-custom'] });
+      queryClient.invalidateQueries({ queryKey: ['public-config'] });
     },
     onError: (err: any) => {
       toast.error(err?.message || m['admin.settings.save_error']());
