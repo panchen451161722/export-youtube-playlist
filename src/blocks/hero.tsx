@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, useState, type CSSProperties } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import {
@@ -25,12 +23,23 @@ import { Input } from '@/components/ui/input';
 type PlaylistVideo = {
   position: number;
   title: string;
+  description: string;
+  thumbnailUrl: string;
   channelTitle: string;
   publishedAt: string;
   duration: string;
+  durationSeconds: number | null;
+  durationMinutes: number | null;
+  durationText: string;
   viewCount: string;
+  likeCount: string;
+  commentCount: string;
   videoId: string;
   url: string;
+  tags: string[];
+  descriptionTags: string[];
+  descriptionEmails: string[];
+  descriptionLinks: string[];
 };
 
 type PlaylistResult = {
@@ -44,6 +53,35 @@ type PlaylistResult = {
 };
 
 type ExportFormat = 'csv' | 'xlsx';
+type ExportCell = string | number | null;
+
+const exportHeaders = [
+  'Position',
+  'Title',
+  'Description',
+  'Thumbnail URL',
+  'Channel Name',
+  'Views',
+  'Likes',
+  'Comments',
+  'Duration in Seconds',
+  'Duration in Minutes',
+  'Duration in Timestamp',
+  'Duration',
+  'Uploaded Time',
+  'Video URL',
+  'Video ID',
+  'Tags',
+  'Tags (in Description)',
+  'Emails (in Description)',
+  'Links (in Description)',
+] as const;
+
+const exportColumnWidths = [
+  10, 46, 64, 44, 28, 14, 14, 14, 20, 20, 22, 28, 24, 44, 18, 54, 40, 36, 64,
+];
+
+const wrappedExportColumns = new Set([2, 15, 16, 17, 18]);
 
 const youtubeHosts = new Set([
   'youtube.com',
@@ -87,7 +125,21 @@ function isValidPlaylistUrl(value: string) {
 }
 
 function safeSpreadsheetText(value: string) {
-  return /^[=+\-@]/.test(value) ? `'${value}` : value;
+  return /^[=+\-@]/.test(value.trimStart()) ? `'${value}` : value;
+}
+
+function safeExportCell(value: ExportCell): ExportCell {
+  return typeof value === 'string' ? safeSpreadsheetText(value) : value;
+}
+
+function numericExportCell(value: string): number | null {
+  if (!value.trim()) return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function listExportCell(values: string[]): string {
+  return `[${values.join(', ')}]`;
 }
 
 function safeFileName(value: string) {
@@ -115,32 +167,37 @@ function downloadBlob(blob: Blob, name: string) {
 }
 
 function toExportRows(videos: PlaylistVideo[]) {
-  return videos.map((video) => [
-    video.position,
-    safeSpreadsheetText(video.title),
-    safeSpreadsheetText(video.channelTitle),
-    video.publishedAt,
-    video.duration,
-    Number(video.viewCount || 0),
-    video.videoId,
-    video.url,
-  ]);
+  return videos.map((video) =>
+    (
+      [
+        video.position,
+        video.title,
+        video.description,
+        video.thumbnailUrl,
+        video.channelTitle,
+        numericExportCell(video.viewCount),
+        numericExportCell(video.likeCount),
+        numericExportCell(video.commentCount),
+        video.durationSeconds,
+        video.durationMinutes,
+        video.duration,
+        video.durationText,
+        video.publishedAt,
+        video.url,
+        video.videoId,
+        listExportCell(video.tags),
+        listExportCell(video.descriptionTags),
+        listExportCell(video.descriptionEmails),
+        listExportCell(video.descriptionLinks),
+      ] satisfies ExportCell[]
+    ).map(safeExportCell)
+  );
 }
 
 function createCsvBlob(result: PlaylistResult) {
-  const headers = [
-    'Position',
-    'Title',
-    'Channel',
-    'Published At',
-    'Duration',
-    'Views',
-    'Video ID',
-    'URL',
-  ];
-  const csvValue = (value: string | number) =>
-    `"${String(value).replaceAll('"', '""')}"`;
-  const csv = [headers, ...toExportRows(result.videos)]
+  const csvValue = (value: ExportCell) =>
+    `"${(value === null ? '' : String(value)).replaceAll('"', '""')}"`;
+  const csv = [exportHeaders, ...toExportRows(result.videos)]
     .map((row) => row.map(csvValue).join(','))
     .join('\r\n');
   return new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' });
@@ -152,33 +209,21 @@ async function createXlsxBlob(result: PlaylistResult) {
     fontWeight: 'bold' as const,
     backgroundColor: '#E8EDF8',
   };
-  const header = [
-    'Position',
-    'Title',
-    'Channel',
-    'Published At',
-    'Duration',
-    'Views',
-    'Video ID',
-    'URL',
-  ].map((value) => ({ value, ...headerStyle }));
+  const header = exportHeaders.map((value) => ({ value, ...headerStyle }));
   const data = [
     header,
     ...toExportRows(result.videos).map((row) =>
-      row.map((value) => ({ value }))
+      row.map((value, columnIndex) => ({
+        value: value ?? undefined,
+        alignVertical: 'top' as const,
+        wrap: wrappedExportColumns.has(columnIndex),
+        ...(columnIndex === 2 ? { height: 72 } : {}),
+      }))
     ),
   ];
   return writeXlsxFile(data, {
-    columns: [
-      { width: 10 },
-      { width: 46 },
-      { width: 28 },
-      { width: 24 },
-      { width: 14 },
-      { width: 14 },
-      { width: 18 },
-      { width: 44 },
-    ],
+    columns: exportColumnWidths.map((width) => ({ width })),
+    stickyRowsCount: 1,
   }).toBlob();
 }
 

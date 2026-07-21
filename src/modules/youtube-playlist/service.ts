@@ -64,12 +64,23 @@ export class PlaylistServiceError extends Error {
 export type PlaylistVideo = {
   position: number;
   title: string;
+  description: string;
+  thumbnailUrl: string;
   channelTitle: string;
   publishedAt: string;
   duration: string;
+  durationSeconds: number | null;
+  durationMinutes: number | null;
+  durationText: string;
   viewCount: string;
+  likeCount: string;
+  commentCount: string;
   videoId: string;
   url: string;
+  tags: string[];
+  descriptionTags: string[];
+  descriptionEmails: string[];
+  descriptionLinks: string[];
 };
 
 export type PlaylistExport = {
@@ -127,11 +138,18 @@ type VideosListResponse = {
     id?: string;
     snippet?: {
       title?: string;
+      description?: string;
       channelTitle?: string;
       publishedAt?: string;
+      thumbnails?: Record<string, { url?: string }>;
+      tags?: string[];
     };
     contentDetails?: { duration?: string };
-    statistics?: { viewCount?: string };
+    statistics?: {
+      viewCount?: string;
+      likeCount?: string;
+      commentCount?: string;
+    };
   }>;
 };
 
@@ -170,23 +188,113 @@ export function parseYouTubePlaylistUrl(value: string): string {
   return playlistId;
 }
 
-/** Convert an ISO 8601 YouTube duration into H:MM:SS or M:SS. */
-export function formatYouTubeDuration(value: string | undefined): string {
-  if (!value) return '';
+export type YouTubeDuration = {
+  seconds: number | null;
+  minutes: number | null;
+  timestamp: string;
+  text: string;
+};
+
+function durationUnit(value: number, singular: string, plural: string) {
+  return `${value} ${value === 1 ? singular : plural}`;
+}
+
+/** Convert an ISO 8601 YouTube duration into export-friendly representations. */
+export function parseYouTubeDuration(
+  value: string | undefined
+): YouTubeDuration {
+  if (!value) {
+    return { seconds: null, minutes: null, timestamp: '', text: '' };
+  }
   const match = value.match(
     /^P(?:(\d+)D)?T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?$/
   );
-  if (!match) return value;
+  if (!match) {
+    return {
+      seconds: null,
+      minutes: null,
+      timestamp: value,
+      text: value,
+    };
+  }
 
   const days = Number(match[1] || 0);
   const hours = Number(match[2] || 0) + days * 24;
   const minutes = Number(match[3] || 0);
   const seconds = Math.floor(Number(match[4] || 0));
-
-  if (hours > 0) {
-    return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+  const timestamp =
+    hours > 0
+      ? `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+      : `${minutes}:${String(seconds).padStart(2, '0')}`;
+  const textParts: string[] = [];
+  if (hours > 0) textParts.push(durationUnit(hours, 'Hour', 'Hours'));
+  if (minutes > 0) textParts.push(durationUnit(minutes, 'Minute', 'Minutes'));
+  if (seconds > 0 || textParts.length === 0) {
+    textParts.push(durationUnit(seconds, 'Second', 'Seconds'));
   }
-  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+
+  return {
+    seconds: totalSeconds,
+    minutes: Number((totalSeconds / 60).toFixed(2)),
+    timestamp,
+    text: textParts.join(', '),
+  };
+}
+
+/** Convert an ISO 8601 YouTube duration into H:MM:SS or M:SS. */
+export function formatYouTubeDuration(value: string | undefined): string {
+  return parseYouTubeDuration(value).timestamp;
+}
+
+function uniqueValues(values: string[], caseInsensitive = false): string[] {
+  const seen = new Set<string>();
+  return values.filter((value) => {
+    const key = caseInsensitive ? value.toLowerCase() : value;
+    if (!value || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function cleanDescriptionLink(value: string): string {
+  let cleaned = value.replace(/[.,;:!?]+$/g, '');
+  for (const [opening, closing] of [
+    ['(', ')'],
+    ['[', ']'],
+    ['{', '}'],
+  ] as const) {
+    while (
+      cleaned.endsWith(closing) &&
+      cleaned.split(closing).length > cleaned.split(opening).length
+    ) {
+      cleaned = cleaned.slice(0, -1);
+    }
+  }
+  return cleaned;
+}
+
+export function extractDescriptionMetadata(description: string): {
+  tags: string[];
+  emails: string[];
+  links: string[];
+} {
+  const tags = uniqueValues(
+    description.match(/#[\p{L}\p{N}_-]+/gu) ?? [],
+    true
+  );
+  const emails = uniqueValues(
+    description.match(
+      /[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+/gi
+    ) ?? [],
+    true
+  );
+  const links = uniqueValues(
+    (description.match(/https?:\/\/[^\s<>"']+/gi) ?? [])
+      .map(cleanDescriptionLink)
+      .filter(Boolean)
+  );
+  return { tags, emails, links };
 }
 
 function getBestThumbnail(
@@ -284,10 +392,19 @@ function normalizeVideo(
 ): PlaylistVideo | null {
   const videoId = video.id || item.contentDetails?.videoId;
   if (!videoId || !video.snippet?.title) return null;
+  const description = video.snippet.description || '';
+  const duration = parseYouTubeDuration(video.contentDetails?.duration);
+  const descriptionMetadata = extractDescriptionMetadata(description);
+  const tags = (video.snippet.tags ?? [])
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .map((tag) => (tag.startsWith('#') ? tag : `#${tag}`));
 
   return {
     position: (item.snippet?.position ?? 0) + 1,
     title: video.snippet.title,
+    description,
+    thumbnailUrl: getBestThumbnail(video.snippet.thumbnails),
     channelTitle:
       video.snippet.channelTitle || item.snippet?.channelTitle || '',
     publishedAt:
@@ -295,10 +412,19 @@ function normalizeVideo(
       video.snippet.publishedAt ||
       item.snippet?.publishedAt ||
       '',
-    duration: formatYouTubeDuration(video.contentDetails?.duration),
+    duration: duration.timestamp,
+    durationSeconds: duration.seconds,
+    durationMinutes: duration.minutes,
+    durationText: duration.text,
     viewCount: video.statistics?.viewCount || '',
+    likeCount: video.statistics?.likeCount || '',
+    commentCount: video.statistics?.commentCount || '',
     videoId,
     url: `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`,
+    tags,
+    descriptionTags: descriptionMetadata.tags,
+    descriptionEmails: descriptionMetadata.emails,
+    descriptionLinks: descriptionMetadata.links,
   };
 }
 
