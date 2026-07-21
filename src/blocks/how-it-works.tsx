@@ -1,4 +1,4 @@
-import { Download, Link2, SearchCheck } from 'lucide-react';
+import { Download, Link2, ListChecks } from 'lucide-react';
 
 import { m } from '@/paraglide/messages.js';
 
@@ -9,7 +9,7 @@ const steps = [
     description: () => m['landing.how.step_1.description'](),
   },
   {
-    icon: SearchCheck,
+    icon: ListChecks,
     title: () => m['landing.how.step_2.title'](),
     description: () => m['landing.how.step_2.description'](),
   },

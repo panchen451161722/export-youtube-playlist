@@ -167,10 +167,36 @@
       transform: translate3d(4%, 6%, 0) scale(1.08);
     }
   }
+  @keyframes export-confetti-fall {
+    0% {
+      opacity: 0;
+      transform: translate3d(0, -12vh, 0) rotate(0deg);
+    }
+    10% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translate3d(var(--confetti-sway), 108vh, 0)
+        rotate(var(--confetti-rotation));
+    }
+  }
+  .export-confetti-piece {
+    position: absolute;
+    top: -1rem;
+    left: var(--confetti-left);
+    width: 0.55rem;
+    height: 0.95rem;
+    border-radius: 0.15rem;
+    background: var(--confetti-color);
+    animation: export-confetti-fall var(--confetti-duration) ease-in
+      var(--confetti-delay) forwards;
+  }
   @media (prefers-reduced-motion: reduce) {
     .animate-drift-a,
     .animate-drift-b,
-    .animate-drift-c {
+    .animate-drift-c,
+    .export-confetti-piece {
       animation: none !important;
     }
   }

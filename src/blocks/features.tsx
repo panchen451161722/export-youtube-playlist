@@ -1,7 +1,7 @@
 import {
+  Archive,
   Clock3,
   FileSpreadsheet,
-  Link2,
   ListFilter,
   LockKeyhole,
   Rows3,
@@ -92,7 +92,7 @@ export function Features() {
                 {m['landing.features.spreadsheets.clean_columns']()}
               </span>
               <span className="inline-flex items-center gap-2">
-                <Link2 aria-hidden="true" className="size-4" />
+                <Archive aria-hidden="true" className="size-4" />
                 {m['landing.features.spreadsheets.copy_links']()}
               </span>
             </div>
