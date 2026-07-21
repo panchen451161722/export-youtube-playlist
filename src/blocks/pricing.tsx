@@ -1,328 +1,117 @@
-'use client';
+import { Check, Clock3, Sparkles } from 'lucide-react';
 
-import { useMemo, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import {
-  Check,
-  Folder,
-  Folders,
-  Headphones,
-  Infinity as InfinityIcon,
-  Mail,
-  Puzzle,
-  Sparkles,
-  Terminal,
-  Zap,
-} from 'lucide-react';
-import { toast } from 'sonner';
-
-import { useSession } from '@/core/auth/client';
-import { useRouter } from '@/core/i18n/navigation';
-import { apiPost } from '@/lib/api-client';
 import { m } from '@/paraglide/messages.js';
-import { usePublicConfig } from '@/hooks/use-public-config';
-import {
-  PaymentProviderModal,
-  type PaymentProvider,
-} from '@/components/payment-provider-modal';
-import {
-  PricingTable,
-  type PricingGroup,
-  type PricingPlan,
-} from '@/components/pricing-table';
 
-const ALL_PROVIDERS: PaymentProvider[] = [
-  'stripe',
-  'creem',
-  'paypal',
-  'alipay',
-  'wechat',
-];
+const freeFeatures = [
+  () => m['landing.pricing.free.feature_limit'](),
+  () => m['landing.pricing.free.feature_formats'](),
+  () => m['landing.pricing.free.feature_preview'](),
+] as const;
 
-export function Pricing({ title }: { title?: string } = {}) {
-  const router = useRouter();
-  const { data: session } = useSession();
+const proFeatures = [
+  () => m['landing.pricing.pro.feature_limit'](),
+  () => m['landing.pricing.pro.feature_history'](),
+  () => m['landing.pricing.pro.feature_priority'](),
+] as const;
 
-  const { data: configsData } = usePublicConfig();
-  const configs = configsData ?? {};
-  const [modalOpen, setModalOpen] = useState(false);
-  const [pendingPlan, setPendingPlan] = useState<PricingPlan | null>(null);
-  const [loadingProvider, setLoadingProvider] =
-    useState<PaymentProvider | null>(null);
-
-  const enabledProviders = useMemo<PaymentProvider[]>(
-    () => ALL_PROVIDERS.filter((p) => configs[`${p}_enabled`] === 'true'),
-    [configs]
-  );
-
-  const starterFeatures = [
-    { icon: Folder, label: m['landing.pricing.feature_1_project']() },
-    { icon: Sparkles, label: m['landing.pricing.feature_5k_credits']() },
-    { icon: Mail, label: m['landing.pricing.feature_email_support']() },
-  ];
-  const proFeatures = [
-    { icon: Folders, label: m['landing.pricing.feature_unlimited_projects']() },
-    { icon: Sparkles, label: m['landing.pricing.feature_50k_credits']() },
-    { icon: Zap, label: m['landing.pricing.feature_priority_support']() },
-    { icon: Terminal, label: m['landing.pricing.feature_api_access']() },
-  ];
-  const enterpriseFeatures = [
-    { icon: Check, label: m['landing.pricing.feature_everything_pro']() },
-    {
-      icon: InfinityIcon,
-      label: m['landing.pricing.feature_unlimited_credits'](),
-    },
-    {
-      icon: Headphones,
-      label: m['landing.pricing.feature_dedicated_support'](),
-    },
-    { icon: Puzzle, label: m['landing.pricing.feature_custom_integrations']() },
-  ];
-
-  const groups: PricingGroup[] = [
-    {
-      key: 'monthly',
-      label: m['landing.pricing.monthly'](),
-      plans: [
-        {
-          id: 'starter-monthly',
-          name: m['landing.pricing.starter'](),
-          description: m['landing.pricing.starter_desc'](),
-          price: '$9',
-          interval: 'mo',
-          features: starterFeatures,
-          productId: 'starter_monthly',
-          priceInCents: 900,
-          currency: 'usd',
-          credits: 5000,
-          plan: { name: 'Starter', interval: 'month', intervalCount: 1 },
-        },
-        {
-          id: 'pro-monthly',
-          name: m['landing.pricing.pro'](),
-          description: m['landing.pricing.pro_desc'](),
-          price: '$29',
-          interval: 'mo',
-          featured: true,
-          badge: m['landing.pricing.popular'](),
-          features: proFeatures,
-          productId: 'pro_monthly',
-          priceInCents: 2900,
-          currency: 'usd',
-          credits: 50000,
-          plan: { name: 'Pro', interval: 'month', intervalCount: 1 },
-        },
-        {
-          id: 'enterprise-monthly',
-          name: m['landing.pricing.enterprise'](),
-          description: m['landing.pricing.enterprise_desc'](),
-          price: '$99',
-          interval: 'mo',
-          features: enterpriseFeatures,
-          productId: 'enterprise_monthly',
-          priceInCents: 9900,
-          currency: 'usd',
-          credits: 500000,
-          plan: { name: 'Enterprise', interval: 'month', intervalCount: 1 },
-        },
-      ],
-    },
-    {
-      key: 'yearly',
-      label: m['landing.pricing.yearly'](),
-      plans: [
-        {
-          id: 'starter-yearly',
-          name: m['landing.pricing.starter'](),
-          description: m['landing.pricing.starter_desc'](),
-          price: '$86',
-          originalPrice: '$108',
-          interval: 'yr',
-          features: starterFeatures,
-          productId: 'starter_yearly',
-          priceInCents: 8600,
-          currency: 'usd',
-          credits: 60000,
-          plan: { name: 'Starter', interval: 'year', intervalCount: 1 },
-        },
-        {
-          id: 'pro-yearly',
-          name: m['landing.pricing.pro'](),
-          description: m['landing.pricing.pro_desc'](),
-          price: '$278',
-          originalPrice: '$348',
-          interval: 'yr',
-          featured: true,
-          badge: m['landing.pricing.popular'](),
-          features: proFeatures,
-          productId: 'pro_yearly',
-          priceInCents: 27800,
-          currency: 'usd',
-          credits: 600000,
-          plan: { name: 'Pro', interval: 'year', intervalCount: 1 },
-        },
-        {
-          id: 'enterprise-yearly',
-          name: m['landing.pricing.enterprise'](),
-          description: m['landing.pricing.enterprise_desc'](),
-          price: '$950',
-          originalPrice: '$1,188',
-          interval: 'yr',
-          features: enterpriseFeatures,
-          productId: 'enterprise_yearly',
-          priceInCents: 95000,
-          currency: 'usd',
-          credits: 6000000,
-          plan: { name: 'Enterprise', interval: 'year', intervalCount: 1 },
-        },
-      ],
-    },
-    {
-      key: 'lifetime',
-      label: m['landing.pricing.lifetime'](),
-      plans: [
-        {
-          id: 'starter-lifetime',
-          name: m['landing.pricing.starter'](),
-          description: m['landing.pricing.starter_desc'](),
-          price: '$149',
-          features: starterFeatures,
-          productId: 'starter_lifetime',
-          priceInCents: 14900,
-          currency: 'usd',
-          credits: 100000,
-          buttonText: m['landing.pricing.buy_lifetime'](),
-        },
-        {
-          id: 'pro-lifetime',
-          name: m['landing.pricing.pro'](),
-          description: m['landing.pricing.pro_desc'](),
-          price: '$499',
-          features: proFeatures,
-          featured: true,
-          badge: m['landing.pricing.best_value'](),
-          productId: 'pro_lifetime',
-          priceInCents: 49900,
-          currency: 'usd',
-          credits: 1000000,
-          buttonText: m['landing.pricing.buy_lifetime'](),
-        },
-        {
-          id: 'enterprise-lifetime',
-          name: m['landing.pricing.enterprise'](),
-          description: m['landing.pricing.enterprise_desc'](),
-          price: '$1,999',
-          features: enterpriseFeatures,
-          productId: 'enterprise_lifetime',
-          priceInCents: 199900,
-          currency: 'usd',
-          credits: 10000000,
-          buttonText: m['landing.pricing.buy_lifetime'](),
-        },
-      ],
-    },
-  ];
-
-  const checkoutMutation = useMutation({
-    mutationFn: ({
-      plan,
-      provider,
-    }: {
-      plan: PricingPlan;
-      provider: PaymentProvider;
-    }) =>
-      apiPost<{ checkout_url?: string }>('/api/payment/checkout', {
-        product_id: plan.productId,
-        product_name: plan.productName || plan.name,
-        plan_name: plan.plan?.name || plan.name,
-        price: plan.priceInCents,
-        currency: plan.currency || 'usd',
-        type: plan.plan ? 'subscription' : 'one-time',
-        description: plan.name,
-        plan: plan.plan,
-        credits: plan.credits,
-        credits_valid_days: plan.creditsValidDays,
-        payment_provider: provider,
-      }),
-    onSuccess: (data) => {
-      if (!data?.checkout_url) {
-        toast.error('Checkout failed');
-        setLoadingProvider(null);
-        return;
-      }
-      window.location.href = data.checkout_url;
-    },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Checkout failed');
-      setLoadingProvider(null);
-    },
-  });
-
-  function startCheckout(plan: PricingPlan, provider: PaymentProvider) {
-    setLoadingProvider(provider);
-    checkoutMutation.mutate({ plan, provider });
-  }
-
-  async function handleCheckout(plan: PricingPlan) {
-    if (!session?.user) {
-      const redirect = encodeURIComponent(
-        typeof window !== 'undefined' ? window.location.pathname : '/pricing'
-      );
-      router.push(`/sign-in?redirect=${redirect}`);
-      return;
-    }
-
-    const selectEnabled = configs.select_payment_enabled === 'true';
-    const defaultProvider = (configs.default_payment_provider ||
-      enabledProviders[0] ||
-      'stripe') as PaymentProvider;
-
-    if (selectEnabled && enabledProviders.length > 1) {
-      setPendingPlan(plan);
-      setModalOpen(true);
-      return;
-    }
-
-    await startCheckout(plan, defaultProvider);
-  }
-
-  function handleProviderSelect(provider: PaymentProvider) {
-    if (!pendingPlan) return;
-    startCheckout(pendingPlan, provider);
-  }
-
+export function Pricing() {
   return (
-    <section
-      id="pricing"
-      className="border-border border-t px-4 py-24 sm:py-32"
-    >
+    <section id="pricing" className="scroll-mt-24 px-4 py-24 sm:py-32">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-20 text-center">
-          <h2 className="font-serif text-4xl font-normal tracking-tight sm:text-5xl">
-            {title ?? m['landing.pricing.title']()}
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-primary text-sm font-semibold tracking-[0.16em] uppercase">
+            {m['landing.pricing.eyebrow']()}
+          </p>
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-balance sm:text-5xl">
+            {m['landing.pricing.title']()}
           </h2>
-          <p className="text-muted-foreground mt-5">
+          <p className="text-muted-foreground mt-5 text-base leading-7 sm:text-lg">
             {m['landing.pricing.description']()}
           </p>
         </div>
-        <PricingTable groups={groups} onCheckout={handleCheckout} />
-      </div>
 
-      <PaymentProviderModal
-        open={modalOpen}
-        onOpenChange={(open) => {
-          setModalOpen(open);
-          if (!open) {
-            setPendingPlan(null);
-            setLoadingProvider(null);
-          }
-        }}
-        providers={enabledProviders.length ? enabledProviders : ['stripe']}
-        loadingProvider={loadingProvider}
-        onSelect={handleProviderSelect}
-        planName={pendingPlan?.name}
-        price={pendingPlan?.price}
-      />
+        <div className="mx-auto mt-12 grid max-w-4xl gap-6 md:grid-cols-2">
+          <article className="border-border/70 bg-card flex flex-col rounded-3xl border p-7 shadow-sm sm:p-9">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold">
+                  {m['landing.pricing.free.name']()}
+                </p>
+                <p className="mt-4 text-4xl font-semibold tracking-tight">
+                  {m['landing.pricing.free.price']()}
+                </p>
+              </div>
+              <span className="bg-muted text-muted-foreground rounded-full px-3 py-1.5 text-xs font-semibold">
+                {m['landing.pricing.free.badge']()}
+              </span>
+            </div>
+            <p className="text-muted-foreground mt-4 min-h-12 text-sm leading-6">
+              {m['landing.pricing.free.description']()}
+            </p>
+            <ul className="mt-8 space-y-4">
+              {freeFeatures.map((feature, index) => (
+                <li key={index} className="flex items-start gap-3 text-sm">
+                  <span className="bg-primary/9 text-primary mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full">
+                    <Check aria-hidden="true" className="size-3.5" />
+                  </span>
+                  <span>{feature()}</span>
+                </li>
+              ))}
+            </ul>
+            <a
+              href="#exporter"
+              className="border-input bg-background hover:bg-accent focus-visible:ring-ring/50 mt-9 inline-flex min-h-11 items-center justify-center rounded-xl border px-5 text-sm font-semibold transition-colors outline-none focus-visible:ring-3"
+            >
+              {m['landing.pricing.free.button']()}
+            </a>
+          </article>
+
+          <article className="relative flex flex-col overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 p-7 text-white shadow-xl shadow-slate-950/10 sm:p-9">
+            <div
+              aria-hidden="true"
+              className="absolute -top-24 -right-20 size-64 rounded-full bg-blue-500/20 blur-3xl"
+            />
+            <div className="relative flex items-start justify-between gap-4">
+              <div>
+                <p className="flex items-center gap-2 text-sm font-semibold">
+                  <Sparkles
+                    aria-hidden="true"
+                    className="size-4 text-blue-300"
+                  />
+                  {m['landing.pricing.pro.name']()}
+                </p>
+                <p className="mt-4 text-4xl font-semibold tracking-tight">
+                  {m['landing.pricing.pro.price']()}
+                </p>
+              </div>
+              <span className="rounded-full border border-blue-300/25 bg-blue-400/10 px-3 py-1.5 text-xs font-semibold text-blue-200">
+                {m['landing.pricing.pro.badge']()}
+              </span>
+            </div>
+            <p className="relative mt-4 min-h-12 text-sm leading-6 text-slate-300">
+              {m['landing.pricing.pro.description']()}
+            </p>
+            <ul className="relative mt-8 space-y-4">
+              {proFeatures.map((feature, index) => (
+                <li key={index} className="flex items-start gap-3 text-sm">
+                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-blue-400/15 text-blue-200">
+                    <Check aria-hidden="true" className="size-3.5" />
+                  </span>
+                  <span className="text-slate-200">{feature()}</span>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              disabled
+              className="relative mt-9 inline-flex min-h-11 cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-5 text-sm font-semibold text-slate-400"
+            >
+              <Clock3 aria-hidden="true" className="size-4" />
+              {m['landing.pricing.pro.button']()}
+            </button>
+          </article>
+        </div>
+      </div>
     </section>
   );
 }

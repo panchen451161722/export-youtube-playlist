@@ -1,53 +1,87 @@
 export const meta = {
-  title: 'Privacy Policy',
-  description: 'How we collect, use, and protect your personal information.',
-  updated_at: '2026-05-21',
+  title: 'Privacy Policy | Export YouTube Playlist',
+  description:
+    'Learn how Export YouTube Playlist handles playlist URLs, public YouTube metadata, downloads, analytics, and advertising.',
+  updated_at: '2026-07-20',
 };
 
-## Introduction
+## Overview
 
-We respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, and safeguard your information when you use our service.
+Export YouTube Playlist helps you turn metadata from a public YouTube playlist into a CSV or XLSX file, or copy its video links. This policy describes the information involved when you use the service and the choices available to you.
 
-## Information We Collect
+The exporter does not require a user account. It is designed not to create an application-level history of the playlist URLs you submit or the playlist data returned for your export.
 
-We collect the following types of information to provide and improve our service:
+## Information Processed by the Exporter
 
-1. **Account Information** — Your name, email address, and other details you provide when creating an account.
-2. **Usage Data** — Information about how you interact with the service, including features accessed, frequency of use, and interaction patterns.
-3. **Device Information** — Device type, operating system, and browser type, used to optimize compatibility and performance.
-4. **Cookies** — Small data files stored on your device to remember preferences and improve your experience.
-5. **Payment Information** — Billing details handled by trusted third-party payment processors. We do not store full card numbers on our servers.
+When you submit a playlist URL:
 
-## How We Use Your Information
+1. The URL is sent to our server so we can validate it and extract the playlist identifier.
+2. Our server requests publicly available playlist and video metadata from the YouTube Data API.
+3. The result is returned to your browser for preview.
+4. CSV and XLSX files are generated in your browser. We do not upload the generated file back to our server.
 
-We use the data we collect to:
+The public metadata may include video titles, links, channel names, publication dates, durations, view counts, thumbnails, and playlist position. Private, unavailable, or deleted content may not be returned.
 
-- Provide, maintain, and improve the service.
-- Process transactions and send related confirmations.
-- Send technical notices, security alerts, and support messages.
-- Respond to your questions, feedback, and support requests.
-- Detect, prevent, and address fraud and abuse.
+We do not use YouTube OAuth and do not ask for access to your YouTube account. Please do not submit private playlist links, credentials, API keys, or other confidential information.
+
+## Storage and Technical Data
+
+Submitted playlist URLs and returned playlist metadata are processed for the current request and are not intentionally stored in our application database. Your browser may temporarily keep the preview in memory until you reload or close the page.
+
+Like most web services, our hosting and security providers may process limited technical information needed to deliver and protect the site, such as IP address, browser type, timestamps, request status, and security events. Retention and handling by those providers are subject to their own policies and operational requirements.
+
+## YouTube Data API
+
+The service uses the YouTube Data API to retrieve public information. Google may receive the playlist identifier, our server's network information, and technical request details when we make an API request. Google's handling of that information is governed by its own terms and privacy policy.
+
+Export YouTube Playlist is an independent service and is not endorsed by or affiliated with YouTube or Google.
+
+## Cookies, Analytics, and Advertising
+
+We may use essential storage or cookies for functions such as language and theme preferences.
+
+Analytics and advertising, including Google AdSense, are not active unless they are configured and enabled on the site. If enabled, those providers may use cookies or similar technologies to measure usage, prevent abuse, or personalize or measure ads, subject to their own policies and any consent choices presented to you. You can also manage cookies through your browser settings.
+
+## Payments
+
+Paid features are not currently available. If we introduce paid plans, checkout will be handled by a payment provider and we will update this policy before collecting payment information. We do not currently collect or store payment card details for the exporter.
+
+## How We Use Information
+
+We process information as needed to:
+
+- Validate playlist URLs and provide the requested preview and export.
+- Operate, secure, troubleshoot, and improve the service.
+- Prevent excessive automated requests and protect YouTube API quota.
+- Measure product usage or display advertising only when the relevant service has been enabled.
+- Comply with applicable legal obligations and enforce our Terms of Service.
+
+We do not sell the playlist URLs you submit or the exported playlist metadata.
 
 ## Data Sharing
 
-We do not sell your personal information. We may share data only in these limited cases:
+Information may be processed by YouTube/Google when the API is called and by infrastructure, security, analytics, or advertising providers that help operate enabled parts of the service. We may also disclose information when reasonably necessary to comply with law, respond to valid legal process, or protect the service and its users.
 
-- With service providers who help us operate the service, under confidentiality agreements.
-- To comply with legal obligations or respond to lawful requests from public authorities.
-- To protect our rights, property, or safety, or that of our users.
+## Your Choices
 
-## Data Security
+Because the exporter does not intentionally keep a playlist-export history, there may be no saved playlist record for us to retrieve or delete. Depending on where you live, you may have rights relating to other personal information we hold. You may contact us to ask about applicable access, correction, or deletion options.
 
-We implement industry-standard security measures including encryption in transit, access controls, and regular reviews. No method of transmission over the Internet is 100% secure, but we work continuously to protect your information.
+You can limit optional cookies through any consent controls shown on the site and through your browser settings. Blocking some storage may affect site preferences.
 
-## Your Rights
+## Security and Retention
 
-You have the right to access, update, export, or delete your personal information. You can do this through your account settings or by contacting us at the email address below.
+We use reasonable technical and organizational safeguards appropriate to a small web service. No internet service can guarantee absolute security.
+
+Application data used for an export is intended to remain only for the time needed to complete the request. Technical logs and security records, if created by our infrastructure providers, may be retained for limited operational, security, or legal purposes.
+
+## Children
+
+The service is not directed to children under the age at which parental consent is required in their country. If you believe a child has provided personal information through the service, please contact us.
 
 ## Changes to This Policy
 
-We may update this Privacy Policy from time to time. We will notify you of any material changes by updating the date at the top of this page and, where appropriate, sending a notice through the service.
+We may update this policy as the service changes. The date at the top shows the latest revision. Material changes will be reflected on this page before or when the relevant feature is enabled.
 
-## Contact Us
+## Contact
 
-If you have questions about this Privacy Policy, please contact us at the email address provided on our website.
+If you have questions or a privacy request, please use the contact method published on this website.

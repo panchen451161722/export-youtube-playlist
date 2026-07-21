@@ -78,6 +78,9 @@ export const envConfigs: Record<string, string> = {
   // to them would let the admin "Test" silently pass on the machine's own key.
   replicate_api_token: procEnv.REPLICATE_API_TOKEN ?? '',
 
+  // YouTube Data API (server-only)
+  youtube_api_key: procEnv.YOUTUBE_API_KEY ?? '',
+
   // Locale (public)
   locale: publicEnv('VITE_DEFAULT_LOCALE') ?? 'en',
 };
