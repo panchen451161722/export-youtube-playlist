@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, Menu, X } from 'lucide-react';
 
 import { envConfigs } from '@/config';
@@ -31,8 +31,38 @@ const toolItems = [
 ] as const;
 
 function ToolsMenu({ mobile = false }: { mobile?: boolean }) {
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+
+  useEffect(() => {
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      const details = detailsRef.current;
+      if (
+        details?.open &&
+        event.target instanceof Node &&
+        !details.contains(event.target)
+      ) {
+        details.open = false;
+      }
+    };
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && detailsRef.current?.open) {
+        detailsRef.current.open = false;
+        detailsRef.current.querySelector('summary')?.focus();
+      }
+    };
+
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, []);
+
   return (
-    <details className="group relative">
+    <details ref={detailsRef} className="group relative">
       <summary
         className={
           mobile
@@ -59,6 +89,9 @@ function ToolsMenu({ mobile = false }: { mobile?: boolean }) {
             <a
               key={label}
               href="#exporter"
+              onClick={() => {
+                if (detailsRef.current) detailsRef.current.open = false;
+              }}
               className="rounded-xl bg-[#5865f2]/8 px-3 py-2.5 text-sm font-semibold text-[#35425b] transition-colors hover:bg-[#5865f2]/14 dark:bg-white/8 dark:text-white dark:hover:bg-white/12"
             >
               {label}
