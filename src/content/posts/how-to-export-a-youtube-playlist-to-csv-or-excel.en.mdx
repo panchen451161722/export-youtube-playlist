@@ -1,0 +1,92 @@
+export const meta = {
+  title: 'How to Export a YouTube Playlist to CSV or Excel',
+  description:
+    'A practical guide to downloading public YouTube playlist titles, links, durations, engagement metrics, and other metadata as CSV or Excel.',
+  created_at: '2026-07-21',
+  author_name: 'Export YouTube Playlist',
+};
+
+A spreadsheet is often the easiest way to review a long YouTube playlist. It lets you search titles, sort by duration, compare public engagement metrics, and keep a list of links without opening every video individually.
+
+This guide shows how to export an accessible public YouTube playlist to CSV or Excel without installing an extension or granting access to your YouTube account.
+
+## Before you begin
+
+You need the URL of a public playlist. A typical URL looks like this:
+
+```text
+https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx
+```
+
+The `list` value identifies the playlist. A normal video URL that also contains a `list` parameter can work as well.
+
+Private playlists cannot be read through the public API. Deleted, private, age-restricted, or region-restricted videos may be missing or may contain less metadata than other entries.
+
+## Step 1: Copy the playlist URL
+
+Open the playlist on YouTube and copy its URL from the browser address bar or the Share action. Make sure the URL includes the playlist's `list` parameter.
+
+## Step 2: Paste the playlist URL
+
+Open the [playlist exporter](/) and paste the URL into the input. The tool validates the URL when you export and requests available public metadata through the official YouTube Data API.
+
+No YouTube login is required. The exporter does not ask for access to your subscriptions, watch history, or private playlists.
+
+## Step 3: Know what will be included
+
+The launch version supports up to 500 videos from one playlist.
+
+The export can include fields such as:
+
+- Playlist position, video title, video ID, and video URL.
+- Description, thumbnail URL, channel name, and upload time.
+- Public view, like, and comment counts when YouTube makes them available.
+- Duration in seconds, minutes, timestamp, and readable text.
+- Video tags and hashtags, email addresses, and links found in descriptions.
+
+Public metrics change over time, so an export is a snapshot of the data available when you load the playlist.
+
+## Step 4: Choose CSV or Excel
+
+Select one or both formats:
+
+- **CSV** is lightweight and works well with Google Sheets, database imports, scripts, and data-analysis tools.
+- **Excel (.xlsx)** preserves column widths and wrapped descriptions, making it more convenient to open directly in Microsoft Excel or compatible spreadsheet applications.
+
+If you select both formats—or leave both unchecked—the exporter downloads one ZIP containing both files.
+
+## Step 5: Export and download
+
+Select **Export**. File generation happens in your browser, and a success message appears when the download starts.
+
+The downloaded filename is based on the playlist title. External spreadsheet text is escaped to reduce the risk of formula execution when the file is opened.
+
+## Which format should you use?
+
+Choose CSV when you want a portable text-based file, plan to process the data with code, or need to import it into another service. Choose Excel when a formatted worksheet is more useful and you expect to inspect long descriptions or many columns manually.
+
+Keeping both is useful when you want a readable workbook and a simple source file for future automation.
+
+## Common problems
+
+### The playlist cannot be loaded
+
+Check that the URL contains a playlist ID and that the playlist is public. A private playlist will not become accessible by signing in to this website because the exporter intentionally does not request YouTube account permissions.
+
+### Some videos are missing
+
+YouTube may omit videos that are private, deleted, restricted, or otherwise unavailable through the API. The number returned by the API can therefore differ from the count visible to the playlist owner.
+
+### Views, likes, or comments are blank
+
+Some creators disable public metrics, and some video types do not expose every statistic. Blank cells mean the value was not available; they do not mean zero.
+
+### The API quota is temporarily exhausted
+
+The tool uses a shared YouTube API quota. If the quota has been reached, wait and try again later instead of repeatedly submitting the same playlist.
+
+## Privacy summary
+
+The playlist URL and public metadata are processed only to fulfill the current request. The application does not create a saved history of playlist exports, and the generated CSV, XLSX, and ZIP files are not uploaded back to the server.
+
+For more information, read the [Privacy Policy](/privacy-policy) or contact [support@exportyoutubeplaylist.com](mailto:support@exportyoutubeplaylist.com).

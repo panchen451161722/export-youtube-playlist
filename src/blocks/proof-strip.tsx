@@ -24,15 +24,15 @@ export function ProofStrip() {
   return (
     <section
       aria-label={m['landing.proof.label']()}
-      className="relative z-10 -mt-7 px-4 sm:-mt-9"
+      className="bg-background px-5 pb-12 sm:px-8 sm:pb-16"
     >
-      <div className="border-border/70 bg-background/95 mx-auto grid max-w-5xl overflow-hidden rounded-2xl border shadow-[0_18px_55px_-30px_rgba(15,23,42,0.4)] backdrop-blur sm:grid-cols-3">
+      <div className="border-border bg-card mx-auto grid max-w-[1280px] overflow-hidden rounded-xl border sm:grid-cols-3">
         {proofItems.map(({ icon: Icon, title, description }, index) => (
           <div
             key={index}
-            className="flex min-h-28 items-start gap-4 border-b p-5 last:border-b-0 sm:border-r sm:border-b-0 sm:p-6 sm:last:border-r-0"
+            className="border-border flex min-h-28 items-start gap-4 border-b p-5 last:border-b-0 sm:border-r sm:border-b-0 sm:p-6 sm:last:border-r-0"
           >
-            <span className="bg-primary/8 text-primary flex size-10 shrink-0 items-center justify-center rounded-xl">
+            <span className="bg-secondary text-foreground flex size-10 shrink-0 items-center justify-center rounded-lg">
               <Icon aria-hidden="true" className="size-5" strokeWidth={1.8} />
             </span>
             <span>

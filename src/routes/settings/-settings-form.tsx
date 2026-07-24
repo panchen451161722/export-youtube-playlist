@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { authClient } from '@/core/auth/client';
 import { apiPatch } from '@/lib/api-client';
 import { m } from '@/paraglide/messages.js';
+import { localizeHref } from '@/paraglide/runtime.js';
 import { TextField } from '@/components/form-field';
 import { ImageUploader, ImageUploaderValue } from '@/components/image-uploader';
 import { Button } from '@/components/ui/button';
@@ -16,6 +19,15 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -33,6 +45,8 @@ export function SettingsForm({
   image: string;
 }) {
   const [image, setImage] = useState(initialImage);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const queryClient = useQueryClient();
 
   const saveMutation = useMutation({
@@ -62,6 +76,28 @@ export function SettingsForm({
       (item) => item.status === 'uploaded' && item.url
     );
     setImage(uploaded?.url || '');
+  }
+
+  async function handleDeleteAccount() {
+    setIsDeleting(true);
+    try {
+      const result = await authClient.deleteUser({
+        callbackURL: localizeHref('/'),
+      });
+      if (result.error) {
+        throw new Error(result.error.message || 'Account deletion failed');
+      }
+      window.location.assign(localizeHref('/'));
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : String(error || '');
+      toast.error(
+        /session|fresh|expired/i.test(message)
+          ? m['settings.profile.delete_session_expired']()
+          : m['settings.profile.delete_failed']()
+      );
+      setIsDeleting(false);
+    }
   }
 
   return (
@@ -122,6 +158,57 @@ export function SettingsForm({
               </Button>
             )}
           </form.Subscribe>
+        </CardFooter>
+      </Card>
+
+      <Card className="border-destructive/30">
+        <CardHeader>
+          <CardTitle className="text-destructive">
+            {m['settings.profile.danger_zone']()}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground text-sm">
+            {m['settings.profile.delete_description']()}
+          </p>
+        </CardContent>
+        <CardFooter>
+          <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+            <DialogTrigger className="bg-destructive/10 text-destructive hover:bg-destructive/20 inline-flex h-9 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors">
+              <Trash2 className="size-4" />
+              {m['settings.profile.delete_account']()}
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {m['settings.profile.delete_confirm_title']()}
+                </DialogTitle>
+                <DialogDescription>
+                  {m['settings.profile.delete_confirm_description']()}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isDeleting}
+                  onClick={() => setDeleteOpen(false)}
+                >
+                  {m['settings.profile.delete_cancel']()}
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  disabled={isDeleting}
+                  onClick={handleDeleteAccount}
+                >
+                  {isDeleting
+                    ? m['settings.profile.deleting']()
+                    : m['settings.profile.delete_confirm']()}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </CardFooter>
       </Card>
     </form>

@@ -1,37 +1,51 @@
-'use client';
-
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, Menu, X } from 'lucide-react';
 
+import { useSession } from '@/core/auth/client';
+import { tDynamic } from '@/core/i18n/dynamic';
+import { Link } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
 import { m } from '@/paraglide/messages.js';
 import { LocaleSelector } from '@/components/locale-selector';
+import { SiteUserMenu } from '@/components/site-user-menu';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { PUBLIC_TOOL_DEFINITIONS } from '@/components/tools/public-tool-definitions';
 
-const toolItems = [
-  'Export YouTube Playlist',
-  'YouTube Channel Export',
-  'YouTube Playlist Analyzer',
-  'YouTube Channel Analyzer',
-  'YouTube Playlist Link Extractor',
-  'YouTube Channel Video Link Extractor',
-  'YouTube Playlist Title Extractor',
-  'YouTube Channel Title Extractor',
-  'YouTube Channel Playlist Extractor',
-  'YouTube Thumbnail Downloader',
-  'YouTube Channel Banner & Logo Downloader',
-  'YouTube Region Restriction Checker',
-  'YouTube Tags Extractor',
-  'YouTube Description Extractor',
-  'YouTube Channel to Playlist',
-  'YouTube Channel Keywords',
-  'YouTube Channel ID Finder',
-  'YouTube Subscribe Link Generator',
-  'YouTube Embed Code Generator',
-] as const;
+type ToolItem = {
+  label: string;
+  href: string;
+};
 
-function ToolsMenu({ mobile = false }: { mobile?: boolean }) {
+function ToolsMenu({
+  mobile = false,
+  onNavigate,
+}: {
+  mobile?: boolean;
+  onNavigate?: () => void;
+}) {
   const detailsRef = useRef<HTMLDetailsElement>(null);
+  const toolItems: ToolItem[] = [
+    {
+      label: m['tools.catalog.export.title'](),
+      href: '/#exporter',
+    },
+    {
+      label: m['tools.catalog.links.title'](),
+      href: '/tools/youtube-playlist-link-extractor',
+    },
+    {
+      label: m['tools.catalog.titles.title'](),
+      href: '/tools/youtube-playlist-title-extractor',
+    },
+    {
+      label: m['tools.catalog.analyzer.title'](),
+      href: '/tools/youtube-playlist-analyzer',
+    },
+    ...PUBLIC_TOOL_DEFINITIONS.map((tool) => ({
+      label: tDynamic(`tools.extra.${tool.key}.title`),
+      href: `/tools/${tool.slug}`,
+    })),
+  ];
 
   useEffect(() => {
     const closeOnOutsideClick = (event: PointerEvent) => {
@@ -61,6 +75,11 @@ function ToolsMenu({ mobile = false }: { mobile?: boolean }) {
     };
   }, []);
 
+  const closeMenu = () => {
+    if (detailsRef.current) detailsRef.current.open = false;
+    onNavigate?.();
+  };
+
   return (
     <details ref={detailsRef} className="group relative">
       <summary
@@ -81,50 +100,46 @@ function ToolsMenu({ mobile = false }: { mobile?: boolean }) {
         className={
           mobile
             ? 'mt-1 grid max-h-[45vh] gap-1 overflow-y-auto rounded-xl border border-[#18213b]/8 bg-white/60 p-2 dark:border-white/10 dark:bg-white/5'
-            : 'absolute top-[calc(100%+1.25rem)] left-1/2 z-50 grid w-[min(52rem,calc(100vw-2rem))] -translate-x-1/2 grid-cols-2 gap-1 rounded-2xl border border-[#18213b]/10 bg-[#fffdf8] p-3 shadow-[0_24px_70px_rgba(24,33,59,.18)] xl:grid-cols-3 dark:border-white/10 dark:bg-[#182237]'
+            : 'absolute top-[calc(100%+1.25rem)] left-1/2 z-50 grid max-h-[calc(100vh-6rem)] w-[min(52rem,calc(100vw-2rem))] -translate-x-1/2 grid-cols-2 gap-1 overflow-y-auto rounded-2xl border border-[#18213b]/10 bg-[#fffdf8] p-3 shadow-[0_24px_70px_rgba(24,33,59,.18)] xl:grid-cols-3 dark:border-white/10 dark:bg-[#182237]'
         }
       >
-        {toolItems.map((label, index) =>
-          index === 0 ? (
-            <a
-              key={label}
-              href="#exporter"
-              onClick={() => {
-                if (detailsRef.current) detailsRef.current.open = false;
-              }}
-              className="rounded-xl bg-[#5865f2]/8 px-3 py-2.5 text-sm font-semibold text-[#35425b] transition-colors hover:bg-[#5865f2]/14 dark:bg-white/8 dark:text-white dark:hover:bg-white/12"
-            >
-              {label}
-            </a>
-          ) : (
-            <span
-              key={label}
-              aria-disabled="true"
-              title={m['landing.nav.coming_soon']()}
-              className="flex cursor-default items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm text-[#667085] dark:text-slate-300"
-            >
-              <span>{label}</span>
-              <span className="shrink-0 text-[9px] font-bold tracking-wide text-[#98a2b3] uppercase">
-                {m['landing.nav.soon']()}
-              </span>
-            </span>
-          )
-        )}
+        <Link
+          href="/tools"
+          onClick={closeMenu}
+          className="col-span-full mb-1 flex items-center justify-between rounded-xl bg-[#18213b] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#273351] dark:bg-white dark:text-[#18213b] dark:hover:bg-slate-100"
+        >
+          <span>{m['tools.catalog.title']()}</span>
+          <span aria-hidden="true">→</span>
+        </Link>
+        {toolItems.map((tool) => (
+          <Link
+            key={tool.href}
+            href={tool.href}
+            onClick={closeMenu}
+            className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-[#35425b] transition-colors hover:bg-[#5865f2]/10 dark:text-white dark:hover:bg-white/10"
+          >
+            <span>{tool.label}</span>
+          </Link>
+        ))}
       </div>
     </details>
   );
 }
 
 export function Header() {
+  const { data: session } = useSession();
+  const [hydrated, setHydrated] = useState(false);
   const [open, setOpen] = useState(false);
 
+  useEffect(() => setHydrated(true), []);
+
   const navItems = [
-    { href: '#exporter', label: m['landing.nav.home'](), disabled: false },
-    { href: '#', label: m['landing.nav.blogs'](), disabled: true },
-    { href: '#pricing', label: m['landing.nav.pricing'](), disabled: false },
+    { href: '/#exporter', label: m['landing.nav.home'](), disabled: false },
+    { href: '/blog', label: m['landing.nav.blogs'](), disabled: false },
+    { href: '/pricing', label: m['landing.nav.pricing'](), disabled: false },
     { href: '#', label: m['landing.nav.feedback'](), disabled: true },
-    { href: '#', label: m['landing.nav.contact'](), disabled: true },
-    { href: '#', label: m['landing.nav.about'](), disabled: true },
+    { href: '/contact', label: m['landing.nav.contact'](), disabled: false },
+    { href: '/about', label: m['landing.nav.about'](), disabled: false },
   ];
 
   const renderNavItem = (item: (typeof navItems)[number], mobile = false) => {
@@ -146,28 +161,28 @@ export function Header() {
     }
 
     return (
-      <a
+      <Link
         key={item.label}
         href={item.href}
         onClick={mobile ? () => setOpen(false) : undefined}
         className={className}
       >
         {item.label}
-      </a>
+      </Link>
     );
   };
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#18213b]/8 bg-[#f7f5ef]/90 backdrop-blur-xl dark:border-white/10 dark:bg-[#111827]/90">
       <div className="mx-auto flex h-[4.5rem] max-w-6xl items-center justify-between px-4 sm:px-6">
-        <a href="#exporter" className="flex min-w-0 items-center gap-2.5">
+        <Link href="/#exporter" className="flex min-w-0 items-center gap-2.5">
           <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#18213b] text-base font-black text-white shadow-sm dark:bg-white dark:text-[#18213b]">
             E
           </span>
           <span className="truncate text-sm font-bold tracking-[-0.01em] text-[#18213b] sm:text-base dark:text-white">
             {envConfigs.app_name}
           </span>
-        </a>
+        </Link>
 
         <nav
           className="hidden items-center gap-4 lg:flex"
@@ -181,12 +196,20 @@ export function Header() {
         <div className="hidden items-center gap-2 lg:flex">
           <LocaleSelector />
           <ThemeToggle />
-          <a
-            href="#exporter"
-            className="ml-1 inline-flex h-10 items-center rounded-xl bg-[#ff4d3d] px-4 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(255,77,61,.22)] transition-colors hover:bg-[#ec3d30]"
-          >
-            {m['landing.nav.export']()}
-          </a>
+          {hydrated && session?.user ? (
+            <SiteUserMenu
+              name={session.user.name || 'User'}
+              email={session.user.email}
+              image={session.user.image}
+            />
+          ) : (
+            <Link
+              href="/sign-in"
+              className="inline-flex h-10 items-center rounded-xl border border-[#18213b]/10 bg-white/70 px-4 text-sm font-semibold text-[#35425b] transition-colors hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+            >
+              {m['common.sign.sign_in_title']()}
+            </Link>
+          )}
         </div>
 
         <button
@@ -207,18 +230,26 @@ export function Header() {
             aria-label={m['landing.nav.mobile']()}
           >
             {renderNavItem(navItems[0], true)}
-            <ToolsMenu mobile />
+            <ToolsMenu mobile onNavigate={() => setOpen(false)} />
             {navItems.slice(1).map((item) => renderNavItem(item, true))}
             <div className="mt-2 flex items-center gap-2 border-t border-[#18213b]/8 pt-3 dark:border-white/10">
               <LocaleSelector />
               <ThemeToggle />
-              <a
-                href="#exporter"
-                onClick={() => setOpen(false)}
-                className="ml-auto inline-flex h-10 items-center rounded-xl bg-[#ff4d3d] px-4 text-sm font-semibold text-white"
-              >
-                {m['landing.nav.export']()}
-              </a>
+              {hydrated && session?.user ? (
+                <SiteUserMenu
+                  name={session.user.name || 'User'}
+                  email={session.user.email}
+                  image={session.user.image}
+                />
+              ) : (
+                <Link
+                  href="/sign-in"
+                  onClick={() => setOpen(false)}
+                  className="inline-flex h-10 items-center rounded-xl border border-[#18213b]/10 bg-white/70 px-4 text-sm font-semibold text-[#35425b] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                >
+                  {m['common.sign.sign_in_title']()}
+                </Link>
+              )}
             </div>
           </nav>
         </div>

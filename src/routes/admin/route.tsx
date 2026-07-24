@@ -10,10 +10,12 @@ import {
 } from 'lucide-react';
 
 import { envConfigs } from '@/config';
+import { privatePageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { AppLayout } from '@/components/app-layout';
 
 export const Route = createFileRoute('/admin')({
+  head: () => privatePageSeo(m['common.systems.admin']()),
   component: AdminLayout,
 });
 

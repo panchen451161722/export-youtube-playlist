@@ -1,0 +1,4 @@
+interface:
+  display_name: "Setup Authentication"
+  short_description: "Bootstrap Google sign-in and the first super admin"
+  default_prompt: "Use $setup-auth to enable email and Google sign-in and bootstrap the first production super admin."

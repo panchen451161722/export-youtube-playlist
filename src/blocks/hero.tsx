@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import {
   AlertCircle,
@@ -10,7 +10,6 @@ import {
   LockKeyhole,
   Play,
   ShieldCheck,
-  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -91,24 +90,6 @@ const youtubeHosts = new Set([
   'youtu.be',
   'www.youtu.be',
 ]);
-
-const confettiColors = [
-  '#ff4d3d',
-  '#5865f2',
-  '#f7c948',
-  '#2fbf71',
-  '#ff82b2',
-  '#55c2ff',
-];
-
-const confettiPieces = Array.from({ length: 52 }, (_, index) => ({
-  color: confettiColors[index % confettiColors.length],
-  delay: `${(index % 13) * 0.035}s`,
-  duration: `${1.45 + (index % 7) * 0.08}s`,
-  left: `${2 + ((index * 37) % 96)}%`,
-  rotation: `${360 + (index % 5) * 120}deg`,
-  sway: `${-70 + ((index * 29) % 140)}px`,
-}));
 
 function isValidPlaylistUrl(value: string) {
   try {
@@ -275,49 +256,10 @@ function getErrorCopy(message: string) {
   return m['landing.exporter.error.network']();
 }
 
-function ConfettiBurst({ run }: { run: number }) {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (!run) return;
-    setVisible(true);
-    const timeout = window.setTimeout(() => setVisible(false), 2200);
-    return () => window.clearTimeout(timeout);
-  }, [run]);
-
-  if (!visible) return null;
-
-  return (
-    <div
-      className="pointer-events-none fixed inset-0 z-[80] overflow-hidden"
-      aria-hidden="true"
-      data-testid="export-confetti"
-    >
-      {confettiPieces.map((piece, index) => (
-        <span
-          key={`${run}-${index}`}
-          className="export-confetti-piece"
-          style={
-            {
-              '--confetti-color': piece.color,
-              '--confetti-delay': piece.delay,
-              '--confetti-duration': piece.duration,
-              '--confetti-left': piece.left,
-              '--confetti-rotation': piece.rotation,
-              '--confetti-sway': piece.sway,
-            } as CSSProperties
-          }
-        />
-      ))}
-    </div>
-  );
-}
-
 export function Hero() {
   const [url, setUrl] = useState('');
   const [clientError, setClientError] = useState('');
   const [formats, setFormats] = useState({ csv: false, xlsx: false });
-  const [confettiRun, setConfettiRun] = useState(0);
 
   const mutation = useMutation({
     mutationFn: async ({
@@ -338,7 +280,6 @@ export function Hero() {
       return result;
     },
     onSuccess: () => {
-      setConfettiRun((run) => run + 1);
       toast.success(m['landing.exporter.success'](), {
         duration: 6000,
         dismissible: true,
@@ -383,31 +324,22 @@ export function Hero() {
   return (
     <section
       id="exporter"
-      className="relative isolate overflow-hidden bg-[#f7f5ef] px-4 pt-16 pb-20 sm:px-6 sm:pt-24 lg:pb-28 dark:bg-[#111827]"
+      className="bg-background scroll-mt-14 px-5 py-14 sm:px-8 sm:py-24"
     >
-      <ConfettiBurst run={confettiRun} />
-      <div
-        className="pointer-events-none absolute inset-0 opacity-60 dark:opacity-20"
-        aria-hidden="true"
-        style={{
-          backgroundImage:
-            'radial-gradient(circle at 12% 12%, rgba(95, 110, 255, .22), transparent 26%), radial-gradient(circle at 86% 22%, rgba(255, 77, 61, .2), transparent 25%)',
-        }}
-      />
-      <div className="relative mx-auto grid max-w-6xl items-start gap-12 lg:grid-cols-[0.82fr_1.18fr] lg:gap-16">
-        <div className="pt-4 lg:sticky lg:top-28">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#18213b]/10 bg-white/70 px-3 py-1.5 text-xs font-semibold tracking-wide text-[#18213b] uppercase shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5 dark:text-white">
-            <Sparkles className="size-3.5 text-[#ff4d3d]" />
+      <div className="mx-auto grid max-w-[1280px] items-start gap-12 lg:grid-cols-[0.82fr_1.18fr] lg:gap-16">
+        <div className="pt-2 lg:sticky lg:top-24">
+          <div className="border-border bg-card text-foreground mb-6 inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm font-medium">
+            <span className="size-1.5 rounded-full bg-[#ff4d3d]" />
             {m['landing.hero.eyebrow']()}
           </div>
-          <h1 className="max-w-xl font-serif text-4xl leading-[1.08] font-bold tracking-[-0.035em] text-[#18213b] sm:text-5xl lg:text-[3.55rem] dark:text-white">
+          <h1 className="text-foreground max-w-xl text-[2.5rem] leading-[1.06] font-medium tracking-[-0.04em] text-balance sm:text-5xl lg:text-[3.5rem]">
             {m['landing.hero.headline']()}
           </h1>
-          <p className="mt-6 max-w-xl text-lg leading-8 text-[#536078] dark:text-slate-300">
+          <p className="text-muted-foreground mt-6 max-w-xl text-lg leading-8">
             {m['landing.hero.subheadline']()}
           </p>
 
-          <div className="mt-8 grid gap-3 text-sm text-[#35425b] dark:text-slate-300">
+          <div className="text-foreground mt-8 hidden gap-3 text-sm sm:grid">
             {[
               [ShieldCheck, m['landing.hero.trust_api']()],
               [LockKeyhole, m['landing.hero.trust_private']()],
@@ -416,8 +348,8 @@ export function Hero() {
               const TrustIcon = Icon as typeof ShieldCheck;
               return (
                 <div key={String(label)} className="flex items-center gap-3">
-                  <span className="grid size-8 place-items-center rounded-full bg-white shadow-sm dark:bg-white/10">
-                    <TrustIcon className="size-4 text-[#5865f2]" />
+                  <span className="border-border bg-card grid size-8 place-items-center rounded-md border">
+                    <TrustIcon className="text-muted-foreground size-4" />
                   </span>
                   <span>{String(label)}</span>
                 </div>
@@ -426,17 +358,17 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="rounded-[1.6rem] border border-[#18213b]/10 bg-white p-3 shadow-[0_28px_90px_rgba(24,33,59,0.16)] sm:p-5 dark:border-white/10 dark:bg-[#182237]">
-          <div className="rounded-[1.15rem] border border-[#18213b]/10 bg-[#fbfbfd] p-5 sm:p-7 dark:border-white/10 dark:bg-[#111827]">
+        <div className="border-border bg-card rounded-2xl border p-5 sm:p-7">
+          <div>
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2 text-lg font-semibold text-[#18213b] dark:text-white">
+                <div className="text-foreground flex items-center gap-2 text-lg font-medium">
                   <span className="grid size-8 place-items-center rounded-lg bg-[#ff4d3d] text-white">
                     <Play className="size-4 fill-current" />
                   </span>
                   {m['landing.exporter.title']()}
                 </div>
-                <p className="mt-2 text-sm text-[#667085] dark:text-slate-400">
+                <p className="text-muted-foreground mt-2 text-sm">
                   {m['landing.exporter.description']()}
                 </p>
               </div>
@@ -447,7 +379,7 @@ export function Hero() {
                 {['CSV', 'XLSX'].map((format) => (
                   <span
                     key={format}
-                    className="rounded-md border border-[#d7dced] bg-white px-2 py-1 font-mono text-[10px] font-bold tracking-wide text-[#44516b] dark:border-white/10 dark:bg-white/5 dark:text-slate-300"
+                    className="border-border bg-background text-muted-foreground rounded-sm border px-2 py-1 font-mono text-[10px] font-medium tracking-wide"
                   >
                     {format}
                   </span>
@@ -458,7 +390,7 @@ export function Hero() {
             <form onSubmit={handleSubmit} className="mt-6">
               <label
                 htmlFor="playlist-url"
-                className="text-sm font-semibold text-[#24304a] dark:text-slate-200"
+                className="text-foreground text-sm font-medium"
               >
                 {m['landing.exporter.label']()}
               </label>
@@ -474,26 +406,26 @@ export function Hero() {
                 placeholder={m['landing.exporter.placeholder']()}
                 aria-describedby="playlist-helper playlist-error"
                 aria-invalid={Boolean(error)}
-                className="mt-2 h-12 w-full rounded-xl border-[#cfd5e4] bg-white px-4 shadow-none focus-visible:ring-[#5865f2]/30 dark:border-white/15 dark:bg-white/5"
+                className="border-input bg-card focus-visible:ring-ring/25 mt-2 h-12 w-full rounded-lg px-4 shadow-none"
               />
               <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                 <p
                   id="playlist-helper"
-                  className="text-xs text-[#758097] dark:text-slate-400"
+                  className="text-muted-foreground text-xs"
                 >
                   {m['landing.exporter.helper']()}
                 </p>
-                <p className="text-xs font-medium text-[#5865f2] dark:text-indigo-300">
+                <p className="text-foreground text-xs font-medium">
                   {m['landing.exporter.limit']()}
                 </p>
               </div>
 
               <fieldset className="mt-6">
-                <legend className="text-sm font-semibold text-[#24304a] dark:text-slate-200">
+                <legend className="text-foreground text-sm font-medium">
                   {m['landing.exporter.choose_formats']()}
                 </legend>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#d7dced] bg-white p-4 transition hover:border-[#5865f2]/50 hover:bg-[#f8f9ff] has-[[data-checked]]:border-[#5865f2] has-[[data-checked]]:bg-[#f1f2ff] dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:has-[[data-checked]]:border-indigo-400 dark:has-[[data-checked]]:bg-indigo-500/10">
+                  <label className="border-border bg-card hover:bg-secondary has-[[data-checked]]:border-foreground has-[[data-checked]]:bg-secondary flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors">
                     <Checkbox
                       checked={formats.csv}
                       onCheckedChange={(checked) =>
@@ -502,14 +434,12 @@ export function Hero() {
                           csv: checked,
                         }))
                       }
-                      className="size-5 data-checked:border-[#5865f2] data-checked:bg-[#5865f2]"
+                      className="data-checked:border-primary data-checked:bg-primary size-5"
                     />
-                    <FileText className="size-5 text-[#5865f2]" />
-                    <span className="font-semibold text-[#24304a] dark:text-white">
-                      CSV
-                    </span>
+                    <FileText className="text-muted-foreground size-5" />
+                    <span className="text-foreground font-medium">CSV</span>
                   </label>
-                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#d7dced] bg-white p-4 transition hover:border-[#5865f2]/50 hover:bg-[#f8f9ff] has-[[data-checked]]:border-[#5865f2] has-[[data-checked]]:bg-[#f1f2ff] dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:has-[[data-checked]]:border-indigo-400 dark:has-[[data-checked]]:bg-indigo-500/10">
+                  <label className="border-border bg-card hover:bg-secondary has-[[data-checked]]:border-foreground has-[[data-checked]]:bg-secondary flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors">
                     <Checkbox
                       checked={formats.xlsx}
                       onCheckedChange={(checked) =>
@@ -518,15 +448,15 @@ export function Hero() {
                           xlsx: checked,
                         }))
                       }
-                      className="size-5 data-checked:border-[#5865f2] data-checked:bg-[#5865f2]"
+                      className="data-checked:border-primary data-checked:bg-primary size-5"
                     />
-                    <FileSpreadsheet className="size-5 text-[#2f9e62]" />
-                    <span className="font-semibold text-[#24304a] dark:text-white">
+                    <FileSpreadsheet className="text-muted-foreground size-5" />
+                    <span className="text-foreground font-medium">
                       Excel (.xlsx)
                     </span>
                   </label>
                 </div>
-                <p className="mt-2 text-xs text-[#758097] dark:text-slate-400">
+                <p className="text-muted-foreground mt-2 text-xs">
                   {m['landing.exporter.default_formats']()}
                 </p>
               </fieldset>
@@ -534,7 +464,7 @@ export function Hero() {
               <Button
                 type="submit"
                 disabled={mutation.isPending}
-                className="mt-6 h-12 w-full rounded-xl bg-[#ff4d3d] px-5 font-semibold text-white shadow-[0_8px_22px_rgba(255,77,61,.28)] hover:bg-[#ec3d30]"
+                className="bg-primary text-primary-foreground hover:bg-primary/88 mt-6 h-12 w-full rounded-lg px-5 font-medium shadow-none"
               >
                 {mutation.isPending ? (
                   <>
@@ -554,27 +484,24 @@ export function Hero() {
               <div
                 id="playlist-error"
                 role="alert"
-                className="mt-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-3.5 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200"
+                className="mt-5 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3.5 text-sm text-red-800"
               >
                 <AlertCircle className="mt-0.5 size-4 shrink-0" />
                 <span>{error}</span>
               </div>
             ) : null}
 
-            <div className="mt-6 grid grid-cols-3 gap-2 border-t border-[#dfe3ee] pt-5 text-center dark:border-white/10">
+            <div className="border-border mt-6 grid grid-cols-3 divide-x border-t pt-5 text-center">
               {[
                 ['500', m['landing.exporter.stat_videos']()],
                 ['2', m['landing.exporter.stat_formats']()],
                 ['0', m['landing.exporter.stat_uploads']()],
               ].map(([value, label]) => (
-                <div
-                  key={String(label)}
-                  className="rounded-xl bg-white p-3 dark:bg-white/5"
-                >
-                  <div className="font-mono text-xl font-bold text-[#18213b] dark:text-white">
+                <div key={String(label)} className="px-2 py-2">
+                  <div className="text-foreground font-mono text-xl font-medium">
                     {String(value)}
                   </div>
-                  <div className="mt-1 text-[11px] text-[#758097] dark:text-slate-400">
+                  <div className="text-muted-foreground mt-1 text-[11px]">
                     {String(label)}
                   </div>
                 </div>

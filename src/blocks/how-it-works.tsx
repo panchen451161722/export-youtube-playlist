@@ -24,14 +24,14 @@ export function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="bg-muted/45 scroll-mt-24 border-y px-4 py-24 sm:py-28"
+      className="bg-background scroll-mt-20 px-5 py-24 sm:px-8"
     >
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-[1280px]">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-primary text-sm font-semibold tracking-[0.16em] uppercase">
+          <p className="text-foreground text-sm font-medium">
             {m['landing.how.eyebrow']()}
           </p>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-balance sm:text-5xl">
+          <h2 className="mt-4 text-3xl font-medium tracking-[-0.025em] text-balance sm:text-5xl">
             {m['landing.how.title']()}
           </h2>
           <p className="text-muted-foreground mt-5 text-base leading-7 sm:text-lg">
@@ -48,21 +48,21 @@ export function HowItWorks() {
             {steps.map(({ icon: Icon, title, description }, index) => (
               <li
                 key={index}
-                className="border-border/70 bg-background relative rounded-3xl border p-7 shadow-sm sm:p-8"
+                className="border-border bg-card relative rounded-xl border p-7 sm:p-8"
               >
                 <div className="relative z-10 flex items-center justify-between">
-                  <span className="bg-primary text-primary-foreground flex size-12 items-center justify-center rounded-2xl shadow-sm">
+                  <span className="bg-primary text-primary-foreground flex size-12 items-center justify-center rounded-lg">
                     <Icon
                       aria-hidden="true"
                       className="size-6"
                       strokeWidth={1.8}
                     />
                   </span>
-                  <span className="text-muted-foreground/45 text-5xl font-semibold tabular-nums">
+                  <span className="text-muted-foreground/45 text-5xl font-medium tracking-[-0.03em] tabular-nums">
                     0{index + 1}
                   </span>
                 </div>
-                <h3 className="mt-8 text-xl font-semibold">{title()}</h3>
+                <h3 className="mt-8 text-xl font-medium">{title()}</h3>
                 <p className="text-muted-foreground mt-3 leading-7">
                   {description()}
                 </p>

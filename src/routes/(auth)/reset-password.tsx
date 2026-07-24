@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { resetPassword } from '@/core/auth/client';
 import { Link, useRouter } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
+import { privatePageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { TextField } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
@@ -184,5 +185,6 @@ function ResetPasswordPage() {
 }
 
 export const Route = createFileRoute('/(auth)/reset-password')({
+  head: () => privatePageSeo(m['common.sign.reset_password_title']()),
   component: ResetPasswordPage,
 });

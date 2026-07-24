@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 3000",
+    "dev:proxy": "node --use-env-proxy ./node_modules/vite/bin/vite.js dev --port 3000",
     "prebuild": "node scripts/db-setup.mjs",
     "build": "vite build",
     "start": "node .output/server/index.mjs",

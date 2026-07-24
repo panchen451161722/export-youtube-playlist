@@ -68,14 +68,22 @@ let emailVerificationEnabledLoaded = false;
 function getSocialProviders(configs: Record<string, string>) {
   const providers: Record<string, any> = {};
 
-  if (configs.google_client_id && configs.google_client_secret) {
+  if (
+    configs.google_auth_enabled !== 'false' &&
+    configs.google_client_id &&
+    configs.google_client_secret
+  ) {
     providers.google = {
       clientId: configs.google_client_id,
       clientSecret: configs.google_client_secret,
     };
   }
 
-  if (configs.github_client_id && configs.github_client_secret) {
+  if (
+    configs.github_auth_enabled === 'true' &&
+    configs.github_client_id &&
+    configs.github_client_secret
+  ) {
     providers.github = {
       clientId: configs.github_client_id,
       clientSecret: configs.github_client_secret,
@@ -87,10 +95,14 @@ function getSocialProviders(configs: Record<string, string>) {
 
 function getSocialSignature(configs: Record<string, string>) {
   return [
+    configs.app_url || envConfigs.app_url || '',
+    configs.auth_url || envConfigs.auth_url || '',
     configs.google_client_id || '',
     configs.google_client_secret || '',
+    configs.google_auth_enabled || '',
     configs.github_client_id || '',
     configs.github_client_secret || '',
+    configs.github_auth_enabled || '',
     // Including the one-tap flag here so toggling it without changing
     // credentials still rebuilds authInstance (which owns the plugin list).
     configs.google_one_tap_enabled || '',
@@ -136,7 +148,11 @@ function isEmailConfigured(configs: Record<string, string>): boolean {
 function getAuthPlugins(configs: Record<string, string> | undefined) {
   if (!configs) return [];
   const plugins: any[] = [];
-  if (configs.google_client_id && configs.google_one_tap_enabled === 'true') {
+  if (
+    configs.google_auth_enabled !== 'false' &&
+    configs.google_client_id &&
+    configs.google_one_tap_enabled === 'true'
+  ) {
     plugins.push(oneTap());
   }
   return plugins;
@@ -155,7 +171,7 @@ export function getAuth(configs?: Record<string, string>) {
 
   // Rebuild if the email-auth flag changed
   if (configs) {
-    const nextEmailEnabled = configs.email_auth_enabled !== 'false';
+    const nextEmailEnabled = configs.email_auth_enabled === 'true';
     if (nextEmailEnabled !== emailEnabledLoaded) {
       authInstance = null;
       emailEnabledLoaded = nextEmailEnabled;
@@ -177,8 +193,8 @@ export function getAuth(configs?: Record<string, string>) {
 
   const socialProviders = configs ? getSocialProviders(configs) : {};
   const emailAndPasswordEnabled = configs
-    ? configs.email_auth_enabled !== 'false'
-    : true;
+    ? configs.email_auth_enabled === 'true'
+    : false;
   const emailVerificationEnabled = configs
     ? configs.email_verification_enabled === 'true' &&
       isEmailConfigured(configs)
@@ -208,6 +224,9 @@ export function getAuth(configs?: Record<string, string>) {
     socialProviders,
     plugins: getAuthPlugins(configs),
     user: {
+      deleteUser: {
+        enabled: true,
+      },
       additionalFields: {
         utmSource: {
           type: 'string',

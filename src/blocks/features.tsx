@@ -11,13 +11,13 @@ import { m } from '@/paraglide/messages.js';
 
 export function Features() {
   return (
-    <section id="features" className="scroll-mt-24 px-4 py-24 sm:py-32">
-      <div className="mx-auto max-w-6xl">
+    <section id="features" className="scroll-mt-20 px-5 py-24 sm:px-8">
+      <div className="mx-auto max-w-[1280px]">
         <div className="max-w-2xl">
-          <p className="text-primary text-sm font-semibold tracking-[0.16em] uppercase">
+          <p className="text-foreground text-sm font-medium">
             {m['landing.features.eyebrow']()}
           </p>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-balance sm:text-5xl">
+          <h2 className="mt-4 text-3xl font-medium tracking-[-0.025em] text-balance sm:text-5xl">
             {m['landing.features.title']()}
           </h2>
           <p className="text-muted-foreground mt-5 max-w-xl text-base leading-7 sm:text-lg">
@@ -26,11 +26,11 @@ export function Features() {
         </div>
 
         <div className="mt-12 grid gap-5 lg:grid-cols-2">
-          <article className="group border-border/70 bg-card relative overflow-hidden rounded-3xl border p-7 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg motion-reduce:transform-none sm:p-9 lg:row-span-2">
-            <div className="bg-primary text-primary-foreground flex size-12 items-center justify-center rounded-2xl shadow-sm">
+          <article className="border-border bg-card relative overflow-hidden rounded-xl border p-7 sm:p-8 lg:row-span-2">
+            <div className="bg-primary text-primary-foreground flex size-12 items-center justify-center rounded-lg">
               <Rows3 aria-hidden="true" className="size-6" />
             </div>
-            <h3 className="mt-8 text-2xl font-semibold tracking-tight">
+            <h3 className="mt-8 text-2xl font-medium tracking-[-0.015em]">
               {m['landing.features.metadata.title']()}
             </h3>
             <p className="text-muted-foreground mt-3 max-w-lg leading-7">
@@ -39,7 +39,7 @@ export function Features() {
 
             <div
               aria-hidden="true"
-              className="border-border/70 bg-background mt-9 overflow-hidden rounded-2xl border"
+              className="border-border bg-background mt-9 overflow-hidden rounded-xl border"
             >
               <div className="bg-muted/60 grid grid-cols-[1.6fr_1fr_0.7fr] gap-3 border-b px-4 py-3">
                 <span className="bg-muted-foreground/16 h-2.5 rounded-full" />
@@ -62,7 +62,7 @@ export function Features() {
             </div>
           </article>
 
-          <article className="group border-border/70 bg-card rounded-3xl border p-7 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg motion-reduce:transform-none sm:p-9">
+          <article className="border-border bg-card rounded-xl border p-7 sm:p-8">
             <div className="flex items-start justify-between gap-6">
               <div>
                 <FileSpreadsheet
@@ -70,15 +70,15 @@ export function Features() {
                   className="text-primary size-9"
                   strokeWidth={1.7}
                 />
-                <h3 className="mt-7 text-2xl font-semibold tracking-tight">
+                <h3 className="mt-7 text-2xl font-medium tracking-[-0.015em]">
                   {m['landing.features.spreadsheets.title']()}
                 </h3>
               </div>
               <div className="flex -space-x-2">
-                <span className="bg-primary text-primary-foreground flex size-10 items-center justify-center rounded-xl border-2 border-white text-[10px] font-bold">
+                <span className="bg-primary text-primary-foreground flex size-10 items-center justify-center rounded-lg border-2 border-white text-[10px] font-bold">
                   {m['landing.features.spreadsheets.csv']()}
                 </span>
-                <span className="flex size-10 items-center justify-center rounded-xl border-2 border-white bg-emerald-600 text-[10px] font-bold text-white">
+                <span className="flex size-10 items-center justify-center rounded-lg border-2 border-white bg-emerald-700 text-[10px] font-bold text-white">
                   {m['landing.features.spreadsheets.xlsx']()}
                 </span>
               </div>
@@ -98,32 +98,28 @@ export function Features() {
             </div>
           </article>
 
-          <article className="group relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 p-7 text-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg motion-reduce:transform-none sm:p-9">
-            <div
-              aria-hidden="true"
-              className="absolute -top-20 -right-16 size-52 rounded-full bg-blue-500/20 blur-3xl"
-            />
-            <div className="relative">
+          <article className="border-border bg-card rounded-xl border p-7 sm:p-8">
+            <div>
               <div className="flex items-center gap-3">
                 <LockKeyhole
                   aria-hidden="true"
-                  className="size-8 text-blue-300"
+                  className="text-foreground size-8"
                   strokeWidth={1.7}
                 />
                 <Clock3
                   aria-hidden="true"
-                  className="size-5 text-slate-500"
+                  className="text-muted-foreground size-5"
                   strokeWidth={1.7}
                 />
               </div>
-              <h3 className="mt-7 text-2xl font-semibold tracking-tight">
+              <h3 className="mt-7 text-2xl font-medium tracking-[-0.015em]">
                 {m['landing.features.privacy.title']()}
               </h3>
-              <p className="mt-3 leading-7 text-slate-300">
+              <p className="text-muted-foreground mt-3 leading-7">
                 {m['landing.features.privacy.description']()}
               </p>
-              <div className="mt-7 inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/80 px-3.5 py-2 text-xs font-medium text-slate-200">
-                <span className="size-2 rounded-full bg-emerald-400" />
+              <div className="border-border bg-secondary text-foreground mt-7 inline-flex items-center gap-2 rounded-md border px-3.5 py-2 text-xs font-medium">
+                <span className="size-2 rounded-full bg-emerald-600" />
                 {m['landing.features.privacy.status']()}
               </div>
             </div>

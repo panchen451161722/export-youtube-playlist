@@ -287,7 +287,7 @@ export function getSettings(): Setting[] {
       type: 'switch',
       group: 'email_auth',
       tab: 'auth',
-      defaultValue: 'true',
+      defaultValue: 'false',
     },
     {
       name: 'email_verification_enabled',
@@ -313,6 +313,7 @@ export function getSettings(): Setting[] {
       type: 'switch',
       group: 'google_auth',
       tab: 'auth',
+      defaultValue: 'true',
     },
     {
       name: 'google_one_tap_enabled',
@@ -346,6 +347,7 @@ export function getSettings(): Setting[] {
       type: 'switch',
       group: 'github_auth',
       tab: 'auth',
+      defaultValue: 'false',
     },
     {
       name: 'github_client_id',

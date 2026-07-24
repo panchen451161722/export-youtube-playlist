@@ -554,7 +554,7 @@ export const ticket = table(
     id: text('id').primaryKey(),
     userId: text('user_id')
       .notNull()
-      .references(() => user.id),
+      .references(() => user.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
     status: text('status').notNull().default('open'), // open | replied | closed
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -572,10 +572,10 @@ export const ticketMessage = table(
     id: text('id').primaryKey(),
     ticketId: text('ticket_id')
       .notNull()
-      .references(() => ticket.id),
+      .references(() => ticket.id, { onDelete: 'cascade' }),
     userId: text('user_id')
       .notNull()
-      .references(() => user.id),
+      .references(() => user.id, { onDelete: 'cascade' }),
     role: text('role').notNull().default('user'), // user | admin
     content: text('content').notNull(),
     attachments: text('attachments').notNull().default('[]'), // JSON array of image URLs
@@ -603,7 +603,9 @@ export const inviteCode = table(
     usedCount: integer('used_count').notNull().default(0),
     trialDays: integer('trial_days').notNull().default(15),
     note: text('note').default(''),
-    createdBy: text('created_by').references(() => user.id),
+    createdBy: text('created_by').references(() => user.id, {
+      onDelete: 'set null',
+    }),
     expiresAt: timestamp('expires_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
@@ -616,7 +618,7 @@ export const userInvite = table(
     id: text('id').primaryKey(),
     userId: text('user_id')
       .notNull()
-      .references(() => user.id),
+      .references(() => user.id, { onDelete: 'cascade' }),
     inviteCodeId: text('invite_code_id')
       .notNull()
       .references(() => inviteCode.id),

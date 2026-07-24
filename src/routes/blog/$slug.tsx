@@ -4,8 +4,9 @@ import { ArrowLeft, Calendar } from 'lucide-react';
 
 import { Link } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
+import { absoluteUrl, localizedPageUrl, publicPageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
-import { getLocale, localizeUrl } from '@/paraglide/runtime.js';
+import { getLocale } from '@/paraglide/runtime.js';
 import { Footer } from '@/blocks/footer';
 import { Header } from '@/blocks/header';
 import { MarkdownContent } from '@/components/markdown-content';
@@ -25,16 +26,42 @@ export const Route = createFileRoute('/blog/$slug')({
   head: ({ loaderData }) => {
     if (!loaderData) return {};
     const { locale, post } = loaderData;
-    const canonical = localizeUrl(`${envConfigs.app_url}/blog/${post.slug}`, {
-      locale: locale as any,
-    }).href;
-    return {
-      meta: [
-        { title: `${post.title} | ${envConfigs.app_name}` },
-        { name: 'description', content: post.description },
-      ],
-      links: [{ rel: 'canonical', href: canonical }],
-    };
+    const path = `/blog/${post.slug}`;
+    const title = `${post.title} | ${envConfigs.app_name}`;
+    const author = post.authorName || envConfigs.app_name;
+    const image = post.image || '/apple-touch-icon.png';
+    return publicPageSeo({
+      title,
+      description: post.description,
+      path,
+      locale,
+      type: 'article',
+      image,
+      imageAlt: post.title,
+      publishedTime: post.createdAt,
+      modifiedTime: post.createdAt,
+      author,
+      structuredData: {
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: post.title,
+        description: post.description,
+        image: absoluteUrl(image),
+        datePublished: post.createdAt,
+        dateModified: post.createdAt,
+        inLanguage: locale === 'zh' ? 'zh-CN' : 'en-US',
+        mainEntityOfPage: localizedPageUrl(path, locale),
+        author: { '@type': 'Organization', name: author },
+        publisher: {
+          '@type': 'Organization',
+          name: envConfigs.app_name,
+          logo: {
+            '@type': 'ImageObject',
+            url: absoluteUrl('/apple-touch-icon.png'),
+          },
+        },
+      },
+    });
   },
   component: BlogPostPage,
 });

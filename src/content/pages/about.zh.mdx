@@ -1,0 +1,38 @@
+export const meta = {
+  title: '关于 Export YouTube Playlist',
+  description:
+    '了解 Export YouTube Playlist 为什么存在，以及它如何将公开播放列表元数据转换为实用表格。',
+  updated_at: '2026-07-21',
+};
+
+## 专注于播放列表导出
+
+Export YouTube Playlist 是一个独立工具，可以把公开的 YouTube 播放列表元数据整理为 CSV 和 Excel 文件。用户无需安装扩展、编写脚本或授权访问自己的 YouTube 账号。
+
+## 为什么开发这个工具
+
+YouTube 播放列表适合观看，但不便作为结构化数据检查。学生可能需要课程清单，创作者可能需要比较发布数据，音乐爱好者也可能希望备份标题和链接。
+
+本工具希望用简单、透明的流程，让这些信息更容易在表格中使用。
+
+## 工作方式
+
+提交公开播放列表链接后，服务器会通过官方 YouTube Data API 请求可用的公开元数据，并把结果返回浏览器。所选的 CSV 和 XLSX 文件会在浏览器中生成并下载。
+
+导出功能不会请求访问您的 YouTube 账号，也不会保存播放列表链接或导出元数据历史。
+
+## 我们重视的原则
+
+- 免费导出不应强制登录。
+- 导出文件应整洁、稳定并适合表格处理。
+- 失败时应提供清晰错误，而不是损坏的文件。
+- 产品限制与未来付费功能应明确说明。
+- 公开元数据只应用于用户当前请求的导出。
+
+## 独立服务
+
+Export YouTube Playlist 为独立运营的服务，与 YouTube 或 Google 不存在隶属、认可或赞助关系。YouTube 是 Google LLC 的商标。
+
+## 联系我们
+
+如有问题、纠错或产品建议，请发送邮件至 [support@exportyoutubeplaylist.com](mailto:support@exportyoutubeplaylist.com)。

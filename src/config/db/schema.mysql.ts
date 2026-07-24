@@ -522,7 +522,7 @@ export const ticket = table(
     id: varchar191('id').primaryKey(),
     userId: varchar191('user_id')
       .notNull()
-      .references(() => user.id),
+      .references(() => user.id, { onDelete: 'cascade' }),
     title: varchar('title', { length: 255 }).notNull(),
     status: varchar('status', { length: 50 }).notNull().default('open'), // open | replied | closed
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -540,10 +540,10 @@ export const ticketMessage = table(
     id: varchar191('id').primaryKey(),
     ticketId: varchar191('ticket_id')
       .notNull()
-      .references(() => ticket.id),
+      .references(() => ticket.id, { onDelete: 'cascade' }),
     userId: varchar191('user_id')
       .notNull()
-      .references(() => user.id),
+      .references(() => user.id, { onDelete: 'cascade' }),
     role: varchar('role', { length: 50 }).notNull().default('user'), // user | admin
     content: longtext('content').notNull(),
     attachments: longtext('attachments').notNull(), // JSON array of image URLs (default [] set by service)

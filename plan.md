@@ -1,334 +1,338 @@
-# Export YouTube Playlist：7 天上线计划
-
-## 1. 目标与约束
-
-### 上线目标
-
-在 7 个自然日内，基于当前 ShipAny TanStack Start 模板上线英文版 YouTube Playlist 导出工具。首发只打透一个核心流程：
-
-> 粘贴公开的 YouTube Playlist URL → 获取视频列表 → 预览结果 → 导出 CSV/XLSX 或复制全部视频链接。
-
-### 已确认约束
-
-- 目标市场：英文用户，默认语言为 English。
-- 开发资源：个人开发，必须限制首周并行范围。
-- 域名：全新域名，具体域名尚未确定。
-- 数据来源：只使用官方 YouTube Data API，不做网页抓取。
-- 商业模式：AdSense + 付费版。
-- 当前缺口：YouTube API、生产环境、域名、Stripe/AdSense 配置均未准备。
-- 参考站：`https://export-youtube-playlist.vercel.app/`，只参考信息架构、功能优先级和交互流程，不复制其品牌、文案或受保护资产。
-
-### 技术决策
-
-- 应用名称暂定：`Export YouTube Playlist`，Day 1 可一次性改名。
-- 使用现有 TanStack Start + React 19 + shadcn/ui 模板，不重建认证、支付、SEO、博客、法务页和后台底座。
-- 本地开发使用 SQLite；首发生产环境默认使用 Cloudflare Workers + D1。
-- 核心导出流程首发允许匿名使用，不强制注册。
-- 模板已有认证、支付和订阅模块，首周只做必要接线，不重写这些模块。
-- 英文为公开主语言；新增 i18n key 仍同步维护 `messages/en.json` 与 `messages/zh.json`，避免破坏模板编译规则。
-
-## 2. 一周上线的完成定义
-
-Day 7 结束时必须同时满足：
-
-1. 生产 URL 可访问；域名未完成时先用 `workers.dev` 地址上线。
-2. 用户可以提交有效的公开 YouTube Playlist URL。
-3. 页面展示播放列表标题、视频数量和视频预览表格。
-4. 每个视频至少返回：标题、视频 URL、频道名称、发布日期、时长、播放量。
-5. 用户可以下载 CSV 和 XLSX，并能一键复制全部视频链接。
-6. 无效 URL、私密/不可访问列表、空列表、删除视频、API 超时和配额不足都有明确错误信息。
-7. 首页、隐私政策、服务条款、联系入口、robots、sitemap 和基础 SEO 元数据可用。
-8. 390px、768px、1440px 三档页面可用，无明显布局错误。
-9. `pnpm build` 通过，安全扫描无 HIGH 级问题。
-10. YouTube API Key 不进入客户端代码、日志、Git 或下载文件。
-
-## 3. 首周范围
-
-### P0：必须上线
-
-- 英文首页与核心导出表单。
-- YouTube Playlist URL 校验与 Playlist ID 提取。
-- 官方 YouTube Data API 分页读取。
-- 视频数据标准化、预览表格和状态反馈。
-- CSV 下载。
-- XLSX 下载。
-- Copy All Links。
-- 免费版单次视频数量上限，默认先设为 500，并通过服务端配置调整。
-- 匿名请求限流、超时、最大分页数和基础滥用保护。
-- 英文 About/Privacy/Terms/Contact 内容。
-- Canonical、Open Graph、robots、sitemap、llms.txt。
-- Google Analytics 或 Plausible 二选一。
-- Cloudflare Workers + D1 生产部署。
-
-### P1：凭证及时到位才上线
-
-- Stripe 付费结账与订阅：只有 Stripe 凭证在 Day 2 前准备好才进入首发。
-- Pricing 页面：凭证未到位时展示 `Pro — Coming Soon`，不提供失效的支付按钮。
-- AdSense：只在账号和站点审核完成后启用；首周可预留组件，但默认不渲染广告位。
-- Turnstile：只有出现明显滥用或 API 配额压力时启用，不阻塞首发。
-
-### 首周明确不做
-
-- YouTube Channel Export。
-- Playlist/Channel Analyzer。
-- 独立的 Link Extractor、Title Extractor 内页。
-- JSON、XML、SQLite、Word、M3U 等扩展格式。
-- 批量播放列表、导出历史、定时任务和邮件通知。
-- 登录后 Dashboard 的产品化改造。
-- 完整中文站运营。
-- 复制参考站的图片、Logo、文案和广告布局。
-
-## 4. 模板内的实施位置
-
-### 项目配置
-
-- `.env.development`：本地 URL、应用名、SQLite、AUTH_SECRET、YouTube API Key。
-- `.env.example`：增加变量名称与说明，不写任何真实密钥。
-- `src/config/index.ts`：增加服务端专用 YouTube 配置读取。
-- `public/logo.svg`、`public/favicon.svg`：替换为产品字母标识，不重新引入模板二进制 Logo。
-- `messages/en.json`、`messages/zh.json`：更新产品名、首页、工具、FAQ、错误和价格相关文案。
-
-### 业务模块
+# Export YouTube Playlist：上线执行计划
+
+最后更新：2026-07-22
+
+## 1. 首发目标
+
+在一周内将英文版 `Export YouTube Playlist` 部署到 Cloudflare Workers，并绑定：
+
+- 正式域名：`https://exportyoutubeplaylist.com`
+- 支持邮箱：`support@exportyoutubeplaylist.com`
+- 数据库：Cloudflare D1
+- 数据来源：官方 YouTube Data API v3
+
+首发核心流程：
+
+> 粘贴公开播放列表 URL → 选择 CSV/XLSX → Export → 下载文件或 ZIP → 显示成功提示与撒花效果
+
+## 2. 已确认的产品决策
+
+- 英文优先；i18n key 仍同时维护英文和中文，避免破坏构建。
+- 匿名用户可以直接导出，登录不是导出的前置条件。
+- 登录只开放 Google OAuth，不开放邮箱密码和 GitHub 登录。
+- 登录功能为未来付费去广告权益保留；付款前不保存导出历史。
+- 首发不保存播放列表 URL、视频数据或导出文件。
+- 用户后台模块代码全部保留；首版隐藏 Billing、Payments、Credits、API Keys、Tickets 等导航，只展示 Profile。
+- 用户可以退出登录和自助删除账号。
+- 首发只支持公开播放列表，不申请读取用户 YouTube 私人数据的 OAuth 权限。
+- 单个播放列表最多导出 500 条；对标站的 5,000 条支持放到稳定期评估。
+- 首发格式为 CSV 和 XLSX；多选或未选择格式时下载 ZIP。
+- Pricing 保留 Free 和 `Pro — Coming soon`；价格与计费周期待定，不启用付款按钮。
+- AdSense 不阻塞上线；上线后申请，获批前不展示空广告位。
+- 访问统计使用 Cloudflare Web Analytics，暂不接 Google Analytics 或 Sentry。
+- 匿名导出接口使用 Cloudflare Turnstile 和生产可用的限流保护。
+- 对外页面包括 Privacy、Terms、About、Contact，以及一篇英文导出指南。
+
+## 3. 当前已完成
+
+- [x] 英文产品首页及核心 Load → Export 交互
+- [x] CSV/XLSX 多格式 ZIP 下载与成功提示
+- [x] 19 列丰富元数据导出
+- [x] YouTube URL 校验、官方 API 分页和服务端密钥读取
+- [x] 单列表 500 条服务端限制
+- [x] 不持久化用户播放列表或导出结果
+- [x] Pricing 展示 Free + Pro Coming Soon
+- [x] E Logo 与 favicon
+- [x] Privacy Policy 与 Terms of Service 基础页面
+- [x] 核心导出自动化测试
+
+## 4. 上线前 P0 工作
+
+### A. 登录和账户
+
+- [x] 默认关闭邮箱密码、GitHub 和 Google One Tap，只开放 Google OAuth 按钮
+- [x] Google OAuth 未配置时显示清晰的暂不可用状态
+- [x] 登录成功默认进入 `/settings/profile`
+- [x] 隐藏非首发用户后台导航，但保留对应代码和路由
+- [x] 增加自助删除账号，删除用户、会话和未来可关联的账户数据
+- [ ] 验证退出登录、OAuth 回调和正式域名 Cookie
+
+### B. 防滥用
+
+- [ ] 在播放列表 Load 请求前嵌入 Cloudflare Turnstile managed widget
+- [ ] 服务端调用官方 `siteverify`，仅在 `success === true` 时执行 YouTube API 请求
+- [ ] `TURNSTILE_SECRET` 仅保存在本地环境和 Cloudflare Secret
+- [ ] 将进程内两秒限流升级为 Cloudflare 生产可用的限流方案
+- [ ] 覆盖 Turnstile 失败、过期、重复提交和 429 错误提示
+
+### C. 内容、信任与 SEO
+
+- [x] 校对 Privacy/Terms：正式域名、支持邮箱、不保存导出数据、Google 登录
+- [x] 新增 `/about`
+- [x] 新增 `/contact`
+- [x] 新增英文指南 `/blog/how-to-export-a-youtube-playlist-to-csv-or-excel`
+- [x] 删除或隐藏 ShipAny 示例博客文章
+- [x] 更新 footer、sitemap、robots、llms.txt 和 canonical
+- [x] 检查所有公开页面 title、description、OG 与唯一 H1
+
+### D. Cloudflare 生产环境
+
+- [x] 使用项目部署流程生成正式 `wrangler.jsonc`
+- [x] 创建并绑定 D1 数据库
+- [x] 生成、审查并应用生产数据库迁移
+- [x] 配置 `AUTH_SECRET`、`CONFIG_ENCRYPTION_KEY`、`YOUTUBE_API_KEY`
+- [ ] 创建 Turnstile widget 并配置 `TURNSTILE_SECRET`
+- [ ] 将 YouTube API Key 限制为 YouTube Data API v3
+- [ ] 配置 Google OAuth Client ID/Secret 及正式回调地址
+- [x] 绑定 `exportyoutubeplaylist.com`、HTTPS 和 DNS
+- [ ] 配置 `support@exportyoutubeplaylist.com` Email Routing
+- [ ] 开启 Cloudflare Web Analytics
 
-- `src/modules/youtube-playlist/service.ts`
-  - 解析并验证 Playlist ID。
-  - 请求 YouTube API。
-  - 处理分页和视频详情批量查询。
-  - 统一返回结构并过滤不安全内容。
-  - 统一错误类型，不把上游响应或密钥直接返回客户端。
-- `src/routes/api/youtube-playlist.ts`
-  - 使用 POST。
-  - 校验 JSON body 和 URL 长度。
-  - 应用限流、超时和视频数量上限。
-  - 调用业务 service。
-  - 使用 `respData` / `respErr` 返回。
+### E. 验收
 
-### 前端
+- [ ] 测试 1、50、51、200、500 条播放列表
+- [ ] 测试空链接、错误链接、私人列表、不可访问列表、删除视频和 API 配额错误
+- [ ] 验证 CSV、XLSX、ZIP、文件名、Unicode 与公式注入防护
+- [x] 验证 390px、768px、1440px 布局和键盘操作
+- [ ] 验证 Google 登录、退出与删除账号
+- [x] `pnpm exec tsc --noEmit` 通过
+- [x] 自动化测试通过
+- [x] `pnpm build` 和 Cloudflare 构建通过
+- [x] security-scan 无 HIGH
+- [x] launch-audit 的响应式、SEO、性能、安全检查无阻断项
 
-- `src/components/playlist-exporter.tsx`
-  - 只接收内容 props，不直接读取 i18n。
-  - 使用 TanStack Query mutation + `apiPost`，不使用裸 `fetch`。
-  - 包含表单、loading、进度、错误、结果预览和导出操作。
-- `src/blocks/export-tool.tsx`
-  - 读取 i18n 文案并配置 `PlaylistExporter`。
-- `src/lib/playlist-export.ts`
-  - CSV 转义、文件名清洗、XLSX 生成、文本复制。
-- `src/routes/index.tsx`
-  - 重组为 Header → Hero/Export Tool → Features → How It Works → Pricing → FAQ → Blog/Guides → Footer。
-- `src/blocks/*`
-  - 重写模板 demo 内容；保留可复用的 `src/components/*` 与 `src/components/ui/*`。
+## 5. 当前发布状态（2026-07-22）
 
-### 内容与 SEO
+- [x] Cloudflare Worker 已部署到正式域名：`https://exportyoutubeplaylist.com`
+- [x] D1 数据库、生产迁移、RBAC 初始化和 Worker Secrets 已完成
+- [x] 线上首页、Pricing、Blog、About、Contact、Sitemap 与公开配置接口均返回 200
+- [x] 线上真实播放列表验证通过：`Python Programming Beginner Tutorials` 返回 26/26 条
+- [x] 匿名 Load → Export 核心流程可用
+- [x] 正式域名已切换到 Cloudflare nameserver
+- [x] 使用 Worker Route 接管 `exportyoutubeplaylist.com/*`，HTTPS 与线上导出验收通过
+- [ ] Google OAuth、Turnstile、Email Routing 和 Web Analytics 后续配置
 
-- 更新 `src/content/pages/privacy-policy.{en,zh}.mdx`。
-- 更新 `src/content/pages/terms-of-service.{en,zh}.mdx`。
-- 新增 About/Contact 时使用模板的 static-page 模式。
-- 更新 `src/routes/robots[.]txt.ts`、`src/routes/sitemap[.]xml.ts`、`src/routes/llms[.]txt.ts`。
-- 首页提供真实工具说明、3 步使用流程、隐私/安全说明和 FAQ，避免关键词堆砌。
+## 6. 一周排期
 
-## 5. 7 天执行排期
+### Day 1：账户与导航
 
-### Day 1 — 模板启动与外部凭证
+- Google-only 登录配置
+- 登录后默认进入 Profile
+- 隐藏暂未使用的用户后台导航
+- 自助删除账号
 
-#### 开发任务
+### Day 2：防滥用
 
-- 安装依赖并运行一次基线 `pnpm build`。
-- 创建 `.env.development`，本地采用 SQLite。
-- 运行 `pnpm db:setup`、`pnpm db:push`。
-- 设置应用名、描述、Logo、favicon 和默认英文语言。
-- 确认保留模块：Auth、Payment、Subscription、Config、Posts、Admin。
-- 关闭首页未使用的模板 CTA，避免跳转到未完成 Dashboard。
+- Turnstile 前端组件
+- 服务端 `siteverify`
+- Cloudflare 生产限流
+- 防滥用测试
 
-#### 用户必须完成
+### Day 3：内容
 
-- 创建 Google Cloud Project。
-- 启用 YouTube Data API v3。
-- 创建并限制 API Key。
-- 决定产品名和拟购买域名；未决定不阻塞开发。
-- 若首周要开付费，准备 Stripe 测试/生产账号。
+- About、Contact
+- 校对 Privacy、Terms
+- 英文导出指南
+- 清理示例博客和失效入口
 
-#### 当日验收
+### Day 4：Cloudflare
 
-- 模板可以本地启动和构建。
-- YouTube API Key 可以从服务端成功请求一个测试播放列表。
-- 浏览器构建产物中搜索不到 API Key。
+- D1、迁移、Secrets
+- Google OAuth
+- 域名、DNS、Email Routing、Web Analytics
 
-### Day 2 — 参考结构与产品页面骨架
+### Day 5：端到端 QA
 
-#### 开发任务
+- 播放列表测试矩阵
+- 手机端和桌面端
+- 导出文件完整性
+- 错误状态与无障碍
 
-- 按本地 `clone-website` 流程提取参考站桌面、平板、移动端的信息架构与交互模型，并保存可审计的设计参考；不复制品牌内容与资产。
-- 只保留首发需要的页面结构：Header、Hero、工具表单、价值点、使用步骤、Pricing、FAQ、Footer。
-- 建立自己的颜色、字体和间距 token。
-- 重写首页英文文案与导航，不复制参考站内容。
-- 完成 1440px 与 390px 的首页骨架。
+### Day 6：上线审计
 
-#### 当日验收
+- 构建、SEO、性能、安全、响应式
+- 修复 P0/P1 问题
+- 生产部署与烟雾测试
 
-- 首页没有 ShipAny demo 文案或模板归因。
-- 首页首屏直接出现 Playlist URL 输入框。
-- 移动端用户不需要先滚动大段营销内容才能使用工具。
+### Day 7：缓冲与发布
 
-### Day 3 — YouTube Playlist 服务与 API
+- 修复生产问题
+- 提交 sitemap/Search Console
+- 记录版本、已知限制和回滚方式
 
-#### 开发任务
+## 7. 需要用户提供或操作
 
-- 建立 `youtube-playlist` module 和 POST API route。
-- 完成 URL/Playlist ID 解析、分页、视频详情查询和字段标准化。
-- 实现服务端超时、数量上限、错误映射和最小间隔限流。
-- 不持久化用户提交的 Playlist URL 或完整导出结果。
-- 使用至少 10 个测试链接覆盖正常与异常情况。
+- [x] 提供/配置 YouTube Data API Key
+- [ ] 创建 Google OAuth Web Client；加入正式域名和回调地址
+- [x] 授权 Cloudflare 账户操作，创建 D1 和 Worker
+- [ ] 创建 Turnstile widget（当前 Wrangler OAuth 权限不足，需在控制台完成）
+- [ ] 指定 `support@exportyoutubeplaylist.com` 要转发到的真实邮箱
+- [x] 在 Cloudflare 添加 `exportyoutubeplaylist.com`，并在 Spaceship 替换为 Cloudflare 分配的两个 nameserver
 
-#### 当日验收
+任何密钥不得发到公开文档、Git、客户端 bundle 或聊天记录；优先写入本地 Secret/Cloudflare Secret。
 
-- API 对公开列表返回稳定 JSON 结构。
-- 50、51、200、500 视频的分页逻辑可工作。
-- 私密、无效、空列表、删除视频不会导致 500 或泄漏上游错误。
+## 8. 上线后工作
 
-### Day 4 — 核心交互与文件导出
+### AdSense
 
-#### 开发任务
+- 网站上线并积累真实内容后申请 AdSense
+- 获批后增加 CMP/Cookie consent、`ads.txt` 和广告位
+- 登录用户的付费去广告权益在支付功能上线后生效
 
-- 完成表单提交、loading、错误提示和结果摘要。
-- 完成移动端可用的结果预览表格。
-- 实现 CSV、XLSX 和 Copy All Links。
-- 文件名从播放列表标题生成并进行安全清洗。
-- 加入重复提交保护和导出成功事件。
+### 付费
 
-#### 当日验收
+- 确认一次性买断或订阅，以及最终价格
+- 接入 checkout、webhook、订单和权益
+- 付费权益仅控制广告展示，不影响匿名导出
 
-- 从粘贴 URL 到下载 CSV 的完整链路成功。
-- CSV 可在 Excel/Google Sheets 正确打开，特殊字符、逗号、换行和 Unicode 不错列。
-- XLSX 列名、数据类型和文件名正确。
-- Copy All Links 的顺序与播放列表一致。
+### 扩展
 
-### Day 5 — SEO、法务与商业化接线
+- 根据流量、Worker 限制和 YouTube 配额评估 5,000 条播放列表
+- 每 7–10 天最多上线一个有真实搜索意图的工具内页
+- 每个工具必须独立完成：功能、唯一内容、SEO、测试、sitemap、部署和 Search Console 请求收录
+- 不复制对标站正文或视觉；只参考工具信息架构和用户搜索意图
 
-#### 开发任务
+## 9. Tools 内页扩展路线
 
-- 更新 title、description、canonical、OG、hreflang。
-- 更新 sitemap、robots、llms.txt。
-- 完成 Privacy、Terms、About、Contact。
-- 接入 Analytics 事件：提交、成功、失败类型、CSV、XLSX、Copy Links。
-- 完成 Pricing 页面状态：
-  - Stripe 已准备：使用模板现有支付模块接线和测试。
-  - Stripe 未准备：展示 Coming Soon/Waitlist，不渲染假 checkout。
-- AdSense 组件保持 feature flag 关闭，审核通过后再启用。
+参考清单：`https://export-youtube-playlist.vercel.app/tools/`
 
-#### 当日验收
+对标站当前包含 18 个站内工具和 3 个跳转到外部站的个人数据导出工具。首轮只规划 18 个公开数据工具；Liked Music、Liked Videos、Subscriptions 依赖用户 YouTube OAuth 和更严格的审核，暂不纳入。
 
-- 所有首发 URL 有正确的英文 title/description。
-- sitemap 只包含真实、可用、允许索引的页面。
-- 页面不暴露 API Key、内部异常栈或用户 URL 历史。
+### 9.1 扩展前置条件
 
-### Day 6 — 全面 QA 与部署预演
-
-#### 开发任务
-
-- 在 390px、768px、1440px 检查响应式和主题。
-- 测试公开列表、YouTube Music 列表、超长列表、删除视频、无效输入和重复点击。
-- 运行 `pnpm build`。
-- 运行项目 `security-scan`；修复全部 HIGH 问题。
-- 运行 `launch-audit all`，优先修复移动端、SEO、性能和安全阻断项。
-- 创建 `wrangler.jsonc`，创建 D1，生成/审查生产迁移。
-- 准备 `.env.production`、AUTH_SECRET、CONFIG_ENCRYPTION_KEY。
-
-#### 当日验收
-
-- 生产 preset 构建通过。
-- 安全扫描无 HIGH。
-- 测试矩阵无 P0/P1 缺陷。
-- D1、Worker、生产密钥和生产 URL 配置齐全。
-
-### Day 7 — 发布与生产验证
-
-#### 开发任务
-
-- 经最终确认后运行模板规定的 Cloudflare 部署流程。
-- 应用 D1 生产迁移和 RBAC 初始化。
-- 绑定自定义域名；域名未就绪则先使用 `workers.dev`。
-- 生产环境执行完整导出烟雾测试。
-- 验证 canonical、robots、sitemap、404、隐私页和下载响应。
-- 提交 Google Search Console，记录生产基线。
-
-#### 当日验收
-
-- 首页和核心 API 可从公网使用。
-- 使用 3 个不同规模的真实播放列表完成 CSV/XLSX 下载。
-- 生产日志没有密钥、完整用户输入或异常栈泄漏。
-- 记录上线时间、版本、已知限制和回滚方式。
-
-## 6. 上线门槛与测试矩阵
-
-### 功能门槛
-
-- 至少 20 个测试播放列表通过；有效公开列表成功率目标不低于 95%。
-- 1、50、51、200、500 视频的分页和导出通过。
-- CSV/XLSX/Copy Links 三个出口都使用同一份标准化数据。
-- 用户连续点击不会产生并发风暴或重复下载。
-- 服务端限制 URL 长度、最大视频数、超时和请求频率。
-
-### 安全门槛
-
-- API Key 仅在服务端配置。
-- 不把用户输入拼接进 shell、SQL、HTML 或文件路径。
-- 错误信息不包含上游原始响应、堆栈或密钥。
-- CSV 防公式注入：以 `=`, `+`, `-`, `@` 开头的外部文本按安全策略转义。
-- 下载文件名移除路径字符和控制字符。
-- 提交前执行本项目 `security-scan`；有 HIGH 则禁止提交和发布。
-
-### 体验与 SEO 门槛
-
-- 首屏工具可在移动端直接使用。
-- 没有空导航、空博客、无效支付按钮和未完成 Dashboard 链接。
-- 每页只保留一个明确 H1。
-- Canonical、Open Graph、favicon、robots、sitemap 正确。
-- 重要按钮有 loading/disabled/error/success 状态。
-
-## 7. 一周内的降级顺序
-
-若时间不足，按以下顺序降级，不能牺牲核心导出可靠性：
-
-1. 延后 AdSense 展示。
-2. 延后 Stripe checkout，保留 Pricing + Coming Soon。
-3. 延后博客区块，只保留一篇使用指南。
-4. 延后 XLSX，确保 CSV + Copy Links 正式可用；XLSX 在 Day 8–10 补齐。
-5. 使用 `workers.dev` 首发，之后再绑定自定义域名。
-
-不能降级：官方 API、服务端密钥保护、错误处理、CSV 正确性、移动端、Privacy/Terms、生产构建和安全扫描。
-
-## 8. 上线后的 30 天内页节奏
-
-| 时间 | 页面/功能 | 上线条件 |
-| --- | --- | --- |
-| Day 10–12 | `/tools/youtube-playlist-link-extractor/` | 复用首页 API；核心服务稳定 |
-| Day 14 | How to Export YouTube Playlist to Excel | 使用真实截图和真实导出步骤 |
-| Day 18–21 | `/tools/youtube-playlist-title-extractor/` | 有真实标题复制/下载需求 |
-| Day 24 | Notion 或 NotebookLM 使用指南 | 根据搜索与用户反馈二选一 |
-| Day 30+ | YouTube Channel Export | 至少 100 次成功导出且配额成本可控 |
-
-稳定期发布频率：每 7–10 天最多 1 个工具页，每周 1–2 篇真正有场景价值的文章。Analyzer 不早于第 8 周。
-
-## 9. Day 1 前需要用户提供的资料
-
-### 必须
-
-- 最终产品名，或确认沿用 `Export YouTube Playlist`。
-- Google Cloud 项目与 YouTube Data API Key。
-- Cloudflare 账号授权。
-
-### 可延后
-
-- 自定义域名。
-- Stripe 凭证、产品价格和 webhook 配置。
-- AdSense Publisher ID 与审核结果。
-- Google Analytics ID 或 Plausible 域名。
-- 管理员邮箱和初始密码。
-
-## 10. 首周成功指标
-
-- 核心目标：上线后获得前 20 个真实成功导出。
-- 可靠性：有效公开列表成功率 ≥ 95%。
-- 产品：提交后成功下载或复制的完成率可被 Analytics 统计。
-- 成本：能够看到每天请求量、失败原因和 YouTube API 配额消耗。
-- 商业信号：记录 Pro 点击、价格页访问和批量/大列表需求，不以首周付费收入作为上线门槛。
+- [ ] Google Search Console 验证 Domain Property，并提交 `/sitemap.xml`
+- [ ] 开启 Cloudflare Web Analytics，建立页面访问与转化基线
+- [ ] YouTube API Key 限制为仅允许 YouTube Data API v3
+- [ ] 完成 Turnstile、服务端 `siteverify` 和生产限流
+- [ ] 完成 1、50、51、200、500 条及异常播放列表测试矩阵
+- [ ] 开启 HTTP → HTTPS 强制跳转
+
+### 9.2 统一工具架构
+
+- [x] 新建 `/tools` 工具目录页，首批仅展示已上线工具
+- [x] 抽取统一 Tool Page Shell：输入区、状态、结果、使用说明、FAQ、相关工具
+- [x] Playlist 工具统一复用现有 `/api/youtube-playlist` 数据，不重复请求 YouTube
+- [x] Video 工具统一使用一个受保护的单视频服务
+- [x] Channel 工具统一使用一个频道解析与分页服务
+- [x] 对相同 playlist/video/channel ID 增加 5 分钟短期缓存，减少重复配额消耗
+- [ ] 所有工具复用 Turnstile、限流、错误模型和隐私约束
+
+### 9.3 第一批：Playlist 核心集群
+
+这些页面与现有产品关联最强、数据已经具备，应优先建立主题权威。
+
+1. [x] `/tools/youtube-playlist-link-extractor`
+   - 复用现有播放列表结果
+   - 支持复制纯链接、标题 + 链接和 TXT 下载
+   - CSV 固定为对标站兼容的 `Index,URL` 结构
+   - 上线后观察 7–10 天再进入下一页
+2. [x] `/tools/youtube-playlist-title-extractor`
+   - 复用现有播放列表结果
+   - 支持复制标题、编号标题和 TXT/CSV
+   - CSV 固定为对标站兼容的 `Index,Title` 结构
+3. [x] `/tools/youtube-playlist-analyzer`
+   - 覆盖 playlist length/duration calculator 搜索意图
+   - 展示视频数、总时长、平均时长、1.25×/1.5×/2×观看时间、总/平均互动数据
+   - 支持下载逐视频分析 CSV，便于数据核验与回归测试
+   - 首版不做复杂图表，先验证搜索和使用需求
+
+第一批数据验收（2026-07-23）：
+
+- [x] 使用同一公开播放列表对比原站与当前站：
+      `PL-osiE80TeTskrapNbzXhwoFUiLCjGgY7`
+- [x] 两边均返回 26/26 条，视频 ID、标题、URL、频道、时长、上传时间
+      100% 一致
+- [x] 浏览、点赞、评论等实时计数按 1% 相对误差容差核验，100% 一致
+- [x] 稳定字段精确匹配；浏览量等实时计数采用 1% 相对误差容差，三个工具均为
+      100%
+
+### 9.4 第二批：Video 高意图工具
+
+4. [x] `/tools/download-youtube-thumbnail`
+   - 根据视频 ID 生成标准缩略图地址，优先避免 API 调用
+5. [x] `/tools/youtube-tag-extractor`
+   - 单视频查询并复制公开 tags
+6. [x] `/tools/youtube-description-extractor`
+   - 提取公开 description、链接和邮箱
+7. [x] `/tools/youtube-embed-code-generator`
+   - 客户端生成 iframe，支持尺寸、开始时间、自动播放和循环
+8. [x] `/tools/youtube-region-restriction-checker`
+   - 展示 API 返回的公开区域限制；地图视图放第二版
+
+### 9.5 第三批：Channel 基础工具
+
+先完成频道 URL、handle、channel ID 和 uploads playlist 的统一解析，再连续复用。
+
+9. [x] `/tools/youtube-channel-id-finder`
+10. [x] `/tools/youtube-channel-to-playlist`
+11. [x] `/tools/youtube-subscribe-link-generator`
+12. [x] `/tools/youtube-channel-playlist-extractor`
+13. [x] `/tools/youtube-channel-video-link-extractor`
+14. [x] `/tools/youtube-channel-title-extractor`
+
+### 9.6 第四批：Channel 重型工具
+
+这些工具分页更多、配额和页面复杂度更高，必须在真实流量与配额数据稳定后开发。
+
+15. [x] `/tools/export-youtube-channel`
+16. [x] `/tools/youtube-channel-analyzer`
+17. [x] `/tools/youtube-channel-keywords`
+18. [x] `/tools/youtube-channel-banner-and-logo-downloader`
+
+剩余 15 个工具的数据验收（2026-07-23）：
+
+- [x] 使用同一公开视频 `YYXdXT2l-Gg` 与同一公开频道
+      `UCCezIgC97PvUuR4_gbFUs5g`（Corey Schafer）建立固定对标样本
+- [x] 统一单视频服务覆盖缩略图、tags、description、embed 和地区限制
+- [x] 统一频道服务覆盖 channel ID、uploads playlist、订阅链接、24 个公开播放列表和
+      276 个公开视频，并支持最多 5,000 条分页
+- [x] Channel CSV/XLSX 使用对标站兼容的 17 列结构；列表字段按内容集合比较，忽略
+      原站 Python set 导致的不稳定顺序
+- [x] 15 个工具共比较 8,215 个数据单元格，匹配 8,197 个，总一致率
+      **99.78%**；每个工具均达到 95%，最低为频道完整导出的 **99.62%**
+- [x] 对标脚本：`scripts/compare-public-tools-reference.ts`
+
+全部 18 个站内工具的统一验收（2026-07-23）：
+
+- [x] 将第一批 3 个 Playlist 工具和剩余 15 个 Video/Channel 工具纳入同一条可重复
+      执行的对标命令
+- [x] 18 个工具共比较 8,501 个数据单元格，匹配 8,483 个，总一致率
+      **99.79%**
+- [x] 17 个工具为 **100%**，最低的频道完整导出为 **99.62%**；每个工具均高于
+      95% 门槛
+- [x] 覆盖审计脚本确认：18 条工具路由、英文/中文唯一 SEO 文案、`/tools` 目录、
+      header、sitemap、llms.txt 和 llms-full.txt 均已接线
+- [x] Header Tools 菜单改为从统一工具定义生成，18 个工具均可点击，不再显示
+      Coming Soon；桌面菜单支持视口内滚动
+- [x] 本地真实输入烟雾测试：公开视频可返回 5 个缩略图尺寸，公开频道 handle 可解析为
+      正确 Channel ID，非法 URL 可立即显示错误
+- [x] 为依赖系统代理的本地开发环境增加 `pnpm dev:proxy`，避免 YouTube API 请求一直
+      处于加载状态
+- [x] 直接调用生产 SSR handler 渲染英文/中文共 36 个页面，全部返回 200，且逐页具有
+      唯一 title/H1、description、canonical、结构化数据和可交互表单
+- [x] 对标结果：`docs/research/public-tools-parity-report.md`
+- [x] 覆盖脚本：`scripts/audit-public-tools-coverage.ts`
+- [x] 生产运行时脚本：`scripts/audit-public-tools-runtime.ts`
+
+### 9.7 每个内页的上线门槛
+
+- [x] 一个页面只对应一个清晰搜索意图，避免和首页或其他工具页关键词互抢
+- [x] 唯一 title、description、canonical、H1 和正文，不批量替换关键词生成薄页面
+- [x] 提供可立即使用的真实功能，不发布 Coming Soon 或仅内容页
+- [x] 至少包含使用步骤、输入示例、错误说明、隐私说明、FAQ 和相关工具内链
+- [x] 增加 Breadcrumb 与 SoftwareApplication/WebApplication 结构化数据（适用时）
+- [x] 更新导航、`/tools`、sitemap、robots/llms 和相关页面内链
+- [x] 覆盖正常、错误、配额、移动端和键盘操作测试
+- [x] 使用同一播放列表与对标站抽样对比；稳定字段精确匹配，实时计数允许
+      1% 相对误差，总体可比单元格一致率不得低于 95%
+- [x] `pnpm exec tsc --noEmit`、自动化测试、`pnpm build`、security-scan 通过
+- [ ] 部署后完成线上真实输入烟雾测试
+- [ ] 在 Search Console 请求收录，并记录发布日期、曝光、点击、CTR 和导出/复制转化
+
+### 9.8 继续或停止规则
+
+- 新页面上线后至少观察 7–10 天，再开发下一页
+- 有曝光但 CTR 低：先调整 title/description，不立即新建相似页面
+- 有点击但工具使用率低：先修输入、结果和速度
+- 无曝光：检查收录、内链、搜索意图和内容质量；不靠批量页面解决
+- 当日预计 YouTube 配额超过 70% 时暂停新重型工具，优先缓存、限流或申请官方配额扩展

@@ -1,7 +1,7 @@
 ---
 name: deploy-cloudflare
 description: "Deploy this project to Cloudflare Workers (nitro cloudflare_module preset + wrangler). Auto-handles D1 setup, secrets, schema push, and redeploy. Use when the user says 'deploy to cloudflare', 'ship to workers', 'push to cf', '部署到 cloudflare', or asks how to publish to Workers."
-argument-hint: "[--admin-email=X --admin-password=Y | --admin=X | --domain=X | --rotate-secrets | --force-rbac]"
+argument-hint: "[--domain=X | --rotate-secrets | --force-rbac]"
 user-invocable: true
 ---
 
@@ -18,12 +18,12 @@ Two supported backends on Workers, chosen by `wrangler.jsonc` `vars.DATABASE_PRO
 | When | Default. Zero external infra. | User already has a Postgres (Neon/Supabase/RDS/self-hosted) or needs PG features |
 | Binding | `d1_databases` → `DB` | `hyperdrive` → `HYPERDRIVE` (`src/core/db/postgres.ts` reads `connectionString` from the stashed Workers env at runtime) |
 | Schema push | `wrangler d1 migrations apply --remote` | `pnpm db:migrate` directly against the real PG (NOT through Hyperdrive) |
-| RBAC seed / admin | local-sqlite dump dance (Phase 4.5 / 9) | `pnpm rbac:init` directly against PG — no dance needed |
+| RBAC seed | local-sqlite dump dance (Phase 4.5) | `pnpm rbac:init` directly against PG — no dance needed |
 | Bundle | postgres driver stubbed out | postgres driver kept (vite.config.ts reads `vars.DATABASE_PROVIDER`) |
 
 **Backend selection:** if `wrangler.jsonc` already has a populated `hyperdrive` or `d1_databases` binding, keep that backend (incremental run). On first-time setup, default to D1 unless the user mentioned Postgres/Hyperdrive/Neon/Supabase or `$ARGUMENTS` contains `--db=postgres` — then use the **Phase 3-PG** variant below.
 
-If the chosen backend is Postgres: Phase 2's D1 checks, Phase 4 (D1 migrations), Phase 4.5 (local-sqlite RBAC dance), and Phase 9's D1 SQL steps are REPLACED by their direct-PG equivalents in Phase 3-PG — drizzle and `init-rbac.ts`/`assign-role.ts` talk to PG natively with `DATABASE_PROVIDER=postgresql DATABASE_URL=<direct PG url>`.
+If the chosen backend is Postgres: Phase 2's D1 checks, Phase 4 (D1 migrations), and Phase 4.5 (local-sqlite RBAC dance) are REPLACED by their direct-PG equivalents in Phase 3-PG — drizzle and `init-rbac.ts` talk to PG natively with `DATABASE_PROVIDER=postgresql DATABASE_URL=<direct PG url>`.
 
 ## Philosophy: minimal interruptions, fully idempotent
 
@@ -31,7 +31,9 @@ The skill is designed to be run **any number of times**. A repeat invocation aut
 
 1. **Cloudflare authorization** — skipped if `wrangler whoami` already shows authenticated.
 2. **Final deploy confirmation** — always asked; deploy is irreversible.
-3. **(Optional) Admin credentials** — only asked on first deploy when no `super_admin` exists yet. User picks one of: `email password` (agent creates the account directly so user can log in immediately), `email` (promote an existing user — requires prior sign-up via web), or `skip` (assign later with `/deploy-cloudflare --admin-email=X --admin-password=Y` or `--admin=X`).
+3. **(Optional) Authentication handoff** — after a verified deployment, invoke
+   `$setup-auth` when the user asked to enable login or bootstrap the first
+   `super_admin`. This deployment skill never collects login credentials.
 
 Every other step (D1 create, schema migrations, RBAC seed, secrets, URL fixup) is automatic AND idempotent. So **"再发布一下" / "ship again"** = run `/deploy-cloudflare` again.
 
@@ -47,7 +49,7 @@ Every other step (D1 create, schema migrations, RBAC seed, secrets, URL fixup) i
 | 5.5 Production URL | `.env.production` `VITE_APP_URL` AND `wrangler.jsonc` `vars.VITE_APP_URL` are both consistent with routes (workers.dev + no routes, OR custom domain matching a routes pattern) | Skip the prompt (`--domain=X` overrides) |
 | 6 Deploy | (always runs) | Fresh `pnpm run cf:deploy` with the latest code/env |
 | 7 URL fix | Both `.env.production` AND `wrangler.jsonc` vars already match the deployed URL | Skip redeploy |
-| 9 Admin | `SELECT COUNT(*) FROM user_role ur JOIN role r ON r.id=ur.role_id WHERE r.name='super_admin'` ≥ 1 | Don't prompt (explicit `--admin*` flags still run) |
+| 9 Auth handoff | Authentication was not requested | Invoke `$setup-auth`; it owns bootstrap idempotency |
 
 Narrate auto-picked resource names BEFORE acting so the user can interject with "rename to X".
 
@@ -56,7 +58,8 @@ Narrate auto-picked resource names BEFORE acting so the user can interject with 
 1. **Never auto-run the final deploy.** The production push is irreversible — always confirm. The Phase 7 redeploy to fix a baked URL is part of the same confirmed deploy event and needs no re-confirmation.
 2. **Never echo secret values.** Generate with `openssl`; pipe values from env files directly into `wrangler secret put` (`grep ... | cut -d= -f2- | wrangler ...`). Never `cat` an env file into the conversation.
 3. **Always run the deploy through `pnpm run cf:deploy`.** It sources `.env.production` into the shell BEFORE the build. This matters because `src/lib/env.ts` `loadEnvFiles()` resolves `.env.local > .env.{NODE_ENV} > .env` and never overwrites existing `process.env` — shell-sourced prod values win over any localhost URL lingering in `.env.local`/`.env.development`, so the right `VITE_APP_URL` gets baked into the bundle (better-auth `trustedOrigins`, payment callbacks, canonicals).
-4. **Admin password handling (Phase 9.A):** the user types the password into chat once; pass it to `init-rbac.ts --admin-password=...` and never echo it back — not in narration, commits, or env files. It's stored hashed (better-auth/crypto). Remind them to rotate it after first login.
+4. **Never collect login passwords or OAuth secrets.** Authentication setup is
+   owned by `$setup-auth`; keep this skill focused on infrastructure and deploy.
 5. **Don't hand-edit `.output/server/wrangler.json`** — it's generated. All config belongs in the root `wrangler.jsonc`, which nitro merges at build time.
 
 ## Phase 0: Preflight
@@ -148,7 +151,7 @@ Narrate the detection table (one line each: D1 / wrangler.jsonc / prior deploy /
 > First-time Cloudflare setup. I'll do all of this in one shot — interject only if you want different names.
 >
 > **Resources to create:** Worker `<name from wrangler.jsonc>`, D1 `<database_name>`
-> **Then:** push schema → seed RBAC → set secrets (AUTH_SECRET, CONFIG_ENCRYPTION_KEY, never shown) → ask for production URL → deploy (with confirmation) → fix baked URL if needed → optional admin setup.
+> **Then:** push schema → seed RBAC → set secrets (AUTH_SECRET, CONFIG_ENCRYPTION_KEY, never shown) → ask for production URL → deploy (with confirmation) → fix baked URL if needed → optional `$setup-auth` handoff.
 >
 > Reply `ok` or `rename worker=X db=Y`.
 
@@ -166,7 +169,7 @@ Edit the working copy `wrangler.jsonc` (materialized from `wrangler.example.json
 
 ## Phase 3-PG: First-time setup — Postgres + Hyperdrive variant
 
-Use INSTEAD of Phase 3 when the backend decision (see "Database backend" above) is Postgres. Also REPLACES Phases 4 and 4.5 — schema and RBAC go directly to PG. Phase 9's admin steps run via `pnpm rbac:init` / `rbac:assign` against PG (no D1 SQL, no local-sqlite dance).
+Use INSTEAD of Phase 3 when the backend decision (see "Database backend" above) is Postgres. Also REPLACES Phases 4 and 4.5 — schema and RBAC go directly to PG. Authentication setup remains owned by `$setup-auth`.
 
 ### 1. Get the connection string
 
@@ -212,14 +215,10 @@ If `drizzle/` already holds migrations for another dialect (journal from a previ
 
 Incremental runs: just re-run both — drizzle skips applied migrations, `rbac:init` is a no-op when seeded.
 
-### 5. Admin (replaces Phase 9's D1 SQL)
+### 5. Authentication
 
-```bash
-# create-account mode
-DATABASE_PROVIDER=postgresql DATABASE_URL="$PG_URL" pnpm rbac:init --admin-email="$EMAIL" --admin-password="$PASS"
-# promote-existing mode
-DATABASE_PROVIDER=postgresql DATABASE_URL="$PG_URL" pnpm rbac:assign "$EMAIL" super_admin
-```
+Do not create or promote an administrator inside the deployment flow. Finish
+the deployment and invoke `$setup-auth` if login setup was requested.
 
 Then continue with Phase 5 (secrets), 5.5 (URL), 6 (deploy) unchanged.
 
@@ -335,54 +334,18 @@ curl -sS --noproxy '*' -o /dev/null -w "/api  HTTP=%{http_code}\n" "$URL/api/con
 
 Both 200 → report success with the live URL. Any 500 → one-shot `npx wrangler tail` to capture the first error (print the command for the user too, don't keep it running).
 
-## Phase 9: First super_admin (optional — Interruption #3)
+## Phase 9: Authentication handoff
 
-**Postgres backend:** use Phase 3-PG step 5 instead (direct `pnpm rbac:init` / `rbac:assign` against PG) — the D1 SQL below doesn't apply.
-
-**Skip prompt if:** `ADMIN_COUNT > 0` and no `--admin*` flag.
-
-Flag modes: `--admin-email=X --admin-password=Y` → 9.A create; `--admin=X` → 9.B promote. Otherwise prompt the three options (create with password ⚠️ visible in chat once / promote existing — sign up at `<URL>/sign-up` first / skip).
-
-### 9.A Create account directly
-
-```bash
-LOCAL_D1=$(find .wrangler/state -name "*.sqlite" -path "*d1*" | head -1)
-DATABASE_PROVIDER=sqlite DATABASE_URL="file:$LOCAL_D1" \
-  pnpm rbac:init --admin-email="$EMAIL" --admin-password="$PASS" 2>&1 | tail -5
-
-# user first, then account (FK order; .dump alone is alphabetical), skip user_role
-{
-  sqlite3 "$LOCAL_D1" ".dump user" | grep -E "^INSERT INTO user "
-  sqlite3 "$LOCAL_D1" ".dump account" | grep -E "^INSERT INTO account "
-} | sed 's/^INSERT INTO/INSERT OR IGNORE INTO/' > /tmp/admin-seed.sql
-npx wrangler d1 execute "$DB_NAME" --remote --file=/tmp/admin-seed.sql
-
-# user_role via JOIN — local role.id UUIDs don't match remote's
-npx wrangler d1 execute "$DB_NAME" --remote --command="
-INSERT OR IGNORE INTO user_role (id, user_id, role_id)
-SELECT lower(hex(randomblob(16))), u.id, r.id
-FROM user u, role r WHERE u.email = '$EMAIL' AND r.name = 'super_admin'"
-
-# verify
-npx wrangler d1 execute "$DB_NAME" --remote --json --command="
-SELECT u.email, r.name FROM user u
-JOIN user_role ur ON ur.user_id = u.id JOIN role r ON r.id = ur.role_id
-WHERE u.email = '$EMAIL' AND r.name = 'super_admin'"
-```
-
-1 row → `✓ Admin <email> created. Sign in at <URL>/sign-in.` (never echo the password). 0 rows → surface init-rbac output (password too short, or user existed with another password).
-
-### 9.B Promote existing user
-
-Just the `INSERT OR IGNORE ... SELECT` + verify from above. 0 rows → user hasn't signed up yet; ask them to sign up at `<URL>/sign-up` first or switch to 9.A.
+If the user asked to enable email/Google login or create the first
+`super_admin`, invoke `$setup-auth` after Phase 8 succeeds. Do not create an
+administrator directly, promote an existing credential account, or ask for a
+password in this skill.
 
 ## Force flags
 
 | Flag | Effect |
 |---|---|
 | (none) | Idempotent re-run; only the deploy confirmation fires |
-| `--admin-email=X --admin-password=Y` | Phase 9.A create-account mode |
-| `--admin=email@x.com` | Phase 9.B promote-existing mode |
 | `--domain=app.example.com` | Switch to custom domain (routes + env + redeploy); `--domain=default` reverts to workers.dev |
 | `--rotate-secrets` | Re-upload all secrets |
 | `--force-rbac` | Re-run Phase 4.5 even if `role` is non-empty |
@@ -401,7 +364,7 @@ Just the `INSERT OR IGNORE ... SELECT` + verify from above. 0 rows → user hasn
 | `sqlite3: command not found` (Phase 4.5/9.A) | CLI missing | `brew install sqlite` / `apt-get install sqlite3` |
 | Deploy fails `not a zone in your account` | Custom domain isn't a Cloudflare zone | Add the zone, or `--domain=default` |
 | 522/1014 right after custom-domain deploy | DNS record still propagating | Wait ~30 s, retry |
-| `/admin` 403 after Phase 9 | Stale session claims | Sign out and back in |
+| `/admin` 403 after `$setup-auth` | Stale session claims | Sign out and back in |
 | Runtime throws "This DB driver was stubbed out of the Cloudflare Workers build" | `wrangler.jsonc` `vars.DATABASE_PROVIDER` was changed AFTER the last build (vite.config.ts bakes the driver choice at build time) | Rebuild + redeploy (`pnpm run cf:deploy`) so the bundle matches the provider |
 | Postgres mode: every query fails with connection errors but `wrangler hyperdrive create` succeeded | `hyperdrive` binding missing from `wrangler.jsonc`, or binding name ≠ `HYPERDRIVE` | `src/core/db/postgres.ts` expects binding name exactly `HYPERDRIVE`; fix wrangler.jsonc and redeploy |
 | Postgres mode: intermittent `Cannot perform I/O on behalf of a different request` | A postgres client got cached across requests (e.g. someone re-added a module-level cache for TCP drivers) | `src/core/db/index.ts` deliberately skips the singleton cache for postgres/mysql on Workers — restore that behavior |

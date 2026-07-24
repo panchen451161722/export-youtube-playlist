@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { authClient, useSession } from '@/core/auth/client';
 import { Link, useRouter } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
+import { privatePageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { deLocalizeHref, localizeHref } from '@/paraglide/runtime.js';
 import { Button } from '@/components/ui/button';
@@ -299,5 +300,6 @@ function VerifyEmailPage() {
 }
 
 export const Route = createFileRoute('/(auth)/verify-email')({
+  head: () => privatePageSeo(m['common.sign.verify_email_page_title']()),
   component: VerifyEmailPage,
 });

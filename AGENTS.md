@@ -430,6 +430,7 @@ skills, read `.agents/skills/<name>/SKILL.md` and follow it when the task matche
 | `launch-audit`      | Whole-project sweep on one axis — responsive, light/dark theme, SEO, performance (Lighthouse), or security; run `all` before deploy |
 | `sync-upstream`     | Pull latest template updates; local changes win on conflict                                                                         |
 | `deploy-cloudflare` | Deploy to Cloudflare Workers (D1 or Postgres+Hyperdrive + secrets + schema, idempotent)                                             |
+| `setup-auth`        | Enable email/Google login and bootstrap the first verified Google `super_admin` without an existing admin session                   |
 
 **Database backends on Cloudflare Workers** (chosen by `wrangler.jsonc` `vars.DATABASE_PROVIDER`):
 

@@ -7,6 +7,7 @@ import { authClient, signIn, signUp, useSession } from '@/core/auth/client';
 import { Link, useRouter } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
 import { apiPost } from '@/lib/api-client';
+import { privatePageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { localizeHref } from '@/paraglide/runtime.js';
 import { usePublicConfig } from '@/hooks/use-public-config';
@@ -70,7 +71,7 @@ function SignUpPage() {
 
   const afterLoginUrl = redirectParam
     ? `/auth-callback?redirect=${encodeURIComponent(redirectParam)}`
-    : safeCallbackUrl || '/settings';
+    : safeCallbackUrl || '/settings/profile';
 
   // Carry callbackUrl/redirect across to sign-in so the destination survives the switch.
   const switchQuery = (() => {
@@ -85,7 +86,7 @@ function SignUpPage() {
   const configs = configQuery.data ?? {};
 
   const configsLoaded = configQuery.isSuccess;
-  const emailEnabled = configs.email_auth_enabled !== 'false';
+  const emailEnabled = configs.email_auth_enabled === 'true';
   const googleEnabled = configs.google_auth_enabled === 'true';
   const githubEnabled = configs.github_auth_enabled === 'true';
   const emailVerificationEnabled =
@@ -352,5 +353,6 @@ function SignUpPage() {
 }
 
 export const Route = createFileRoute('/(auth)/sign-up')({
+  head: () => privatePageSeo(m['common.sign.sign_up_title']()),
   component: SignUpPage,
 });

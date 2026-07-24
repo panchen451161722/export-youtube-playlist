@@ -2,8 +2,9 @@ import type { ComponentType } from 'react';
 import { notFound, useLoaderData } from '@tanstack/react-router';
 
 import { envConfigs } from '@/config';
+import { localizedPageUrl, publicPageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
-import { baseLocale, getLocale, localizeUrl } from '@/paraglide/runtime.js';
+import { baseLocale, getLocale } from '@/paraglide/runtime.js';
 
 type PageMeta = {
   title: string;
@@ -47,16 +48,33 @@ export function staticPageRouteOptions(slug: string) {
     head: ({ loaderData }: { loaderData?: LoaderData }) => {
       if (!loaderData) return {};
       const { meta, locale } = loaderData;
-      const canonical = localizeUrl(`${envConfigs.app_url}/${slug}`, {
-        locale: locale as ReturnType<typeof getLocale>,
-      }).href;
-      return {
-        meta: [
-          { title: meta.title },
-          { name: 'description', content: meta.description },
-        ],
-        links: [{ rel: 'canonical', href: canonical }],
-      };
+      const path = `/${slug}`;
+      const pageType =
+        slug === 'about'
+          ? 'AboutPage'
+          : slug === 'contact'
+            ? 'ContactPage'
+            : 'WebPage';
+      return publicPageSeo({
+        title: meta.title,
+        description: meta.description,
+        path,
+        locale,
+        structuredData: {
+          '@context': 'https://schema.org',
+          '@type': pageType,
+          name: meta.title,
+          description: meta.description,
+          dateModified: meta.updated_at,
+          inLanguage: locale === 'zh' ? 'zh-CN' : 'en-US',
+          url: localizedPageUrl(path, locale),
+          isPartOf: {
+            '@type': 'WebSite',
+            name: envConfigs.app_name,
+            url: localizedPageUrl('/', locale),
+          },
+        },
+      });
     },
     component: StaticPage,
   };

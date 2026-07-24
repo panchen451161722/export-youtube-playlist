@@ -6,12 +6,13 @@ import { z } from 'zod';
 import { authClient, signIn, useSession } from '@/core/auth/client';
 import { Link, useRouter } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
+import { privatePageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { localizeHref } from '@/paraglide/runtime.js';
 import { usePublicConfig } from '@/hooks/use-public-config';
 import { TextField } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
   Field,
   FieldDescription,
@@ -65,7 +66,7 @@ function SignInPage() {
 
   const afterLoginUrl = redirectParam
     ? `/auth-callback?redirect=${encodeURIComponent(redirectParam)}`
-    : safeCallbackUrl || '/settings';
+    : safeCallbackUrl || '/settings/profile';
 
   // Carry callbackUrl/redirect across to sign-up so the destination survives the switch.
   const switchQuery = (() => {
@@ -80,7 +81,7 @@ function SignInPage() {
   const configs = configQuery.data ?? {};
 
   const configsLoaded = configQuery.isSuccess;
-  const emailEnabled = configs.email_auth_enabled !== 'false';
+  const emailEnabled = configs.email_auth_enabled === 'true';
   const googleEnabled = configs.google_auth_enabled === 'true';
   const githubEnabled = configs.github_auth_enabled === 'true';
   const passwordResetEnabled = configs.password_reset_enabled === 'true';
@@ -141,9 +142,9 @@ function SignInPage() {
         </Link>
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-xl">
+            <h1 className="text-xl font-semibold">
               {m['common.sign.sign_in_title']()}
-            </CardTitle>
+            </h1>
           </CardHeader>
           <CardContent>
             {configsLoaded && !hasAnyMethod ? (
@@ -316,5 +317,6 @@ function SignInPage() {
 }
 
 export const Route = createFileRoute('/(auth)/sign-in')({
+  head: () => privatePageSeo(m['common.sign.sign_in_title']()),
   component: SignInPage,
 });

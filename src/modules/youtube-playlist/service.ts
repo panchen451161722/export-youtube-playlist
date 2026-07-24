@@ -369,7 +369,9 @@ async function requestYouTubeApi<T>(params: {
 
   let response: Response;
   try {
-    response = await params.fetchImpl(url, {
+    // Cloudflare Workers accepts a Request or URL string as fetch input, while
+    // Node also accepts a URL object. Use the string form for both runtimes.
+    response = await params.fetchImpl.call(globalThis, url.toString(), {
       method: 'GET',
       headers: { accept: 'application/json' },
       signal: params.signal,
@@ -378,6 +380,17 @@ async function requestYouTubeApi<T>(params: {
     if (params.signal.aborted || (error as Error)?.name === 'AbortError') {
       throw new PlaylistServiceError('timeout');
     }
+    const cause =
+      error instanceof Error
+        ? (error as Error & { cause?: { name?: string; code?: string } }).cause
+        : undefined;
+    // Keep production diagnostics secret-safe: never log the request URL,
+    // upstream message, or API key because the key is in the query string.
+    console.error('youtube upstream fetch failed', {
+      errorName: error instanceof Error ? error.name : typeof error,
+      causeName: cause?.name || '',
+      causeCode: cause?.code || '',
+    });
     throw new PlaylistServiceError('network');
   }
 

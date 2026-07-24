@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import { envConfigs } from '@/config';
+import { localizedPageUrl, publicPageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
-import { getLocale, locales, localizeUrl } from '@/paraglide/runtime.js';
+import { getLocale } from '@/paraglide/runtime.js';
 import { Footer } from '@/blocks/footer';
 import { Header } from '@/blocks/header';
 import { BlogCard } from '@/components/blog-card';
@@ -16,28 +17,30 @@ export const Route = createFileRoute('/blog/')({
     return { locale, posts };
   },
   head: ({ loaderData }) => {
-    const locale = loaderData?.locale;
-    const urlFor = (loc: string) =>
-      localizeUrl(`${envConfigs.app_url}/blog`, { locale: loc as any }).href;
-    return {
-      meta: [
-        {
-          title: `${m['blog.title']({}, { locale: locale as any })} | ${envConfigs.app_name}`,
+    const locale = loaderData?.locale ?? 'en';
+    const title = `${m['seo.blog.title']({}, { locale: locale as any })} | ${envConfigs.app_name}`;
+    const description = m['seo.blog.description'](
+      {},
+      { locale: locale as any }
+    );
+    return publicPageSeo({
+      title,
+      description,
+      path: '/blog',
+      locale,
+      structuredData: {
+        '@context': 'https://schema.org',
+        '@type': 'Blog',
+        name: title,
+        description,
+        url: localizedPageUrl('/blog', locale),
+        publisher: {
+          '@type': 'Organization',
+          name: envConfigs.app_name,
+          url: localizedPageUrl('/', locale),
         },
-        {
-          name: 'description',
-          content: m['blog.description']({}, { locale: locale as any }),
-        },
-      ],
-      links: [
-        { rel: 'canonical', href: urlFor(locale ?? 'en') },
-        ...locales.map((loc) => ({
-          rel: 'alternate',
-          hrefLang: loc,
-          href: urlFor(loc),
-        })),
-      ],
-    };
+      },
+    });
   },
   component: BlogPage,
 });

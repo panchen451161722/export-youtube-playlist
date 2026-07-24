@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { requestPasswordReset } from '@/core/auth/client';
 import { Link } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
+import { privatePageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { localizeHref } from '@/paraglide/runtime.js';
 import { usePublicConfig } from '@/hooks/use-public-config';
@@ -168,5 +169,6 @@ function ForgotPasswordPage() {
 }
 
 export const Route = createFileRoute('/(auth)/forgot-password')({
+  head: () => privatePageSeo(m['common.sign.forgot_password_title']()),
   component: ForgotPasswordPage,
 });

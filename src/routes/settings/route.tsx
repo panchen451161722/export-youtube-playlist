@@ -11,17 +11,21 @@ import {
 } from 'lucide-react';
 
 import { envConfigs } from '@/config';
+import { privatePageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { SupportWidget } from '@/blocks/support-widget';
 import { AppLayout } from '@/components/app-layout';
 
 export const Route = createFileRoute('/settings')({
+  head: () => privatePageSeo(m['common.systems.settings']()),
   component: SettingsLayout,
 });
 
+const SHOW_DEFERRED_ACCOUNT_FEATURES = false;
+
 function SettingsLayout() {
   const group = m['common.systems.settings']();
-  const navItems = [
+  const deferredNavItems = [
     {
       href: '/settings',
       label: m['settings.nav.overview'](),
@@ -59,6 +63,7 @@ function SettingsLayout() {
       group,
     },
   ];
+  const navItems = SHOW_DEFERRED_ACCOUNT_FEATURES ? deferredNavItems : [];
 
   const footerNavItems = [
     {
@@ -74,10 +79,11 @@ function SettingsLayout() {
       navItems={navItems}
       footerNavItems={footerNavItems}
       brand={envConfigs.app_name}
-      brandHref="/settings"
+      brandHref="/settings/profile"
+      profileHref="/settings/profile"
     >
       <Outlet />
-      <SupportWidget />
+      {SHOW_DEFERRED_ACCOUNT_FEATURES ? <SupportWidget /> : null}
     </AppLayout>
   );
 }
