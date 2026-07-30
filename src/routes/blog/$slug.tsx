@@ -1,4 +1,4 @@
-import { createFileRoute, notFound } from '@tanstack/react-router';
+import { createFileRoute, notFound, redirect } from '@tanstack/react-router';
 import { MDXProvider } from '@mdx-js/react';
 import { ArrowLeft, Calendar } from 'lucide-react';
 
@@ -16,7 +16,13 @@ import { getBlogPostFn } from '@/content/posts/server';
 
 export const Route = createFileRoute('/blog/$slug')({
   loader: async ({ params }) => {
-    const locale = getLocale();
+    if (getLocale() !== 'en') {
+      throw redirect({
+        href: absoluteUrl(`/blog/${params.slug}`),
+        statusCode: 308,
+      });
+    }
+    const locale = 'en';
     const post = await getBlogPostFn({
       data: { slug: params.slug, locale },
     });
@@ -35,6 +41,7 @@ export const Route = createFileRoute('/blog/$slug')({
       description: post.description,
       path,
       locale,
+      availableLocales: ['en'],
       type: 'article',
       image,
       imageAlt: post.title,

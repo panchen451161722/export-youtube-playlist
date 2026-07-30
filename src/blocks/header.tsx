@@ -1,15 +1,42 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { getRouteApi } from '@tanstack/react-router';
 import { ChevronDown, Menu, X } from 'lucide-react';
 
-import { useSession } from '@/core/auth/client';
-import { tDynamic } from '@/core/i18n/dynamic';
 import { Link } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
 import { m } from '@/paraglide/messages.js';
 import { LocaleSelector } from '@/components/locale-selector';
-import { SiteUserMenu } from '@/components/site-user-menu';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { PUBLIC_TOOL_DEFINITIONS } from '@/components/tools/public-tool-definitions';
+
+const rootRouteApi = getRouteApi('__root__');
+
+const SiteUserMenu = lazy(() =>
+  import('@/components/site-user-menu').then((module) => ({
+    default: module.SiteUserMenu,
+  }))
+);
+
+const publicToolTitles = {
+  thumbnail: () => m['tools.extra.thumbnail.title'](),
+  tags: () => m['tools.extra.tags.title'](),
+  description: () => m['tools.extra.description.title'](),
+  embed: () => m['tools.extra.embed.title'](),
+  restrictions: () => m['tools.extra.restrictions.title'](),
+  channel_id: () => m['tools.extra.channel_id.title'](),
+  channel_playlist: () => m['tools.extra.channel_playlist.title'](),
+  subscribe: () => m['tools.extra.subscribe.title'](),
+  channel_playlists: () => m['tools.extra.channel_playlists.title'](),
+  channel_links: () => m['tools.extra.channel_links.title'](),
+  channel_titles: () => m['tools.extra.channel_titles.title'](),
+  channel_export: () => m['tools.extra.channel_export.title'](),
+  channel_analyzer: () => m['tools.extra.channel_analyzer.title'](),
+  channel_keywords: () => m['tools.extra.channel_keywords.title'](),
+  channel_assets: () => m['tools.extra.channel_assets.title'](),
+} satisfies Record<
+  (typeof PUBLIC_TOOL_DEFINITIONS)[number]['key'],
+  () => string
+>;
 
 type ToolItem = {
   label: string;
@@ -42,7 +69,7 @@ function ToolsMenu({
       href: '/tools/youtube-playlist-analyzer',
     },
     ...PUBLIC_TOOL_DEFINITIONS.map((tool) => ({
-      label: tDynamic(`tools.extra.${tool.key}.title`),
+      label: publicToolTitles[tool.key](),
       href: `/tools/${tool.slug}`,
     })),
   ];
@@ -127,15 +154,16 @@ function ToolsMenu({
 }
 
 export function Header() {
-  const { data: session } = useSession();
-  const [hydrated, setHydrated] = useState(false);
+  const { user } = rootRouteApi.useLoaderData();
   const [open, setOpen] = useState(false);
-
-  useEffect(() => setHydrated(true), []);
 
   const navItems = [
     { href: '/#exporter', label: m['landing.nav.home'](), disabled: false },
-    { href: '/blog', label: m['landing.nav.blogs'](), disabled: false },
+    {
+      href: `${envConfigs.app_url}/blog`,
+      label: m['landing.nav.blogs'](),
+      disabled: false,
+    },
     { href: '/pricing', label: m['landing.nav.pricing'](), disabled: false },
     { href: '#', label: m['landing.nav.feedback'](), disabled: true },
     { href: '/contact', label: m['landing.nav.contact'](), disabled: false },
@@ -196,12 +224,14 @@ export function Header() {
         <div className="hidden items-center gap-2 lg:flex">
           <LocaleSelector />
           <ThemeToggle />
-          {hydrated && session?.user ? (
-            <SiteUserMenu
-              name={session.user.name || 'User'}
-              email={session.user.email}
-              image={session.user.image}
-            />
+          {user ? (
+            <Suspense fallback={null}>
+              <SiteUserMenu
+                name={user.name || 'User'}
+                email={user.email}
+                image={user.image}
+              />
+            </Suspense>
           ) : (
             <Link
               href="/sign-in"
@@ -235,12 +265,14 @@ export function Header() {
             <div className="mt-2 flex items-center gap-2 border-t border-[#18213b]/8 pt-3 dark:border-white/10">
               <LocaleSelector />
               <ThemeToggle />
-              {hydrated && session?.user ? (
-                <SiteUserMenu
-                  name={session.user.name || 'User'}
-                  email={session.user.email}
-                  image={session.user.image}
-                />
+              {user ? (
+                <Suspense fallback={null}>
+                  <SiteUserMenu
+                    name={user.name || 'User'}
+                    email={user.email}
+                    image={user.image}
+                  />
+                </Suspense>
               ) : (
                 <Link
                   href="/sign-in"

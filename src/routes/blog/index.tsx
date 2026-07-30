@@ -1,7 +1,7 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 import { envConfigs } from '@/config';
-import { localizedPageUrl, publicPageSeo } from '@/lib/seo';
+import { absoluteUrl, localizedPageUrl, publicPageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
 import { Footer } from '@/blocks/footer';
@@ -12,7 +12,13 @@ import { getBlogPostsFn } from '@/content/posts/server';
 
 export const Route = createFileRoute('/blog/')({
   loader: async () => {
-    const locale = getLocale();
+    if (getLocale() !== 'en') {
+      throw redirect({
+        href: absoluteUrl('/blog'),
+        statusCode: 308,
+      });
+    }
+    const locale = 'en';
     const posts = await getBlogPostsFn({ data: { locale } });
     return { locale, posts };
   },
@@ -28,6 +34,7 @@ export const Route = createFileRoute('/blog/')({
       description,
       path: '/blog',
       locale,
+      availableLocales: ['en'],
       structuredData: {
         '@context': 'https://schema.org',
         '@type': 'Blog',

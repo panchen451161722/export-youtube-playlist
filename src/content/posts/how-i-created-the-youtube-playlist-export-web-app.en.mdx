@@ -1,0 +1,137 @@
+export const meta = {
+  title: 'How I Built the YouTube Playlist Export Web App',
+  description:
+    'The product decisions, technical challenges, and lessons behind turning a playlist export idea into a privacy-conscious web application.',
+  created_at: '2026-07-29T12:00:00Z',
+  author_name: 'Export YouTube Playlist',
+};
+
+Useful products often begin with a repetitive task. In this case, the task was simple to describe: take a public YouTube playlist and turn it into structured data that could be searched, sorted, archived, or analyzed.
+
+Copying video titles and links by hand was slow. Existing tools often supported only a small number of videos, required a YouTube sign-in, or produced files with too little information. A quick script could solve the problem for one developer, but it would not help someone who simply wanted to paste a URL and download a file.
+
+That gap became the starting point for [Export YouTube Playlist](/).
+
+## The problem I wanted to solve
+
+A playlist looks organized on YouTube, but its information is difficult to reuse elsewhere. A researcher may need titles and publication dates. A course creator may want durations and channel names. A music curator may want links, descriptions, and public engagement statistics in a spreadsheet.
+
+The first product requirements were intentionally narrow:
+
+- Accept a public YouTube playlist URL.
+- Preserve the order of available videos.
+- Retrieve useful public metadata.
+- Create files that open in familiar tools.
+- Avoid requiring access to a user's YouTube account.
+
+Keeping the first version focused made the technical decisions much clearer.
+
+## From a script to a web workflow
+
+A command-line script is a good prototype because it proves that the data flow works. It can parse a playlist ID, request playlist items, load details for each available video, and write the result to a CSV file.
+
+The friction appears when someone else tries to use it. They need a runtime, dependencies, an API key, a terminal, and enough confidence to diagnose errors. Even for the person who wrote the script, repeating that setup every time becomes tedious.
+
+The web version reduced the workflow to three actions:
+
+1. Paste a playlist URL.
+2. Choose one or more export formats.
+3. Download the generated file.
+
+That sounds like a small interface, but making it dependable required careful work on validation, API limits, file generation, and error handling.
+
+## Building on the official YouTube Data API
+
+The application uses the official YouTube Data API instead of scraping YouTube pages. The server extracts the `list` parameter from a valid YouTube URL, checks the hostname and playlist ID, and requests only the public data needed for the export.
+
+Playlist data arrives in pages, so the service must continue requesting results while preserving the original position of each item. It then loads video details in batches to collect fields such as:
+
+- Title, description, video URL, and thumbnail.
+- Channel name and upload time.
+- Duration in several useful representations.
+- Public view, like, and comment counts when available.
+- Tags, hashtags, links, and email addresses found in descriptions.
+
+Deleted, private, restricted, or otherwise unavailable videos may not include complete information. The exporter skips unusable entries and clearly reports when a result is incomplete or reaches the free 500-video limit.
+
+## Designing for failures, not just success
+
+The happy path is easy to demonstrate. The difficult part is explaining what happened when the playlist cannot be loaded.
+
+The application distinguishes between several common cases:
+
+- The URL does not contain a valid playlist ID.
+- The playlist is private, deleted, or unavailable.
+- YouTube's API quota has been exhausted.
+- The upstream request takes too long.
+- A network or API error interrupts the request.
+
+Requests have a timeout, response caching is disabled for playlist results, and a short rate limit discourages accidental repeated submissions. The UI turns service errors into specific guidance instead of showing a generic failure message.
+
+These details are less visible than the export button, but they are what make a small utility feel reliable.
+
+## Generating files in the browser
+
+The server returns structured public metadata; the browser creates the downloadable files. This keeps the export step responsive and means generated spreadsheets are not uploaded back to the application.
+
+The first useful formats were CSV and Excel, but different workflows needed different outputs. The exporter now supports 13 formats:
+
+- CSV and Excel for spreadsheets.
+- JSON, XML, YAML, and SQLite for structured data.
+- Text, Markdown, HTML, and Word for readable documents.
+- Bookmark HTML for saving links in a browser.
+- M3U and M3U8 for compatible playlist applications.
+
+When one format is selected, it downloads directly. Selecting multiple formats—or leaving every option unchecked—produces a ZIP containing the requested files.
+
+Each format uses the same normalized set of fields. That shared data model prevents the CSV, spreadsheet, document, and database versions from quietly disagreeing with one another.
+
+## Making a simple interface feel trustworthy
+
+The exporter does not need a complicated dashboard. It needs a clear input, understandable format choices, an obvious progress state, and useful feedback.
+
+Several interface decisions came directly from that principle:
+
+- Validate the URL before starting a request.
+- Explain that public and accessible unlisted playlists are supported.
+- Show the free playlist limit before the user exports.
+- Preview the loaded playlist and its video count.
+- Keep actions usable on narrow mobile screens.
+- Use explicit success and error messages.
+
+The page also explains where the data comes from and what is not stored. A utility that processes links and creates downloads should make its privacy model easy to understand.
+
+## Privacy was part of the architecture
+
+The application does not need a YouTube login for public playlists. It does not ask for subscriptions, viewing history, or private account data.
+
+Only the playlist URL is sent to the application so the server can request current public metadata. Export files are generated in the browser, and the application does not create a saved history of playlist results.
+
+This is both a product choice and a technical simplification. Collecting less user data reduces risk, removes unnecessary authentication steps, and makes the tool faster to try.
+
+## Expanding beyond the original exporter
+
+Once the main export flow worked, the same public data could support smaller, focused tools. Some people need only a clean list of links. Others want titles, total watch time, channel distribution, tags, thumbnails, or channel information.
+
+That led to a growing collection of tools built around the same principles:
+
+- One clear task per page.
+- No YouTube sign-in for public data.
+- Results that can be copied or downloaded.
+- Consistent handling of unavailable items and API limits.
+
+The full exporter remains the center of the product, while the focused tools remove unnecessary options for simpler jobs.
+
+## What I learned from building it
+
+The biggest lesson was that file export is not mainly a file-format problem. It is a data-quality and workflow problem.
+
+Users need predictable columns, stable ordering, honest handling of missing values, safe spreadsheet output, and error messages that tell them what to do next. Supporting many formats matters only after the underlying data is consistent.
+
+I also learned to keep the product close to its original purpose. It is tempting to add accounts, saved projects, and complex dashboards early. For a utility like this, the fastest path to value is still the shortest one: paste a public playlist, choose a format, and download useful data.
+
+## Try the exporter
+
+If you have a public YouTube or YouTube Music playlist, open the [playlist exporter](/), paste the URL, and choose the format that fits your workflow.
+
+The tool is free for playlists with up to 500 available videos, requires no YouTube account connection, and generates the final download directly in your browser.

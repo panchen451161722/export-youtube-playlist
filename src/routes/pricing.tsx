@@ -7,6 +7,7 @@ import { getLocale } from '@/paraglide/runtime.js';
 import { Footer } from '@/blocks/footer';
 import { Header } from '@/blocks/header';
 import { Pricing } from '@/blocks/pricing';
+import { GoogleOneTap } from '@/components/google-one-tap';
 
 export const Route = createFileRoute('/pricing')({
   loader: () => {
@@ -45,6 +46,7 @@ export const Route = createFileRoute('/pricing')({
 function PricingPage() {
   return (
     <div className="bg-background text-foreground flex min-h-screen flex-col">
+      <GoogleOneTap callbackURL="/pricing" />
       <Header />
       <main className="flex-1">
         <h1 className="sr-only">{m['landing.pricing.title']()}</h1>

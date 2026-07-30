@@ -1,6 +1,6 @@
 # Export YouTube Playlist：上线执行计划
 
-最后更新：2026-07-22
+最后更新：2026-07-28
 
 ## 1. 首发目标
 
@@ -27,6 +27,8 @@
 - 首发只支持公开播放列表，不申请读取用户 YouTube 私人数据的 OAuth 权限。
 - 单个播放列表最多导出 500 条；对标站的 5,000 条支持放到稳定期评估。
 - 首发格式为 CSV 和 XLSX；多选或未选择格式时下载 ZIP。
+- 仅为 Home 和 Channel Export 对齐对标站的 13 种格式；未选择格式时默认将全部格式
+  打包为 ZIP。
 - Pricing 保留 Free 和 `Pro — Coming soon`；价格与计费周期待定，不启用付款按钮。
 - AdSense 不阻塞上线；上线后申请，获批前不展示空广告位。
 - 访问统计使用 Cloudflare Web Analytics，暂不接 Google Analytics 或 Sentry。
@@ -336,3 +338,173 @@
 - 有点击但工具使用率低：先修输入、结果和速度
 - 无曝光：检查收录、内链、搜索意图和内容质量；不靠批量页面解决
 - 当日预计 YouTube 配额超过 70% 时暂停新重型工具，优先缓存、限流或申请官方配额扩展
+
+## 10. Home 与 Channel Export 格式补全计划
+
+目标：只为以下两个完整导出入口补齐对标站的 13 种格式：
+
+1. Home 播放列表导出器：`/#exporter`
+2. Channel Export：`/tools/export-youtube-channel`
+
+其余 17 个工具内页保持当前格式和交互，不增加 13 格式选择器。两个目标入口的每种
+格式都必须达到 **可比数据一致率 ≥95%（差异 ≤5%）**。
+
+对标站两个入口当前都支持：
+
+1. CSV
+2. Excel (`.xlsx`)
+3. Text (`.txt`)
+4. Bookmark HTML
+5. JSON
+6. Markdown
+7. XML
+8. HTML
+9. YAML
+10. SQLite
+11. Word (`.docx`)
+12. M3U
+13. M3U8
+
+### 10.1 已确认的范围与交互
+
+- [x] Home 和 Channel Export 使用同一套格式名称、顺序和选择器
+- [x] 两个入口都保持匿名可用，不增加登录或 preview
+- [x] 输入 URL → 选择格式 → Export → 自动下载 → 成功提示与撒花
+- [x] 只选一种格式时直接下载对应文件
+- [x] 选择两种及以上格式时下载一个 ZIP
+- [x] 未选择任何格式时默认生成全部 13 种格式的 ZIP
+- [x] Channel Export 保留现有 Videos、Shorts、Live media type 筛选，导出内容必须
+      与用户选择的类型一致
+- [x] 其他工具内页不增加 Word、SQLite、M3U 等无关格式
+- [x] 首轮不增加自定义字段、CSV 分隔符和编码选项；这些功能另行评估
+- [x] 文件继续在浏览器端生成，不上传或持久化播放列表、频道数据或导出文件
+
+### 10.2 P0：共享 17 字段数据合同
+
+Home 当前默认 CSV/XLSX 是 19 列，Channel Export 已接近对标站的 17 列。先把两种
+数据源映射到同一个参考兼容合同，否则不同格式之间会继续出现列名和顺序漂移。
+
+- [x] 建立共享 `YouTubeExportRecord`，固定原站 CSV 的 17 个字段和顺序：
+      Title、Description、Thumbnail URL、Channel name、Views、Likes、Comments、
+      Duration (Seconds)、Duration (Minutes)、Duration (Timestamp)、Duration、
+      Uploaded time、Video URL、Tags、Tags (in description)、
+      Emails (in description)、Links (in description)
+- [x] 新建 Playlist → `YouTubeExportRecord` 映射器
+- [x] 新建 Channel Videos → `YouTubeExportRecord` 映射器
+- [x] `Position`、`Video ID`、`mediaType` 继续保留在内部模型，但不进入默认参考兼容
+      文件
+- [x] 统一列名、字段顺序、空值、数字类型、上传时间、数组表示和 Unicode
+- [x] CSV 和 Excel 继续防止以 `= + - @` 开头的公式注入
+
+### 10.3 共享格式生成架构
+
+- [x] 将 Home 中的导出逻辑从 `src/blocks/hero.tsx` 抽到共享导出目录
+- [x] 建立格式注册表：key、label、extension、MIME、文本/二进制、generator
+- [x] 两个入口只负责获取和筛选数据，格式生成与 ZIP 统一调用共享注册表
+- [x] 建立可复用的 `ExportFormatPicker` 组件
+- [x] ZIP 生成器根据注册表生成选中文件，不在两个页面重复 13 组条件分支
+- [x] 单个格式生成失败时显示具体格式名称；多格式 ZIP 未完整生成时不下载残缺 ZIP
+- [x] Word 和 SQLite 生成器只在被选中时懒加载，不进入首页初始 bundle
+
+### 10.4 第一批：共享基础与 8 种格式（预计 1.5 天）
+
+同时接入 Home 和 Channel Export：
+
+- [x] CSV：修正 Home 为参考兼容 17 列，Channel 复用同一生成器
+- [x] Excel：同一 17 列、数据类型和顺序
+- [x] JSON：按原站行对象结构输出，列表字段保持参考字符串表示
+- [x] Text：按对标脚本复刻字段、Description 位置、分隔符和换行
+- [x] Markdown：按对标脚本生成逐视频标题、字段列表和转义内容
+- [x] XML：按对标脚本生成 `export/items/item` 并正确转义实体
+- [x] HTML：生成自包含 UTF-8 表格，链接可点击，内容经过转义
+- [x] YAML：按对标脚本保持原字段名并安全处理多行与特殊标量
+
+第一批结束时，两个入口都具备 8 种格式。
+
+### 10.5 第二批：Bookmark、M3U、M3U8（预计 0.5–1 天）
+
+- [x] Bookmark HTML：生成浏览器可导入的 Netscape Bookmark File
+- [x] M3U：输出 `#EXTM3U`、`#EXTINF`、时长、频道、标题和视频 URL
+- [x] M3U8：使用同一记录，明确采用 UTF-8 和 `.m3u8` 扩展名
+- [x] Home 保持播放列表顺序；Channel Export 保持筛选后的频道上传顺序
+- [ ] 中文、emoji、逗号、引号和换行在两个入口都可正确打开
+
+第二批结束时，两个入口都具备 11 种格式。
+
+### 10.6 第三批：Word 与 SQLite（预计 1.5–2 天）
+
+- [x] Word：分析对标站公开生成脚本，确认标题、逐视频结构和字段表格
+- [x] Word：复用 `fflate` 生成最小 OOXML，文件通过解包结构测试
+- [x] SQLite：按对标脚本复刻 `videos` 表、17 个清洗后列名和 TEXT 类型
+- [x] SQLite：仅在选中时加载浏览器 SQLite/WASM，并导出真实数据库文件
+- [x] SQLite 文件通过 `PRAGMA integrity_check`，记录数与当前导出结果一致
+- [ ] 500 条 Playlist 和大型 Channel 导出时记录生成耗时、内存和文件大小
+
+第三批结束时，两个入口都达到 13 种格式。
+
+### 10.7 两套对标样本
+
+Home 固定样本：
+
+- Playlist：`PL-osiE80TeTskrapNbzXhwoFUiLCjGgY7`
+- 同一天分别从对标站和当前站下载 13 种格式
+
+Channel Export 固定样本：
+
+- Channel：`UCCezIgC97PvUuR4_gbFUs5g`
+- Media type：All uploads
+- 同一天分别从对标站和当前站下载 13 种格式
+
+共建立 26 组 reference/current 格式对。对标文件作为 golden fixtures 保存，并记录
+抓取日期。
+
+### 10.8 95% 一致率验收
+
+- [ ] 13 种格式分别实现解析器或归一化器，不使用文件大小或二进制哈希比较
+- [ ] CSV/Excel/JSON/YAML/XML/SQLite：解析为记录和字段后逐单元格比较
+- [ ] Text/Markdown/HTML/Bookmark/M3U/M3U8：解析为规范化视频记录后比较
+- [ ] Word：解包 OOXML 后比较表格单元格，忽略主题和生成时间
+- [ ] 行数、视频顺序、Title、Video URL 等身份字段必须 100% 一致
+- [ ] Description、Channel、Duration、Uploaded time 等稳定字段精确匹配
+- [ ] Views、Likes、Comments 等实时计数允许 1% 相对误差
+- [ ] Tags、描述标签、邮箱、链接按集合比较，忽略无意义顺序和大小写差异
+- [ ] Home 的 13 种格式每种均须 ≥95%
+- [ ] Channel Export 的 13 种格式每种均须 ≥95%
+- [ ] 任意一个入口或格式低于 95% 时停止发布，先输出差异报告并修复
+
+当前开发验收记录（2026-07-28）：
+
+- Home 固定样本真实生成 13 文件 ZIP，26/26 视频匹配，17 列表头与参考 CSV 完全一致
+- 排除会随抓取时间变化的 Views、Likes、Comments 后，Home 稳定字段精确一致率为
+  99.7%；Title、Description、URL、Tags、时间等身份与稳定字段为 100%，唯一差异是
+  原站把 `1 Second` 写成了 `1 Seconds`
+- Channel 固定样本真实生成 13 文件 ZIP，共 277 条；SQLite `videos` 表为 277 条
+- Home 与 Channel 两份 SQLite 均通过 `PRAGMA integrity_check = ok`
+- Channel 已验证未选择格式的 13 文件 ZIP、单选 CSV 直接下载、成功提示和撒花
+- `tsc --noEmit`、25 个测试、Node 构建、Cloudflare 构建和 security-scan 均通过
+- 待补：同日 Channel 对标站 13 个文件的逐格式 golden comparison，以及 500 条压力测试
+
+### 10.9 测试与排期
+
+测试矩阵：
+
+- [ ] Home：1、26、50、200、500 条播放列表
+- [ ] Channel：Videos、Shorts、Live、All，覆盖 1、50、200、500+ 条
+- [ ] 空值、删除/私有视频、缺失统计字段
+- [ ] ASCII、中文、emoji、组合字符、RTL、逗号、引号和换行
+- [x] 单格式直下、未选择时 13 格式 ZIP
+- [x] ZIP 必须包含正确数量、名称和扩展名，且所有文件都能重新解析
+- [ ] `pnpm exec tsc --noEmit`、格式单测、26 组对标、`pnpm build`、
+      security-scan 全部通过
+
+建议排期：
+
+- Day 1：抓取 Home/Channel 共 26 个对标文件；统一 17 字段模型和格式注册表
+- Day 2：两个入口接入 CSV、Excel、JSON、Text、Markdown
+- Day 3：两个入口接入 XML、HTML、YAML、Bookmark HTML、M3U、M3U8
+- Day 4：两个入口接入 Word、SQLite；完成懒加载和 ZIP 错误隔离
+- Day 5：26 组格式对标、500 条压力测试、移动端和下载回归
+
+完成标准：只修改 Home 和 `/tools/export-youtube-channel`，两个入口均支持
+13/13 格式，每个入口的每种格式一致率 ≥95%，身份字段 100% 一致，且不破坏匿名
+导出、筛选、ZIP、成功提示和隐私承诺。

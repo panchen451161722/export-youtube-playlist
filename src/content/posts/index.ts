@@ -12,6 +12,8 @@ import { baseLocale } from '@/paraglide/runtime.js';
  * local posts via the pure helpers below.
  */
 export const BLOG_POST_SLUGS = [
+  'how-i-created-the-youtube-playlist-export-web-app',
+  'how-i-learned-python-using-youtube-playlists',
   'how-to-export-a-youtube-playlist-to-csv-or-excel',
 ] as const;
 

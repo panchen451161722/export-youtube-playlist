@@ -8,10 +8,19 @@ import {
   LoaderCircle,
   Search,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Link } from '@/core/i18n/navigation';
 import { apiPost } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
+import {
+  channelVideosToExportRecords,
+  downloadYouTubeExports,
+  triggerExportConfetti,
+  YOUTUBE_EXPORT_FORMATS,
+  type YouTubeExportFormat,
+} from '@/lib/youtube-export';
+import { ExportFormatPicker } from '@/components/export-format-picker';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -24,12 +33,9 @@ import {
 import {
   copyText,
   createChannelAnalyzerCsv,
-  createChannelExportCsv,
-  createChannelExportXlsx,
   createChannelLinksCsv,
   createChannelPlaylistsCsv,
   createChannelTitlesCsv,
-  downloadBlob,
   downloadText,
   safeFileName,
 } from './public-tool-export';
@@ -102,6 +108,10 @@ export type ChannelUtilityLabels = {
   logos: string;
   banners: string;
   videoCount: string;
+  chooseFormats: string;
+  defaultFormats: string;
+  downloadSuccess: string;
+  downloadSelected: string;
 };
 
 type Props = {
@@ -111,6 +121,13 @@ type Props = {
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (!(error instanceof Error)) return fallback;
+  if (error.message.startsWith('export_generation_failed:')) {
+    const formatKey = error.message.split(':')[1] as YouTubeExportFormat;
+    const format = YOUTUBE_EXPORT_FORMATS.find(
+      (item) => item.key === formatKey
+    );
+    return format ? `${fallback} (${format.label})` : fallback;
+  }
   if (error.message.includes('youtube_api_key_missing')) {
     return 'The YouTube API key is not configured yet.';
   }
@@ -205,7 +222,10 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
   const [sort, setSort] = useState<ChannelVideoSort>('original');
   const [query, setQuery] = useState('');
   const [copyStatus, setCopyStatus] = useState('');
-  const [exportingXlsx, setExportingXlsx] = useState(false);
+  const [selectedFormats, setSelectedFormats] = useState<YouTubeExportFormat[]>(
+    []
+  );
+  const [exportingFiles, setExportingFiles] = useState(false);
 
   const includeVideos = ['links', 'titles', 'export', 'analyzer'].includes(
     mode
@@ -215,14 +235,29 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
   const showSort = ['links', 'titles', 'export'].includes(mode);
 
   const mutation = useMutation({
-    mutationFn: (channelUrl: string) =>
-      apiPost<ChannelToolData>('/api/youtube-channel', {
+    mutationFn: async (channelUrl: string) => {
+      const result = await apiPost<ChannelToolData>('/api/youtube-channel', {
         url: channelUrl,
         includeVideos,
         includePlaylists,
         mediaType,
         limit: 5_000,
-      }),
+      });
+      if (mode === 'export') {
+        await downloadYouTubeExports({
+          records: channelVideosToExportRecords(result.videos),
+          context: { title: result.title, source: 'channel' },
+          formats: selectedFormats,
+        });
+      }
+      return result;
+    },
+    onSuccess: () => {
+      if (mode === 'export') {
+        triggerExportConfetti();
+        toast.success(labels.downloadSuccess);
+      }
+    },
   });
 
   const sortedVideos = useMemo(
@@ -288,21 +323,26 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
             ? createChannelPlaylistsCsv(visiblePlaylists)
             : mode === 'analyzer'
               ? createChannelAnalyzerCsv(mutation.data.videos)
-              : createChannelExportCsv(sortedVideos);
+              : '';
+    if (!csv) return;
     downloadText(csv, `${fileBase}-${mode}.csv`, 'text/csv');
   };
 
-  const handleXlsx = async () => {
-    if (!mutation.data || exportingXlsx) return;
-    setExportingXlsx(true);
+  const handleSelectedExport = async () => {
+    if (!mutation.data || exportingFiles) return;
+    setExportingFiles(true);
     try {
-      const blob = await createChannelExportXlsx({
-        ...mutation.data,
-        videos: sortedVideos,
+      await downloadYouTubeExports({
+        records: channelVideosToExportRecords(sortedVideos),
+        context: { title: mutation.data.title, source: 'channel' },
+        formats: selectedFormats,
       });
-      downloadBlob(blob, `${fileBase}.xlsx`);
+      triggerExportConfetti();
+      toast.success(labels.downloadSuccess);
+    } catch (error) {
+      toast.error(getErrorMessage(error, labels.error));
     } finally {
-      setExportingXlsx(false);
+      setExportingFiles(false);
     }
   };
 
@@ -352,7 +392,7 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
           ) : null}
           <Button
             type="submit"
-            disabled={mutation.isPending || !url.trim()}
+            disabled={mutation.isPending || exportingFiles || !url.trim()}
             className="h-11 min-w-36"
           >
             {mutation.isPending ? (
@@ -366,6 +406,23 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
         <p className="text-muted-foreground mt-2 text-xs">
           {labels.inputHelper}
         </p>
+        {mode === 'export' ? (
+          <fieldset className="mt-6">
+            <legend className="text-foreground text-sm font-medium">
+              {labels.chooseFormats}
+            </legend>
+            <div className="mt-3">
+              <ExportFormatPicker
+                selected={selectedFormats}
+                onChange={setSelectedFormats}
+                disabled={mutation.isPending || exportingFiles}
+              />
+            </div>
+            <p className="text-muted-foreground mt-2 text-xs">
+              {labels.defaultFormats}
+            </p>
+          </fieldset>
+        ) : null}
         {mutation.error ? (
           <p role="alert" className="text-destructive mt-3 text-sm">
             {error}
@@ -724,30 +781,31 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
                       {copyStatus === 'videos' ? labels.copied : labels.copy}
                     </Button>
                   ) : null}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleCsv}
-                    disabled={!sortedVideos.length}
-                  >
-                    <Download />
-                    {labels.downloadCsv}
-                  </Button>
                   {mode === 'export' ? (
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={handleXlsx}
-                      disabled={!sortedVideos.length || exportingXlsx}
+                      onClick={handleSelectedExport}
+                      disabled={!sortedVideos.length || exportingFiles}
                     >
-                      {exportingXlsx ? (
+                      {exportingFiles ? (
                         <LoaderCircle className="animate-spin" />
                       ) : (
                         <Download />
                       )}
-                      {labels.downloadXlsx}
+                      {labels.downloadSelected}
                     </Button>
-                  ) : null}
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCsv}
+                      disabled={!sortedVideos.length}
+                    >
+                      <Download />
+                      {labels.downloadCsv}
+                    </Button>
+                  )}
                 </div>
               </div>
               {mode === 'links' || mode === 'titles' ? (
@@ -757,8 +815,11 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
                 />
               ) : (
                 <div className="border-border bg-muted/30 text-muted-foreground mt-4 rounded-xl border p-5 text-sm">
-                  {labels.formats}: CSV, Excel (.xlsx) · {sortedVideos.length}{' '}
-                  {labels.count.toLowerCase()}
+                  {labels.formats}:{' '}
+                  {mode === 'export'
+                    ? `${YOUTUBE_EXPORT_FORMATS.length} formats`
+                    : 'CSV'}{' '}
+                  · {sortedVideos.length} {labels.count.toLowerCase()}
                 </div>
               )}
             </div>

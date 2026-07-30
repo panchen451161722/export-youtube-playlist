@@ -4,8 +4,6 @@ import {
   AlertCircle,
   ArrowRight,
   CheckCircle2,
-  FileSpreadsheet,
-  FileText,
   LoaderCircle,
   LockKeyhole,
   Play,
@@ -14,9 +12,16 @@ import {
 import { toast } from 'sonner';
 
 import { apiPost } from '@/lib/api-client';
+import {
+  downloadYouTubeExports,
+  playlistVideosToExportRecords,
+  triggerExportConfetti,
+  YOUTUBE_EXPORT_FORMATS,
+  type YouTubeExportFormat,
+} from '@/lib/youtube-export';
 import { m } from '@/paraglide/messages.js';
+import { ExportFormatPicker } from '@/components/export-format-picker';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 
 type PlaylistVideo = {
@@ -51,37 +56,6 @@ type PlaylistResult = {
   videos: PlaylistVideo[];
 };
 
-type ExportFormat = 'csv' | 'xlsx';
-type ExportCell = string | number | null;
-
-const exportHeaders = [
-  'Position',
-  'Title',
-  'Description',
-  'Thumbnail URL',
-  'Channel Name',
-  'Views',
-  'Likes',
-  'Comments',
-  'Duration in Seconds',
-  'Duration in Minutes',
-  'Duration in Timestamp',
-  'Duration',
-  'Uploaded Time',
-  'Video URL',
-  'Video ID',
-  'Tags',
-  'Tags (in Description)',
-  'Emails (in Description)',
-  'Links (in Description)',
-] as const;
-
-const exportColumnWidths = [
-  10, 46, 64, 44, 28, 14, 14, 14, 20, 20, 22, 28, 24, 44, 18, 54, 40, 36, 64,
-];
-
-const wrappedExportColumns = new Set([2, 15, 16, 17, 18]);
-
 const youtubeHosts = new Set([
   'youtube.com',
   'www.youtube.com',
@@ -105,138 +79,6 @@ function isValidPlaylistUrl(value: string) {
   }
 }
 
-function safeSpreadsheetText(value: string) {
-  return /^[=+\-@]/.test(value.trimStart()) ? `'${value}` : value;
-}
-
-function safeExportCell(value: ExportCell): ExportCell {
-  return typeof value === 'string' ? safeSpreadsheetText(value) : value;
-}
-
-function numericExportCell(value: string): number | null {
-  if (!value.trim()) return null;
-  const number = Number(value);
-  return Number.isFinite(number) ? number : null;
-}
-
-function listExportCell(values: string[]): string {
-  return `[${values.join(', ')}]`;
-}
-
-function safeFileName(value: string) {
-  const normalized = value
-    .normalize('NFKD')
-    .replace(/[^a-zA-Z0-9-_ ]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .slice(0, 80);
-  return normalized || 'youtube-playlist';
-}
-
-function downloadBlob(blob: Blob, name: string) {
-  const objectUrl = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = objectUrl;
-  anchor.download = name;
-  anchor.hidden = true;
-  document.body.appendChild(anchor);
-  anchor.click();
-  window.setTimeout(() => {
-    anchor.remove();
-    URL.revokeObjectURL(objectUrl);
-  }, 1000);
-}
-
-function toExportRows(videos: PlaylistVideo[]) {
-  return videos.map((video) =>
-    (
-      [
-        video.position,
-        video.title,
-        video.description,
-        video.thumbnailUrl,
-        video.channelTitle,
-        numericExportCell(video.viewCount),
-        numericExportCell(video.likeCount),
-        numericExportCell(video.commentCount),
-        video.durationSeconds,
-        video.durationMinutes,
-        video.duration,
-        video.durationText,
-        video.publishedAt,
-        video.url,
-        video.videoId,
-        listExportCell(video.tags),
-        listExportCell(video.descriptionTags),
-        listExportCell(video.descriptionEmails),
-        listExportCell(video.descriptionLinks),
-      ] satisfies ExportCell[]
-    ).map(safeExportCell)
-  );
-}
-
-function createCsvBlob(result: PlaylistResult) {
-  const csvValue = (value: ExportCell) =>
-    `"${(value === null ? '' : String(value)).replaceAll('"', '""')}"`;
-  const csv = [exportHeaders, ...toExportRows(result.videos)]
-    .map((row) => row.map(csvValue).join(','))
-    .join('\r\n');
-  return new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' });
-}
-
-async function createXlsxBlob(result: PlaylistResult) {
-  const { default: writeXlsxFile } = await import('write-excel-file/browser');
-  const headerStyle = {
-    fontWeight: 'bold' as const,
-    backgroundColor: '#E8EDF8',
-  };
-  const header = exportHeaders.map((value) => ({ value, ...headerStyle }));
-  const data = [
-    header,
-    ...toExportRows(result.videos).map((row) =>
-      row.map((value, columnIndex) => ({
-        value: value ?? undefined,
-        alignVertical: 'top' as const,
-        wrap: wrappedExportColumns.has(columnIndex),
-        ...(columnIndex === 2 ? { height: 72 } : {}),
-      }))
-    ),
-  ];
-  return writeXlsxFile(data, {
-    columns: exportColumnWidths.map((width) => ({ width })),
-    stickyRowsCount: 1,
-  }).toBlob();
-}
-
-async function exportPlaylist(result: PlaylistResult, formats: ExportFormat[]) {
-  const fileName = safeFileName(result.title);
-
-  if (formats.length === 1) {
-    const format = formats[0];
-    const blob =
-      format === 'csv' ? createCsvBlob(result) : await createXlsxBlob(result);
-    downloadBlob(blob, `${fileName}.${format}`);
-    return;
-  }
-
-  const [{ zipSync }, csvBlob, xlsxBlob] = await Promise.all([
-    import('fflate'),
-    Promise.resolve(createCsvBlob(result)),
-    createXlsxBlob(result),
-  ]);
-  const archive = zipSync(
-    {
-      [`${fileName}.csv`]: new Uint8Array(await csvBlob.arrayBuffer()),
-      [`${fileName}.xlsx`]: new Uint8Array(await xlsxBlob.arrayBuffer()),
-    },
-    { level: 6 }
-  );
-  downloadBlob(
-    new Blob([archive], { type: 'application/zip' }),
-    `${fileName}-exports.zip`
-  );
-}
-
 function getErrorCopy(message: string) {
   if (message.includes('youtube_api_key_missing')) {
     return m['landing.exporter.error.config']();
@@ -251,7 +93,13 @@ function getErrorCopy(message: string) {
     return m['landing.exporter.error.timeout']();
   }
   if (message.includes('export_generation_failed')) {
-    return m['landing.exporter.error.export']();
+    const formatKey = message.split(':')[1] as YouTubeExportFormat | undefined;
+    const format = YOUTUBE_EXPORT_FORMATS.find(
+      (item) => item.key === formatKey
+    );
+    return format
+      ? `${m['landing.exporter.error.export']()} (${format.label})`
+      : m['landing.exporter.error.export']();
   }
   return m['landing.exporter.error.network']();
 }
@@ -259,7 +107,7 @@ function getErrorCopy(message: string) {
 export function Hero() {
   const [url, setUrl] = useState('');
   const [clientError, setClientError] = useState('');
-  const [formats, setFormats] = useState({ csv: false, xlsx: false });
+  const [formats, setFormats] = useState<YouTubeExportFormat[]>([]);
 
   const mutation = useMutation({
     mutationFn: async ({
@@ -267,19 +115,20 @@ export function Hero() {
       selectedFormats,
     }: {
       playlistUrl: string;
-      selectedFormats: ExportFormat[];
+      selectedFormats: YouTubeExportFormat[];
     }) => {
       const result = await apiPost<PlaylistResult>('/api/youtube-playlist', {
         url: playlistUrl,
       });
-      try {
-        await exportPlaylist(result, selectedFormats);
-      } catch {
-        throw new Error('export_generation_failed');
-      }
+      await downloadYouTubeExports({
+        records: playlistVideosToExportRecords(result.videos),
+        context: { title: result.title, source: 'playlist' },
+        formats: selectedFormats,
+      });
       return result;
     },
     onSuccess: () => {
+      triggerExportConfetti();
       toast.success(m['landing.exporter.success'](), {
         duration: 6000,
         dismissible: true,
@@ -301,17 +150,9 @@ export function Hero() {
     }
 
     setClientError('');
-    const selectedFormats = (
-      Object.entries(formats).filter(([, selected]) => selected) as [
-        ExportFormat,
-        boolean,
-      ][]
-    ).map(([format]) => format);
-
     mutation.mutate({
       playlistUrl: url.trim(),
-      selectedFormats:
-        selectedFormats.length === 0 ? ['csv', 'xlsx'] : selectedFormats,
+      selectedFormats: formats,
     });
   };
 
@@ -376,14 +217,12 @@ export function Hero() {
                 className="flex gap-1.5"
                 aria-label={m['landing.exporter.formats']()}
               >
-                {['CSV', 'XLSX'].map((format) => (
-                  <span
-                    key={format}
-                    className="border-border bg-background text-muted-foreground rounded-sm border px-2 py-1 font-mono text-[10px] font-medium tracking-wide"
-                  >
-                    {format}
-                  </span>
-                ))}
+                <span className="border-border bg-background text-muted-foreground rounded-sm border px-2 py-1 font-mono text-[10px] font-medium tracking-wide">
+                  {YOUTUBE_EXPORT_FORMATS.length} formats
+                </span>
+                <span className="border-border bg-background text-muted-foreground rounded-sm border px-2 py-1 font-mono text-[10px] font-medium tracking-wide">
+                  ZIP
+                </span>
               </div>
             </div>
 
@@ -424,37 +263,12 @@ export function Hero() {
                 <legend className="text-foreground text-sm font-medium">
                   {m['landing.exporter.choose_formats']()}
                 </legend>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <label className="border-border bg-card hover:bg-secondary has-[[data-checked]]:border-foreground has-[[data-checked]]:bg-secondary flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors">
-                    <Checkbox
-                      checked={formats.csv}
-                      onCheckedChange={(checked) =>
-                        setFormats((current) => ({
-                          ...current,
-                          csv: checked,
-                        }))
-                      }
-                      className="data-checked:border-primary data-checked:bg-primary size-5"
-                    />
-                    <FileText className="text-muted-foreground size-5" />
-                    <span className="text-foreground font-medium">CSV</span>
-                  </label>
-                  <label className="border-border bg-card hover:bg-secondary has-[[data-checked]]:border-foreground has-[[data-checked]]:bg-secondary flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors">
-                    <Checkbox
-                      checked={formats.xlsx}
-                      onCheckedChange={(checked) =>
-                        setFormats((current) => ({
-                          ...current,
-                          xlsx: checked,
-                        }))
-                      }
-                      className="data-checked:border-primary data-checked:bg-primary size-5"
-                    />
-                    <FileSpreadsheet className="text-muted-foreground size-5" />
-                    <span className="text-foreground font-medium">
-                      Excel (.xlsx)
-                    </span>
-                  </label>
+                <div className="mt-3">
+                  <ExportFormatPicker
+                    selected={formats}
+                    onChange={setFormats}
+                    disabled={mutation.isPending}
+                  />
                 </div>
                 <p className="text-muted-foreground mt-2 text-xs">
                   {m['landing.exporter.default_formats']()}
@@ -494,7 +308,10 @@ export function Hero() {
             <div className="border-border mt-6 grid grid-cols-3 divide-x border-t pt-5 text-center">
               {[
                 ['500', m['landing.exporter.stat_videos']()],
-                ['2', m['landing.exporter.stat_formats']()],
+                [
+                  String(YOUTUBE_EXPORT_FORMATS.length),
+                  m['landing.exporter.stat_formats'](),
+                ],
                 ['0', m['landing.exporter.stat_uploads']()],
               ].map(([value, label]) => (
                 <div key={String(label)} className="px-2 py-2">

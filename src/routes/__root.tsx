@@ -18,7 +18,6 @@ import { getLocale } from '@/paraglide/runtime.js';
 import { GoogleAnalytics } from '@/components/analytics/google-analytics';
 import { Plausible } from '@/components/analytics/plausible';
 import { CustomerService } from '@/components/customer-service';
-import { GoogleOneTap } from '@/components/google-one-tap';
 import { Toaster } from '@/components/ui/sonner';
 
 import '@fontsource-variable/inter';
@@ -26,10 +25,42 @@ import '@/styles/globals.css';
 
 // Analytics IDs live in the DB config (1h-cached service). Fetched via a
 // server function so drizzle/db code never reaches the client bundle.
-const getAnalyticsConfigs = createServerFn().handler(async () => {
-  const { getAllConfigs } = await import('@/modules/config/service');
+const getRootData = createServerFn().handler(async () => {
+  const [{ getAllConfigs }, { getRequestHeaders }] = await Promise.all([
+    import('@/modules/config/service'),
+    import('@tanstack/react-start/server'),
+  ]);
   const configs = await getAllConfigs();
+  const requestHeaders = getRequestHeaders();
+  const hasSessionCookie = (requestHeaders.get('cookie') || '').includes(
+    'better-auth.session_token='
+  );
+  let user: {
+    name: string;
+    email: string;
+    image?: string | null;
+  } | null = null;
+
+  if (hasSessionCookie) {
+    try {
+      const { getAuth } = await import('@/core/auth');
+      const session = await getAuth(configs).api.getSession({
+        headers: requestHeaders,
+      });
+      if (session?.user) {
+        user = {
+          name: session.user.name,
+          email: session.user.email,
+          image: session.user.image,
+        };
+      }
+    } catch {
+      // A public page must remain available if session lookup fails.
+    }
+  }
+
   return {
+    user,
     gaId: configs.google_analytics_id?.trim() || '',
     plausibleDomain: configs.plausible_domain?.trim() || '',
     plausibleSrc: configs.plausible_src?.trim() || '',
@@ -49,7 +80,7 @@ const getAnalyticsConfigs = createServerFn().handler(async () => {
 });
 
 export const Route = createRootRoute({
-  loader: () => getAnalyticsConfigs(),
+  loader: () => getRootData(),
   head: () => {
     return {
       meta: [
@@ -76,7 +107,7 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
-  const analytics = Route.useLoaderData();
+  const rootData = Route.useLoaderData();
 
   return (
     <QueryClientProvider client={getQueryClient()}>
@@ -88,20 +119,19 @@ function RootComponent() {
       >
         <Outlet />
         <Toaster position="top-center" richColors />
-        <GoogleOneTap />
-        {analytics?.gaId ? (
-          <GoogleAnalytics measurementId={analytics.gaId} />
+        {rootData?.gaId ? (
+          <GoogleAnalytics measurementId={rootData.gaId} />
         ) : null}
-        {analytics?.plausibleDomain ? (
+        {rootData?.plausibleDomain ? (
           <Plausible
-            domain={analytics.plausibleDomain}
-            src={analytics.plausibleSrc || undefined}
+            domain={rootData.plausibleDomain}
+            src={rootData.plausibleSrc || undefined}
           />
         ) : null}
         <CustomerService
-          crispWebsiteId={analytics?.crispWebsiteId || undefined}
-          tawkPropertyId={analytics?.tawkPropertyId || undefined}
-          tawkWidgetId={analytics?.tawkWidgetId || undefined}
+          crispWebsiteId={rootData?.crispWebsiteId || undefined}
+          tawkPropertyId={rootData?.tawkPropertyId || undefined}
+          tawkWidgetId={rootData?.tawkWidgetId || undefined}
         />
       </ThemeProvider>
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}

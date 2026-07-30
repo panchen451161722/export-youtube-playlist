@@ -11,7 +11,10 @@ const productLinks = [
   { label: () => m['landing.footer.how'](), href: '/#how-it-works' },
   { label: () => m['landing.footer.pricing'](), href: '/pricing' },
   { label: () => m['landing.footer.faq'](), href: '/#faq' },
-  { label: () => m['landing.footer.blog'](), href: '/blog' },
+  {
+    label: () => m['landing.footer.blog'](),
+    href: `${envConfigs.app_url}/blog`,
+  },
 ] as const;
 
 const legalLinks = [

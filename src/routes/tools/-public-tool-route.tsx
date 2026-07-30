@@ -1,38 +1,158 @@
+import { lazy, Suspense } from 'react';
+
 import { envConfigs } from '@/config';
 import { localizedPageUrl, publicPageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
 import { Footer } from '@/blocks/footer';
 import { Header } from '@/blocks/header';
-import { PublicToolPage } from '@/blocks/tools/public-tool-page';
 import type { PublicToolDefinition } from '@/components/tools/public-tool-definitions';
 
-function localizedMessage(key: string, locale: string) {
-  const message = (m as Record<string, unknown>)[key];
-  if (typeof message !== 'function') return key;
-  return (
-    message as (
-      args?: Record<string, never>,
-      options?: { locale: string }
-    ) => string
-  )({}, { locale });
+const PublicToolPage = lazy(() =>
+  import('@/blocks/tools/public-tool-page').then((module) => ({
+    default: module.PublicToolPage,
+  }))
+);
+
+type StaticMessage = (...args: any[]) => string;
+
+const publicToolSeoMessages = {
+  thumbnail: {
+    title: m['tools.extra.thumbnail.title'],
+    seoTitle: m['tools.extra.thumbnail.seo_title'],
+    seoDescription: m['tools.extra.thumbnail.seo_description'],
+    faqQuestion: m['tools.extra.thumbnail.faq_1_question'],
+    faqAnswer: m['tools.extra.thumbnail.faq_1_answer'],
+  },
+  tags: {
+    title: m['tools.extra.tags.title'],
+    seoTitle: m['tools.extra.tags.seo_title'],
+    seoDescription: m['tools.extra.tags.seo_description'],
+    faqQuestion: m['tools.extra.tags.faq_1_question'],
+    faqAnswer: m['tools.extra.tags.faq_1_answer'],
+  },
+  description: {
+    title: m['tools.extra.description.title'],
+    seoTitle: m['tools.extra.description.seo_title'],
+    seoDescription: m['tools.extra.description.seo_description'],
+    faqQuestion: m['tools.extra.description.faq_1_question'],
+    faqAnswer: m['tools.extra.description.faq_1_answer'],
+  },
+  embed: {
+    title: m['tools.extra.embed.title'],
+    seoTitle: m['tools.extra.embed.seo_title'],
+    seoDescription: m['tools.extra.embed.seo_description'],
+    faqQuestion: m['tools.extra.embed.faq_1_question'],
+    faqAnswer: m['tools.extra.embed.faq_1_answer'],
+  },
+  restrictions: {
+    title: m['tools.extra.restrictions.title'],
+    seoTitle: m['tools.extra.restrictions.seo_title'],
+    seoDescription: m['tools.extra.restrictions.seo_description'],
+    faqQuestion: m['tools.extra.restrictions.faq_1_question'],
+    faqAnswer: m['tools.extra.restrictions.faq_1_answer'],
+  },
+  channel_id: {
+    title: m['tools.extra.channel_id.title'],
+    seoTitle: m['tools.extra.channel_id.seo_title'],
+    seoDescription: m['tools.extra.channel_id.seo_description'],
+    faqQuestion: m['tools.extra.channel_id.faq_1_question'],
+    faqAnswer: m['tools.extra.channel_id.faq_1_answer'],
+  },
+  channel_playlist: {
+    title: m['tools.extra.channel_playlist.title'],
+    seoTitle: m['tools.extra.channel_playlist.seo_title'],
+    seoDescription: m['tools.extra.channel_playlist.seo_description'],
+    faqQuestion: m['tools.extra.channel_playlist.faq_1_question'],
+    faqAnswer: m['tools.extra.channel_playlist.faq_1_answer'],
+  },
+  subscribe: {
+    title: m['tools.extra.subscribe.title'],
+    seoTitle: m['tools.extra.subscribe.seo_title'],
+    seoDescription: m['tools.extra.subscribe.seo_description'],
+    faqQuestion: m['tools.extra.subscribe.faq_1_question'],
+    faqAnswer: m['tools.extra.subscribe.faq_1_answer'],
+  },
+  channel_playlists: {
+    title: m['tools.extra.channel_playlists.title'],
+    seoTitle: m['tools.extra.channel_playlists.seo_title'],
+    seoDescription: m['tools.extra.channel_playlists.seo_description'],
+    faqQuestion: m['tools.extra.channel_playlists.faq_1_question'],
+    faqAnswer: m['tools.extra.channel_playlists.faq_1_answer'],
+  },
+  channel_links: {
+    title: m['tools.extra.channel_links.title'],
+    seoTitle: m['tools.extra.channel_links.seo_title'],
+    seoDescription: m['tools.extra.channel_links.seo_description'],
+    faqQuestion: m['tools.extra.channel_links.faq_1_question'],
+    faqAnswer: m['tools.extra.channel_links.faq_1_answer'],
+  },
+  channel_titles: {
+    title: m['tools.extra.channel_titles.title'],
+    seoTitle: m['tools.extra.channel_titles.seo_title'],
+    seoDescription: m['tools.extra.channel_titles.seo_description'],
+    faqQuestion: m['tools.extra.channel_titles.faq_1_question'],
+    faqAnswer: m['tools.extra.channel_titles.faq_1_answer'],
+  },
+  channel_export: {
+    title: m['tools.extra.channel_export.title'],
+    seoTitle: m['tools.extra.channel_export.seo_title'],
+    seoDescription: m['tools.extra.channel_export.seo_description'],
+    faqQuestion: m['tools.extra.channel_export.faq_1_question'],
+    faqAnswer: m['tools.extra.channel_export.faq_1_answer'],
+  },
+  channel_analyzer: {
+    title: m['tools.extra.channel_analyzer.title'],
+    seoTitle: m['tools.extra.channel_analyzer.seo_title'],
+    seoDescription: m['tools.extra.channel_analyzer.seo_description'],
+    faqQuestion: m['tools.extra.channel_analyzer.faq_1_question'],
+    faqAnswer: m['tools.extra.channel_analyzer.faq_1_answer'],
+  },
+  channel_keywords: {
+    title: m['tools.extra.channel_keywords.title'],
+    seoTitle: m['tools.extra.channel_keywords.seo_title'],
+    seoDescription: m['tools.extra.channel_keywords.seo_description'],
+    faqQuestion: m['tools.extra.channel_keywords.faq_1_question'],
+    faqAnswer: m['tools.extra.channel_keywords.faq_1_answer'],
+  },
+  channel_assets: {
+    title: m['tools.extra.channel_assets.title'],
+    seoTitle: m['tools.extra.channel_assets.seo_title'],
+    seoDescription: m['tools.extra.channel_assets.seo_description'],
+    faqQuestion: m['tools.extra.channel_assets.faq_1_question'],
+    faqAnswer: m['tools.extra.channel_assets.faq_1_answer'],
+  },
+} as const satisfies Record<
+  PublicToolDefinition['key'],
+  {
+    title: StaticMessage;
+    seoTitle: StaticMessage;
+    seoDescription: StaticMessage;
+    faqQuestion: StaticMessage;
+    faqAnswer: StaticMessage;
+  }
+>;
+
+function localizedMessage(message: StaticMessage, locale: string) {
+  return message({}, { locale });
 }
 
 export function publicToolRouteOptions(definition: PublicToolDefinition) {
   const path = `/tools/${definition.slug}`;
-  const prefix = `tools.extra.${definition.key}`;
+  const messages =
+    publicToolSeoMessages[definition.key as keyof typeof publicToolSeoMessages];
 
   return {
     loader: () => {
       const locale = getLocale();
       return {
         locale,
-        title: localizedMessage(`${prefix}.seo_title`, locale),
-        description: localizedMessage(`${prefix}.seo_description`, locale),
-        toolName: localizedMessage(`${prefix}.title`, locale),
-        toolsName: localizedMessage('tools.common.breadcrumb_tools', locale),
-        faqQuestion: localizedMessage(`${prefix}.faq_1_question`, locale),
-        faqAnswer: localizedMessage(`${prefix}.faq_1_answer`, locale),
+        title: localizedMessage(messages.seoTitle, locale),
+        description: localizedMessage(messages.seoDescription, locale),
+        toolName: localizedMessage(messages.title, locale),
+        toolsName: localizedMessage(m['tools.common.breadcrumb_tools'], locale),
+        faqQuestion: localizedMessage(messages.faqQuestion, locale),
+        faqAnswer: localizedMessage(messages.faqAnswer, locale),
       };
     },
     head: ({
@@ -117,7 +237,13 @@ export function publicToolRouteOptions(definition: PublicToolDefinition) {
     component: () => (
       <div className="marketing-shell bg-background text-foreground min-h-screen">
         <Header />
-        <PublicToolPage toolKey={definition.key} />
+        <Suspense
+          fallback={
+            <main className="mx-auto min-h-[60vh] max-w-6xl px-4 py-16 sm:px-6" />
+          }
+        >
+          <PublicToolPage toolKey={definition.key} />
+        </Suspense>
         <Footer />
       </div>
     ),

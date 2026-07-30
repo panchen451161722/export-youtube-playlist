@@ -129,6 +129,10 @@ function channelLabels(submit: string): ChannelUtilityLabels {
     logos: ui('logos'),
     banners: ui('banners'),
     videoCount: ui('video_count'),
+    chooseFormats: ui('choose_formats'),
+    defaultFormats: ui('default_formats'),
+    downloadSuccess: ui('download_success'),
+    downloadSelected: ui('download_selected'),
   };
 }
 

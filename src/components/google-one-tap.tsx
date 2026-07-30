@@ -3,13 +3,14 @@
 import { useEffect, useRef } from 'react';
 
 import { getAuthClient, useSession } from '@/core/auth/client';
+import { localizeHref } from '@/paraglide/runtime.js';
 import { usePublicConfig } from '@/hooks/use-public-config';
 
 // Mounts the Google One Tap prompt for signed-out visitors when the
 // admin has enabled it. Self-contained: pulls config from
 // /api/config/public, gates on session, and triggers at most once
 // per page load.
-export function GoogleOneTap() {
+export function GoogleOneTap({ callbackURL = '/' }: { callbackURL?: string }) {
   const { data: session, isPending } = useSession();
   const { data: configs } = usePublicConfig();
   const triggered = useRef(false);
@@ -30,7 +31,7 @@ export function GoogleOneTap() {
     const client = getAuthClient(configs);
     (client as any)
       .oneTap?.({
-        callbackURL: '/',
+        callbackURL: localizeHref(callbackURL),
         onPromptNotification: () => {
           // Silently ignore dismissals / FedCM hiccups — the user can still
           // sign in via the normal /sign-in page.
@@ -40,7 +41,7 @@ export function GoogleOneTap() {
         // Same — One Tap cancellations throw NetworkError/AbortError that
         // aren't actionable.
       });
-  }, [configs, session, isPending]);
+  }, [callbackURL, configs, session, isPending]);
 
   return null;
 }

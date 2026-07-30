@@ -8,6 +8,7 @@ type PublicSeoOptions = {
   description: string;
   path: string;
   locale: string;
+  availableLocales?: readonly AppLocale[];
   type?: 'website' | 'article';
   image?: string;
   imageAlt?: string;
@@ -43,6 +44,7 @@ export function publicPageSeo({
   description,
   path,
   locale,
+  availableLocales = locales,
   type = 'website',
   image = '/apple-touch-icon.png',
   imageAlt = title,
@@ -54,6 +56,9 @@ export function publicPageSeo({
   const canonical = localizedPageUrl(path, locale);
   const socialImage = absoluteUrl(image);
   const ogLocale = locale === 'zh' ? 'zh_CN' : 'en_US';
+  const defaultLocale = availableLocales.includes(baseLocale)
+    ? baseLocale
+    : availableLocales[0];
 
   return {
     meta: [
@@ -85,16 +90,20 @@ export function publicPageSeo({
     ],
     links: [
       { rel: 'canonical', href: canonical },
-      ...locales.map((loc) => ({
+      ...availableLocales.map((loc) => ({
         rel: 'alternate',
         hrefLang: loc,
         href: localizedPageUrl(path, loc),
       })),
-      {
-        rel: 'alternate',
-        hrefLang: 'x-default',
-        href: localizedPageUrl(path, baseLocale),
-      },
+      ...(defaultLocale
+        ? [
+            {
+              rel: 'alternate',
+              hrefLang: 'x-default',
+              href: localizedPageUrl(path, defaultLocale),
+            },
+          ]
+        : []),
     ],
     scripts: structuredData
       ? [

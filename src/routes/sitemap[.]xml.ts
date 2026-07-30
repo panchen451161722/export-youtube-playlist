@@ -23,6 +23,7 @@ const STATIC_PATHS = [
 type Entry = {
   path: string;
   lastModified?: string;
+  availableLocales?: readonly (typeof locales)[number][];
   changeFrequency: string;
   priority: number;
 };
@@ -43,13 +44,19 @@ function escapeXml(value: string): string {
 }
 
 function entryXml(e: Entry, primaryLocale: string): string {
-  const alternates = locales
+  const entryLocales = e.availableLocales ?? locales;
+  const defaultLocale = entryLocales.includes(baseLocale)
+    ? baseLocale
+    : entryLocales[0];
+  const alternates = entryLocales
     .map(
       (loc) =>
         `    <xhtml:link rel="alternate" hreflang="${loc}" href="${escapeXml(urlFor(e.path, loc))}"/>`
     )
     .concat(
-      `    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(urlFor(e.path, baseLocale))}"/>`
+      defaultLocale
+        ? `    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(urlFor(e.path, defaultLocale))}"/>`
+        : []
     )
     .join('\n');
   return [
@@ -71,6 +78,7 @@ export const Route = createFileRoute('/sitemap.xml')({
       GET: async () => {
         const entries: Entry[] = STATIC_PATHS.map((path) => ({
           path,
+          availableLocales: path === '/blog' ? ['en'] : undefined,
           changeFrequency: path === '' ? 'weekly' : 'monthly',
           priority:
             path === ''
@@ -86,6 +94,7 @@ export const Route = createFileRoute('/sitemap.xml')({
         for (const slug of BLOG_POST_SLUGS) {
           blogEntries.set(slug, {
             path: `/blog/${slug}`,
+            availableLocales: ['en'],
             changeFrequency: 'monthly',
             priority: 0.7,
           });
@@ -98,6 +107,7 @@ export const Route = createFileRoute('/sitemap.xml')({
           for (const post of posts) {
             blogEntries.set(post.slug, {
               path: `/blog/${post.slug}`,
+              availableLocales: ['en'],
               lastModified: new Date(post.createdAt).toISOString(),
               changeFrequency: 'monthly',
               priority: 0.7,
@@ -114,7 +124,9 @@ export const Route = createFileRoute('/sitemap.xml')({
           '<?xml version="1.0" encoding="UTF-8"?>',
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
           ...entries.flatMap((entry) =>
-            locales.map((locale) => entryXml(entry, locale))
+            (entry.availableLocales ?? locales).map((locale) =>
+              entryXml(entry, locale)
+            )
           ),
           '</urlset>',
           '',
