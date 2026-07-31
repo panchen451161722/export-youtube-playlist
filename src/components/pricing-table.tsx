@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Check } from 'lucide-react';
 
 import { apiPost } from '@/lib/api-client';
+import { trackClarityEvent } from '@/lib/clarity';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
 import { Button } from '@/components/ui/button';
@@ -84,6 +85,12 @@ export function PricingTable({
   });
 
   function handleCheckout(plan: PricingPlan) {
+    trackClarityEvent('checkout_started', {
+      plan_id: plan.id,
+      payment_provider: plan.paymentProvider || 'stripe',
+      purchase_type: plan.plan ? 'subscription' : 'one_time',
+    });
+
     if (onCheckout) {
       onCheckout(plan);
       return;

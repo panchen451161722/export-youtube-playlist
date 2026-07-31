@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 
 import { apiPost } from '@/lib/api-client';
+import { clarityErrorType, trackClarityEvent } from '@/lib/clarity';
 import { cn } from '@/lib/utils';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -151,6 +152,18 @@ export function VideoUtilityTool({ mode, labels }: Props) {
   const mutation = useMutation({
     mutationFn: (videoUrl: string) =>
       apiPost<VideoToolData>('/api/youtube-video', { url: videoUrl }),
+    onMutate: () => {
+      trackClarityEvent('tool_run_started', { tool: `video_${mode}` });
+    },
+    onSuccess: () => {
+      trackClarityEvent('tool_run_succeeded', { tool: `video_${mode}` });
+    },
+    onError: (error) => {
+      trackClarityEvent('tool_run_failed', {
+        tool: `video_${mode}`,
+        error_type: clarityErrorType(error),
+      });
+    },
   });
 
   const visibleTags = useMemo(() => {
@@ -226,6 +239,10 @@ export function VideoUtilityTool({ mode, labels }: Props) {
     try {
       await copyText(value);
       setCopyStatus(status);
+      trackClarityEvent('result_copied', {
+        tool: `video_${mode}`,
+        output_format: status,
+      });
       window.setTimeout(() => setCopyStatus(''), 2_000);
     } catch {
       setCopyStatus('');
@@ -235,6 +252,14 @@ export function VideoUtilityTool({ mode, labels }: Props) {
   const fileBase = mutation.data
     ? safeFileName(mutation.data.title, 'youtube-video')
     : 'youtube-video';
+
+  const download = (value: string, fileName: string, outputFormat: string) => {
+    downloadText(value, fileName);
+    trackClarityEvent('export_downloaded', {
+      tool: `video_${mode}`,
+      output_format: outputFormat,
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -282,7 +307,10 @@ export function VideoUtilityTool({ mode, labels }: Props) {
       </form>
 
       {mutation.data ? (
-        <section className="border-border bg-card rounded-2xl border p-5 sm:p-7">
+        <section
+          data-clarity-mask="true"
+          className="border-border bg-card rounded-2xl border p-5 sm:p-7"
+        >
           <ResultHeader data={mutation.data} labels={labels} />
 
           {mode === 'thumbnail' ? (
@@ -313,6 +341,12 @@ export function VideoUtilityTool({ mode, labels }: Props) {
                         download={`${fileBase}-${name}.jpg`}
                         target="_blank"
                         rel="noreferrer"
+                        onClick={() =>
+                          trackClarityEvent('export_downloaded', {
+                            tool: 'video_thumbnail',
+                            output_format: 'jpg',
+                          })
+                        }
                         className={cn(
                           buttonVariants({ variant: 'outline', size: 'sm' })
                         )}
@@ -403,9 +437,10 @@ export function VideoUtilityTool({ mode, labels }: Props) {
                   type="button"
                   variant="outline"
                   onClick={() =>
-                    downloadText(
+                    download(
                       visibleTags.join('\r\n'),
-                      `${fileBase}-tags.txt`
+                      `${fileBase}-tags.txt`,
+                      'txt'
                     )
                   }
                   disabled={!visibleTags.length}
@@ -441,9 +476,10 @@ export function VideoUtilityTool({ mode, labels }: Props) {
                       size="sm"
                       variant="outline"
                       onClick={() =>
-                        downloadText(
+                        download(
                           mutation.data?.description ?? '',
-                          `${fileBase}-description.txt`
+                          `${fileBase}-description.txt`,
+                          'txt'
                         )
                       }
                     >
@@ -654,11 +690,12 @@ export function VideoUtilityTool({ mode, labels }: Props) {
                         size="sm"
                         variant="outline"
                         onClick={() =>
-                          downloadText(
+                          download(
                             mutation.data?.regionRestriction.regions.join(
                               '\r\n'
                             ) ?? '',
-                            `${fileBase}-regions.txt`
+                            `${fileBase}-regions.txt`,
+                            'txt'
                           )
                         }
                       >

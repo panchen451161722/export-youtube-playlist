@@ -29,6 +29,7 @@ const publicKeys = [
   'google_analytics_id',
   'plausible_domain',
   'plausible_src',
+  'clarity_project_id',
 ];
 
 function isEmailSendingConfigured(configs: Record<string, string>): boolean {

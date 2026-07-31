@@ -13,6 +13,11 @@ import { toast } from 'sonner';
 
 import { apiPost } from '@/lib/api-client';
 import {
+  clarityErrorType,
+  resultSizeBucket,
+  trackClarityEvent,
+} from '@/lib/clarity';
+import {
   downloadYouTubeExports,
   playlistVideosToExportRecords,
   triggerExportConfetti,
@@ -127,7 +132,21 @@ export function Hero() {
       });
       return result;
     },
-    onSuccess: () => {
+    onMutate: ({ selectedFormats }) => {
+      trackClarityEvent('tool_run_started', {
+        tool: 'playlist_export',
+        output_format: selectedFormats.join('_') || 'default',
+      });
+    },
+    onSuccess: (data, { selectedFormats }) => {
+      const eventTags = {
+        tool: 'playlist_export',
+        output_format: selectedFormats.join('_') || 'default',
+        result_size: resultSizeBucket(data.videos.length),
+        truncated: data.truncated,
+      };
+      trackClarityEvent('tool_run_succeeded', eventTags);
+      trackClarityEvent('export_downloaded', eventTags);
       triggerExportConfetti();
       toast.success(m['landing.exporter.success'](), {
         duration: 6000,
@@ -140,12 +159,22 @@ export function Hero() {
         },
       });
     },
+    onError: (error) => {
+      trackClarityEvent('tool_run_failed', {
+        tool: 'playlist_export',
+        error_type: clarityErrorType(error),
+      });
+    },
   });
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!isValidPlaylistUrl(url)) {
       setClientError(m['landing.exporter.error.invalid']());
+      trackClarityEvent('tool_run_failed', {
+        tool: 'playlist_export',
+        error_type: 'invalid_url',
+      });
       return;
     }
 

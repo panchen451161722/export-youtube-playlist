@@ -10,6 +10,11 @@ import {
 } from 'lucide-react';
 
 import { apiPost } from '@/lib/api-client';
+import {
+  clarityErrorType,
+  resultSizeBucket,
+  trackClarityEvent,
+} from '@/lib/clarity';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -202,6 +207,25 @@ export function PlaylistExtractionTool({
       apiPost<PlaylistExport>('/api/youtube-playlist', {
         url: playlistUrl,
       }),
+    onMutate: () => {
+      trackClarityEvent('tool_run_started', {
+        tool: `playlist_${mode}`,
+        output_format: format,
+      });
+    },
+    onSuccess: (data) => {
+      trackClarityEvent('tool_run_succeeded', {
+        tool: `playlist_${mode}`,
+        result_size: resultSizeBucket(data.videos.length),
+        truncated: data.truncated,
+      });
+    },
+    onError: (error) => {
+      trackClarityEvent('tool_run_failed', {
+        tool: `playlist_${mode}`,
+        error_type: clarityErrorType(error),
+      });
+    },
   });
 
   const resultText = useMemo(
@@ -234,6 +258,10 @@ export function PlaylistExtractionTool({
     setCopyStatus('idle');
     if (!isValidPlaylistUrl(url)) {
       setClientError(labels.invalidUrl);
+      trackClarityEvent('tool_run_failed', {
+        tool: `playlist_${mode}`,
+        error_type: 'invalid_url',
+      });
       return;
     }
     setClientError('');
@@ -244,6 +272,11 @@ export function PlaylistExtractionTool({
     try {
       await copyText(resultText);
       setCopyStatus('copied');
+      trackClarityEvent('result_copied', {
+        tool: `playlist_${mode}`,
+        output_format: format,
+        result_size: resultSizeBucket(mutation.data?.videos.length ?? 0),
+      });
       window.setTimeout(() => setCopyStatus('idle'), 2_500);
     } catch {
       setCopyStatus('error');
@@ -254,6 +287,11 @@ export function PlaylistExtractionTool({
     if (!mutation.data) return;
     const fileName = safeFileName(mutation.data.title, labels.fileFallback);
     downloadText(resultText, 'text/plain', `${fileName}.txt`);
+    trackClarityEvent('export_downloaded', {
+      tool: `playlist_${mode}`,
+      output_format: 'txt',
+      result_size: resultSizeBucket(mutation.data.videos.length),
+    });
   };
 
   const handleDownloadCsv = () => {
@@ -264,6 +302,11 @@ export function PlaylistExtractionTool({
       'text/csv',
       `${fileName}.csv`
     );
+    trackClarityEvent('export_downloaded', {
+      tool: `playlist_${mode}`,
+      output_format: 'csv',
+      result_size: resultSizeBucket(mutation.data.videos.length),
+    });
   };
 
   return (
@@ -352,7 +395,10 @@ export function PlaylistExtractionTool({
       ) : null}
 
       {mutation.data ? (
-        <section className="border-border mt-7 border-t pt-6">
+        <section
+          data-clarity-mask="true"
+          className="border-border mt-7 border-t pt-6"
+        >
           {mutation.data.videos.length ? (
             <>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

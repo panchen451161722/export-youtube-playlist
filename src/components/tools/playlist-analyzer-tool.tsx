@@ -11,6 +11,11 @@ import {
 } from 'lucide-react';
 
 import { apiPost } from '@/lib/api-client';
+import {
+  clarityErrorType,
+  resultSizeBucket,
+  trackClarityEvent,
+} from '@/lib/clarity';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -193,6 +198,22 @@ export function PlaylistAnalyzerTool({
   const mutation = useMutation({
     mutationFn: (playlistUrl: string) =>
       apiPost<PlaylistExport>('/api/youtube-playlist', { url: playlistUrl }),
+    onMutate: () => {
+      trackClarityEvent('tool_run_started', { tool: 'playlist_analyzer' });
+    },
+    onSuccess: (data) => {
+      trackClarityEvent('tool_run_succeeded', {
+        tool: 'playlist_analyzer',
+        result_size: resultSizeBucket(data.videos.length),
+        truncated: data.truncated,
+      });
+    },
+    onError: (error) => {
+      trackClarityEvent('tool_run_failed', {
+        tool: 'playlist_analyzer',
+        error_type: clarityErrorType(error),
+      });
+    },
   });
 
   const analysis = useMemo(
@@ -211,6 +232,10 @@ export function PlaylistAnalyzerTool({
     event.preventDefault();
     if (!isValidYouTubePlaylistUrl(url)) {
       setClientError(labels.invalidUrl);
+      trackClarityEvent('tool_run_failed', {
+        tool: 'playlist_analyzer',
+        error_type: 'invalid_url',
+      });
       return;
     }
 
@@ -235,6 +260,11 @@ export function PlaylistAnalyzerTool({
       createPlaylistAnalyzerCsv(mutation.data),
       `${fileName}-analysis.csv`
     );
+    trackClarityEvent('export_downloaded', {
+      tool: 'playlist_analyzer',
+      output_format: 'csv',
+      result_size: resultSizeBucket(mutation.data.videos.length),
+    });
   };
 
   const metricCards =
@@ -395,6 +425,7 @@ export function PlaylistAnalyzerTool({
 
       {mutation.data && analysis ? (
         <section
+          data-clarity-mask="true"
           className="border-border bg-card rounded-2xl border p-5 sm:p-7"
           aria-live="polite"
         >

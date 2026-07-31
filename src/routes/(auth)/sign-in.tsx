@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { authClient, signIn, useSession } from '@/core/auth/client';
 import { Link, useRouter } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
+import { trackClarityEvent } from '@/lib/clarity';
 import { privatePageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { localizeHref } from '@/paraglide/runtime.js';
@@ -118,6 +119,7 @@ function SignInPage() {
           }
           setError(msg || 'Sign in failed');
         } else {
+          trackClarityEvent('login_completed', { method: 'email' });
           // Hard navigation so the destination reloads with a fresh session
           // cookie — a client push would let the guard read a stale (logged-out)
           // session store and bounce straight back to /sign-in.
@@ -131,6 +133,7 @@ function SignInPage() {
   });
 
   async function handleSocial(provider: 'google' | 'github') {
+    trackClarityEvent('login_started', { method: provider });
     await signIn.social({ provider, callbackURL: afterLoginUrl });
   }
 
@@ -158,6 +161,7 @@ function SignInPage() {
               </div>
             ) : (
               <form
+                data-clarity-mask="true"
                 onSubmit={(e) => {
                   e.preventDefault();
                   form.handleSubmit();

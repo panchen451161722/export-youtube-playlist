@@ -82,6 +82,8 @@ const dynamicMessages = {
     m['admin.settings.groups.google_analytics.title'],
   'admin.settings.groups.plausible.title':
     m['admin.settings.groups.plausible.title'],
+  'admin.settings.groups.clarity.title':
+    m['admin.settings.groups.clarity.title'],
   'admin.settings.groups.crisp.title': m['admin.settings.groups.crisp.title'],
   'admin.settings.groups.tawk.title': m['admin.settings.groups.tawk.title'],
   'admin.settings.fields.app_name': m['admin.settings.fields.app_name'],
@@ -223,6 +225,8 @@ const dynamicMessages = {
     m['admin.settings.fields.plausible_domain'],
   'admin.settings.fields.plausible_src':
     m['admin.settings.fields.plausible_src'],
+  'admin.settings.fields.clarity_project_id':
+    m['admin.settings.fields.clarity_project_id'],
   'admin.settings.fields.crisp_enabled':
     m['admin.settings.fields.crisp_enabled'],
   'admin.settings.fields.crisp_website_id':

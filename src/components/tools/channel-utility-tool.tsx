@@ -12,6 +12,11 @@ import { toast } from 'sonner';
 
 import { Link } from '@/core/i18n/navigation';
 import { apiPost } from '@/lib/api-client';
+import {
+  clarityErrorType,
+  resultSizeBucket,
+  trackClarityEvent,
+} from '@/lib/clarity';
 import { cn } from '@/lib/utils';
 import {
   channelVideosToExportRecords,
@@ -252,11 +257,36 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
       }
       return result;
     },
-    onSuccess: () => {
+    onMutate: () => {
+      trackClarityEvent('tool_run_started', {
+        tool: `channel_${mode}`,
+        media_type: mediaType,
+      });
+    },
+    onSuccess: (data) => {
+      trackClarityEvent('tool_run_succeeded', {
+        tool: `channel_${mode}`,
+        media_type: mediaType,
+        result_size: resultSizeBucket(
+          includePlaylists ? data.playlists.length : data.videos.length || 1
+        ),
+        truncated: data.truncated,
+      });
       if (mode === 'export') {
+        trackClarityEvent('export_downloaded', {
+          tool: 'channel_export',
+          output_format: selectedFormats.join('_'),
+          result_size: resultSizeBucket(data.videos.length),
+        });
         triggerExportConfetti();
         toast.success(labels.downloadSuccess);
       }
+    },
+    onError: (error) => {
+      trackClarityEvent('tool_run_failed', {
+        tool: `channel_${mode}`,
+        error_type: clarityErrorType(error),
+      });
     },
   });
 
@@ -298,6 +328,10 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
     try {
       await copyText(value);
       setCopyStatus(status);
+      trackClarityEvent('result_copied', {
+        tool: `channel_${mode}`,
+        output_format: mode,
+      });
       window.setTimeout(() => setCopyStatus(''), 2_000);
     } catch {
       setCopyStatus('');
@@ -326,6 +360,15 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
               : '';
     if (!csv) return;
     downloadText(csv, `${fileBase}-${mode}.csv`, 'text/csv');
+    trackClarityEvent('export_downloaded', {
+      tool: `channel_${mode}`,
+      output_format: 'csv',
+      result_size: resultSizeBucket(
+        mode === 'playlists'
+          ? visiblePlaylists.length
+          : mutation.data.videos.length
+      ),
+    });
   };
 
   const handleSelectedExport = async () => {
@@ -337,9 +380,18 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
         context: { title: mutation.data.title, source: 'channel' },
         formats: selectedFormats,
       });
+      trackClarityEvent('export_downloaded', {
+        tool: 'channel_export',
+        output_format: selectedFormats.join('_'),
+        result_size: resultSizeBucket(sortedVideos.length),
+      });
       triggerExportConfetti();
       toast.success(labels.downloadSuccess);
     } catch (error) {
+      trackClarityEvent('tool_run_failed', {
+        tool: 'channel_export',
+        error_type: clarityErrorType(error),
+      });
       toast.error(getErrorMessage(error, labels.error));
     } finally {
       setExportingFiles(false);
@@ -431,7 +483,10 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
       </form>
 
       {mutation.data ? (
-        <section className="border-border bg-card rounded-2xl border p-5 sm:p-7">
+        <section
+          data-clarity-mask="true"
+          className="border-border bg-card rounded-2xl border p-5 sm:p-7"
+        >
           <ProfileHeader data={mutation.data} labels={labels} />
 
           {mode === 'id' ? (
@@ -587,12 +642,19 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
                   type="button"
                   variant="outline"
                   disabled={!mutation.data.keywords.length}
-                  onClick={() =>
+                  onClick={() => {
                     downloadText(
                       mutation.data?.keywords.join('\r\n') ?? '',
                       `${fileBase}-keywords.txt`
-                    )
-                  }
+                    );
+                    trackClarityEvent('export_downloaded', {
+                      tool: 'channel_keywords',
+                      output_format: 'txt',
+                      result_size: resultSizeBucket(
+                        mutation.data?.keywords.length ?? 0
+                      ),
+                    });
+                  }}
                 >
                   <Download />
                   {labels.downloadTxt}
@@ -628,6 +690,12 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
                               download={`${fileBase}-${name}.jpg`}
                               target="_blank"
                               rel="noreferrer"
+                              onClick={() =>
+                                trackClarityEvent('export_downloaded', {
+                                  tool: 'channel_assets',
+                                  output_format: 'jpg',
+                                })
+                              }
                               className={cn(
                                 buttonVariants({
                                   variant: 'outline',

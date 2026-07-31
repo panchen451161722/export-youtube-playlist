@@ -15,6 +15,7 @@ import { ThemeProvider } from 'next-themes';
 import { envConfigs } from '@/config';
 import { getQueryClient } from '@/lib/query-client';
 import { getLocale } from '@/paraglide/runtime.js';
+import { Clarity } from '@/components/analytics/clarity';
 import { GoogleAnalytics } from '@/components/analytics/google-analytics';
 import { Plausible } from '@/components/analytics/plausible';
 import { CustomerService } from '@/components/customer-service';
@@ -32,6 +33,9 @@ const getRootData = createServerFn().handler(async () => {
   ]);
   const configs = await getAllConfigs();
   const requestHeaders = getRequestHeaders();
+  const isLocalRequest = /^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(
+    requestHeaders.get('host') || ''
+  );
   const hasSessionCookie = (requestHeaders.get('cookie') || '').includes(
     'better-auth.session_token='
   );
@@ -64,6 +68,9 @@ const getRootData = createServerFn().handler(async () => {
     gaId: configs.google_analytics_id?.trim() || '',
     plausibleDomain: configs.plausible_domain?.trim() || '',
     plausibleSrc: configs.plausible_src?.trim() || '',
+    clarityProjectId: isLocalRequest
+      ? ''
+      : configs.clarity_project_id?.trim() || '',
     crispWebsiteId:
       configs.crisp_enabled === 'true'
         ? configs.crisp_website_id?.trim() || ''
@@ -127,6 +134,9 @@ function RootComponent() {
             domain={rootData.plausibleDomain}
             src={rootData.plausibleSrc || undefined}
           />
+        ) : null}
+        {rootData?.clarityProjectId ? (
+          <Clarity projectId={rootData.clarityProjectId} />
         ) : null}
         <CustomerService
           crispWebsiteId={rootData?.crispWebsiteId || undefined}

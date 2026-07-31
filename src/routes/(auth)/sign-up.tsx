@@ -7,6 +7,7 @@ import { authClient, signIn, signUp, useSession } from '@/core/auth/client';
 import { Link, useRouter } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
 import { apiPost } from '@/lib/api-client';
+import { trackClarityEvent } from '@/lib/clarity';
 import { privatePageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { localizeHref } from '@/paraglide/runtime.js';
@@ -144,6 +145,8 @@ function SignUpPage() {
           } catch {}
         }
 
+        trackClarityEvent('signup_completed', { method: 'email' });
+
         if (emailVerificationEnabled) {
           const verifyPath = `/verify-email?sent=1&email=${encodeURIComponent(
             value.email
@@ -167,6 +170,7 @@ function SignUpPage() {
   });
 
   async function handleSocial(provider: 'google' | 'github') {
+    trackClarityEvent('signup_started', { method: provider });
     await signIn.social({ provider, callbackURL: afterLoginUrl });
   }
 
@@ -194,6 +198,7 @@ function SignUpPage() {
               </div>
             ) : (
               <form
+                data-clarity-mask="true"
                 onSubmit={(e) => {
                   e.preventDefault();
                   form.handleSubmit();
