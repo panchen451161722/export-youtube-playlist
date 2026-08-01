@@ -1,0 +1,4 @@
+interface:
+  display_name: "SEO Audit"
+  short_description: "Audit and improve on-page SEO without score chasing"
+  default_prompt: "Use $seo-audit to audit this page against its target keyword and implement the highest-value fixes."

@@ -171,7 +171,11 @@ export function PublicToolPage({ toolKey }: { toolKey: string }) {
           />
         )
       }
-      stepsTitle={ui('how_title')}
+      stepsTitle={
+        definition.key === 'channel_export'
+          ? tDynamic(`${prefix}.how_title`)
+          : ui('how_title')
+      }
       steps={[
         {
           title: ui('step_1_title'),

@@ -428,6 +428,7 @@ skills, read `.agents/skills/<name>/SKILL.md` and follow it when the task matche
 | `generate-image`    | AI-generate a decorative image for a page/block                                                                                     |
 | `security-scan`     | **Before every git commit** — secrets, vulns, ignore gaps                                                                           |
 | `launch-audit`      | Whole-project sweep on one axis — responsive, light/dark theme, SEO, performance (Lighthouse), or security; run `all` before deploy |
+| `seo-audit`         | Evidence-based single-page SEO audit and fixes using target keywords, live/source checks, and Web.Cafe-style metrics                |
 | `sync-upstream`     | Pull latest template updates; local changes win on conflict                                                                         |
 | `deploy-cloudflare` | Deploy to Cloudflare Workers (D1 or Postgres+Hyperdrive + secrets + schema, idempotent)                                             |
 | `setup-auth`        | Enable email/Google login and bootstrap the first verified Google `super_admin` without an existing admin session                   |

@@ -19,7 +19,7 @@ export function PlaylistAnalyzer() {
         <PlaylistAnalyzerTool
           locale={getLocale()}
           labels={{
-            formTitle: m['tools.analyzer.summary_title'](),
+            formTitle: m['tools.analyzer.form_title'](),
             formDescription: m['tools.analyzer.form_description'](),
             urlLabel: m['tools.common.input_label'](),
             urlPlaceholder: m['tools.common.input_placeholder'](),
