@@ -63,6 +63,18 @@ const STATIC_PAGES: { path: string; title: string; description: string }[] = [
       'Extract, copy, and download canonical video links from a public playlist.',
   },
   {
+    path: '/tools/export-youtube-playlist-to-csv',
+    title: 'Export YouTube Playlist to CSV',
+    description:
+      'Export public YouTube playlist metadata to a CSV file with CSV included by default.',
+  },
+  {
+    path: '/tools/export-youtube-playlist-to-excel',
+    title: 'Export YouTube Playlist to Excel',
+    description:
+      'Export public YouTube playlist metadata to an Excel XLSX workbook with Excel selected by default.',
+  },
+  {
     path: '/tools/youtube-playlist-title-extractor',
     title: 'YouTube Playlist Title Extractor',
     description:

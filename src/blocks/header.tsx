@@ -57,6 +57,14 @@ function ToolsMenu({
       href: '/#exporter',
     },
     {
+      label: m['tools.csv.title'](),
+      href: '/tools/export-youtube-playlist-to-csv',
+    },
+    {
+      label: m['tools.excel.title'](),
+      href: '/tools/export-youtube-playlist-to-excel',
+    },
+    {
       label: m['tools.catalog.links.title'](),
       href: '/tools/youtube-playlist-link-extractor',
     },

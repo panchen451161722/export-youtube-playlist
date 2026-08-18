@@ -4,6 +4,7 @@ import {
   Link2,
   ListOrdered,
   RadioTower,
+  Table2,
   Video,
 } from 'lucide-react';
 
@@ -30,6 +31,20 @@ export function ToolsCatalog() {
           title: m['tools.catalog.export.title'](),
           description: m['tools.catalog.export.description'](),
           href: '/#exporter',
+          actionLabel: openToolLabel,
+          icon: <FileSpreadsheet />,
+        },
+        {
+          title: m['tools.csv.title'](),
+          description: m['tools.csv.description'](),
+          href: '/tools/export-youtube-playlist-to-csv',
+          actionLabel: openToolLabel,
+          icon: <Table2 />,
+        },
+        {
+          title: m['tools.excel.title'](),
+          description: m['tools.excel.description'](),
+          href: '/tools/export-youtube-playlist-to-excel',
           actionLabel: openToolLabel,
           icon: <FileSpreadsheet />,
         },

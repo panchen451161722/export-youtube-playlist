@@ -8,12 +8,14 @@ type Props = {
   selected: YouTubeExportFormat[];
   onChange: (formats: YouTubeExportFormat[]) => void;
   disabled?: boolean;
+  formats?: readonly (typeof YOUTUBE_EXPORT_FORMATS)[number][];
 };
 
 export function ExportFormatPicker({
   selected,
   onChange,
   disabled = false,
+  formats = YOUTUBE_EXPORT_FORMATS,
 }: Props) {
   const selectedSet = new Set(selected);
 
@@ -22,7 +24,7 @@ export function ExportFormatPicker({
       className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
       data-testid="export-format-picker"
     >
-      {YOUTUBE_EXPORT_FORMATS.map((format) => (
+      {formats.map((format) => (
         <label
           key={format.key}
           className="border-border bg-card hover:bg-secondary has-[[data-checked]]:border-foreground has-[[data-checked]]:bg-secondary flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-3 transition-colors has-[[data-disabled]]:cursor-not-allowed has-[[data-disabled]]:opacity-60"
