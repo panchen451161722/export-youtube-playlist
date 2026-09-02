@@ -168,7 +168,7 @@ export function Header() {
   const navItems = [
     { href: '/#exporter', label: m['landing.nav.home'](), disabled: false },
     {
-      href: `${envConfigs.app_url}/blog`,
+      href: '/blog',
       label: m['landing.nav.blogs'](),
       disabled: false,
     },

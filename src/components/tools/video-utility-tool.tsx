@@ -29,6 +29,7 @@ export type VideoUtilityLabels = {
   inputLabel: string;
   inputPlaceholder: string;
   inputHelper: string;
+  rightsNotice?: string;
   submit: string;
   loading: string;
   error: string;
@@ -299,6 +300,14 @@ export function VideoUtilityTool({ mode, labels }: Props) {
         <p className="text-muted-foreground mt-2 text-xs">
           {labels.inputHelper}
         </p>
+        {labels.rightsNotice ? (
+          <p
+            role="note"
+            className="border-border bg-muted/50 text-muted-foreground mt-4 rounded-lg border px-4 py-3 text-sm"
+          >
+            {labels.rightsNotice}
+          </p>
+        ) : null}
         {mutation.error ? (
           <p role="alert" className="text-destructive mt-3 text-sm">
             {getErrorMessage(mutation.error, labels.error)}

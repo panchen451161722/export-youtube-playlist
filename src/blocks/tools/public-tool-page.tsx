@@ -18,11 +18,15 @@ function ui(key: string) {
   return tDynamic(`tools.extra.ui.${key}`);
 }
 
-function videoLabels(submit: string): VideoUtilityLabels {
+function videoLabels(
+  submit: string,
+  rightsNotice?: string
+): VideoUtilityLabels {
   return {
     inputLabel: ui('video_input'),
     inputPlaceholder: ui('video_placeholder'),
     inputHelper: ui('video_helper'),
+    rightsNotice,
     submit,
     loading: ui('loading'),
     error: ui('video_error'),
@@ -162,7 +166,12 @@ export function PublicToolPage({ toolKey }: { toolKey: string }) {
         definition.category === 'video' ? (
           <VideoUtilityTool
             mode={definition.mode}
-            labels={videoLabels(submit)}
+            labels={videoLabels(
+              submit,
+              definition.key === 'thumbnail'
+                ? tDynamic(`${prefix}.rights_notice`)
+                : undefined
+            )}
           />
         ) : (
           <ChannelUtilityTool

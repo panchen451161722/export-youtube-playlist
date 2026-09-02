@@ -1,10 +1,10 @@
 import type { ComponentType } from 'react';
 
-import { baseLocale } from '@/paraglide/runtime.js';
+import { locales } from '@/paraglide/runtime.js';
 
 /**
  * Local blog posts written as MDX files in this directory.
- * File naming: `<slug>.<locale>.mdx` (falls back to the base locale).
+ * File naming: `<slug>.<locale>.mdx`.
  * Register every local post slug here — it drives loading and the sitemap.
  *
  * This module is isomorphic (safe in client bundles). Database posts are
@@ -58,11 +58,12 @@ export function loadLocalPost(slug: string, locale: string): PostModule | null {
   if (!BLOG_POST_SLUGS.includes(slug as (typeof BLOG_POST_SLUGS)[number])) {
     return null;
   }
-  return (
-    postModules[`/src/content/posts/${slug}.${locale}.mdx`] ??
-    postModules[`/src/content/posts/${slug}.${baseLocale}.mdx`] ??
-    null
-  );
+  return postModules[`/src/content/posts/${slug}.${locale}.mdx`] ?? null;
+}
+
+/** Locales with a real MDX file for this post; no cross-locale fallback. */
+export function getLocalPostLocales(slug: string): (typeof locales)[number][] {
+  return locales.filter((locale) => loadLocalPost(slug, locale) !== null);
 }
 
 function localPostToItem(slug: string, meta: BlogPostMeta): BlogPost {

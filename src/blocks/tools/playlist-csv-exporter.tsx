@@ -2,6 +2,7 @@ import { Check } from 'lucide-react';
 
 import { m } from '@/paraglide/messages.js';
 import { Hero } from '@/blocks/hero';
+import { ExportFormatDetails } from '@/components/tools/export-format-details';
 
 export function PlaylistCsvExporter() {
   const steps = [
@@ -111,6 +112,98 @@ export function PlaylistCsvExporter() {
           </div>
         </div>
       </section>
+
+      <ExportFormatDetails
+        heading={m['tools.csv.details_title']()}
+        description={m['tools.csv.details_description']()}
+        useCases={[
+          {
+            title: m['tools.csv.use_case_1.title'](),
+            description: m['tools.csv.use_case_1.description'](),
+          },
+          {
+            title: m['tools.csv.use_case_2.title'](),
+            description: m['tools.csv.use_case_2.description'](),
+          },
+          {
+            title: m['tools.csv.use_case_3.title'](),
+            description: m['tools.csv.use_case_3.description'](),
+          },
+        ]}
+        fileTitle={m['tools.csv.file_title']()}
+        fileDescription={m['tools.csv.file_description']()}
+        facts={[
+          {
+            title: m['tools.csv.fact_1.title'](),
+            description: m['tools.csv.fact_1.description'](),
+          },
+          {
+            title: m['tools.csv.fact_2.title'](),
+            description: m['tools.csv.fact_2.description'](),
+          },
+          {
+            title: m['tools.csv.fact_3.title'](),
+            description: m['tools.csv.fact_3.description'](),
+          },
+          {
+            title: m['tools.csv.fact_4.title'](),
+            description: m['tools.csv.fact_4.description'](),
+          },
+        ]}
+        previewTitle={m['tools.csv.preview_title']()}
+        previewHeaders={[
+          m['tools.csv.preview_header_1'](),
+          m['tools.csv.preview_header_2'](),
+          m['tools.csv.preview_header_3'](),
+          m['tools.csv.preview_header_4'](),
+        ]}
+        previewRow={[
+          m['tools.csv.preview_row_1'](),
+          m['tools.csv.preview_row_2'](),
+          m['tools.csv.preview_row_3'](),
+          m['tools.csv.preview_row_4'](),
+        ]}
+        sampleHref="/samples/youtube-playlist-export-sample.csv"
+        sampleLabel={m['tools.csv.sample_label']()}
+        sampleMeta={m['tools.csv.sample_meta']()}
+        compatibilityTitle={m['tools.csv.compatibility_title']()}
+        compatibilityDescription={m['tools.csv.compatibility_description']()}
+        compatibilityHeaders={[
+          m['tools.csv.compatibility_header_1'](),
+          m['tools.csv.compatibility_header_2'](),
+          m['tools.csv.compatibility_header_3'](),
+        ]}
+        compatibilityRows={[
+          {
+            app: m['tools.csv.compatibility_1.app'](),
+            behavior: m['tools.csv.compatibility_1.behavior'](),
+            note: m['tools.csv.compatibility_1.note'](),
+          },
+          {
+            app: m['tools.csv.compatibility_2.app'](),
+            behavior: m['tools.csv.compatibility_2.behavior'](),
+            note: m['tools.csv.compatibility_2.note'](),
+          },
+          {
+            app: m['tools.csv.compatibility_3.app'](),
+            behavior: m['tools.csv.compatibility_3.behavior'](),
+            note: m['tools.csv.compatibility_3.note'](),
+          },
+          {
+            app: m['tools.csv.compatibility_4.app'](),
+            behavior: m['tools.csv.compatibility_4.behavior'](),
+            note: m['tools.csv.compatibility_4.note'](),
+          },
+        ]}
+        limitationsTitle={m['tools.csv.limitations_title']()}
+        limitations={[
+          m['tools.csv.limitation_1'](),
+          m['tools.csv.limitation_2'](),
+          m['tools.csv.limitation_3'](),
+        ]}
+        alternativeHref="/tools/export-youtube-playlist-to-excel"
+        alternativeLabel={m['tools.csv.alternative_label']()}
+      />
     </>
   );
 }

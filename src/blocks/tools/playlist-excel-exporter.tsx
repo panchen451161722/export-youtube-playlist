@@ -2,6 +2,7 @@ import { Check } from 'lucide-react';
 
 import { m } from '@/paraglide/messages.js';
 import { Hero } from '@/blocks/hero';
+import { ExportFormatDetails } from '@/components/tools/export-format-details';
 
 export function PlaylistExcelExporter() {
   const steps = [
@@ -112,6 +113,98 @@ export function PlaylistExcelExporter() {
           </div>
         </div>
       </section>
+
+      <ExportFormatDetails
+        heading={m['tools.excel.details_title']()}
+        description={m['tools.excel.details_description']()}
+        useCases={[
+          {
+            title: m['tools.excel.use_case_1.title'](),
+            description: m['tools.excel.use_case_1.description'](),
+          },
+          {
+            title: m['tools.excel.use_case_2.title'](),
+            description: m['tools.excel.use_case_2.description'](),
+          },
+          {
+            title: m['tools.excel.use_case_3.title'](),
+            description: m['tools.excel.use_case_3.description'](),
+          },
+        ]}
+        fileTitle={m['tools.excel.file_title']()}
+        fileDescription={m['tools.excel.file_description']()}
+        facts={[
+          {
+            title: m['tools.excel.fact_1.title'](),
+            description: m['tools.excel.fact_1.description'](),
+          },
+          {
+            title: m['tools.excel.fact_2.title'](),
+            description: m['tools.excel.fact_2.description'](),
+          },
+          {
+            title: m['tools.excel.fact_3.title'](),
+            description: m['tools.excel.fact_3.description'](),
+          },
+          {
+            title: m['tools.excel.fact_4.title'](),
+            description: m['tools.excel.fact_4.description'](),
+          },
+        ]}
+        previewTitle={m['tools.excel.preview_title']()}
+        previewHeaders={[
+          m['tools.excel.preview_header_1'](),
+          m['tools.excel.preview_header_2'](),
+          m['tools.excel.preview_header_3'](),
+          m['tools.excel.preview_header_4'](),
+        ]}
+        previewRow={[
+          m['tools.excel.preview_row_1'](),
+          m['tools.excel.preview_row_2'](),
+          m['tools.excel.preview_row_3'](),
+          m['tools.excel.preview_row_4'](),
+        ]}
+        sampleHref="/samples/youtube-playlist-export-sample.xlsx"
+        sampleLabel={m['tools.excel.sample_label']()}
+        sampleMeta={m['tools.excel.sample_meta']()}
+        compatibilityTitle={m['tools.excel.compatibility_title']()}
+        compatibilityDescription={m['tools.excel.compatibility_description']()}
+        compatibilityHeaders={[
+          m['tools.excel.compatibility_header_1'](),
+          m['tools.excel.compatibility_header_2'](),
+          m['tools.excel.compatibility_header_3'](),
+        ]}
+        compatibilityRows={[
+          {
+            app: m['tools.excel.compatibility_1.app'](),
+            behavior: m['tools.excel.compatibility_1.behavior'](),
+            note: m['tools.excel.compatibility_1.note'](),
+          },
+          {
+            app: m['tools.excel.compatibility_2.app'](),
+            behavior: m['tools.excel.compatibility_2.behavior'](),
+            note: m['tools.excel.compatibility_2.note'](),
+          },
+          {
+            app: m['tools.excel.compatibility_3.app'](),
+            behavior: m['tools.excel.compatibility_3.behavior'](),
+            note: m['tools.excel.compatibility_3.note'](),
+          },
+          {
+            app: m['tools.excel.compatibility_4.app'](),
+            behavior: m['tools.excel.compatibility_4.behavior'](),
+            note: m['tools.excel.compatibility_4.note'](),
+          },
+        ]}
+        limitationsTitle={m['tools.excel.limitations_title']()}
+        limitations={[
+          m['tools.excel.limitation_1'](),
+          m['tools.excel.limitation_2'](),
+          m['tools.excel.limitation_3'](),
+        ]}
+        alternativeHref="/tools/export-youtube-playlist-to-csv"
+        alternativeLabel={m['tools.excel.alternative_label']()}
+      />
     </>
   );
 }

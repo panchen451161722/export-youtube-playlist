@@ -1,5 +1,7 @@
 import { createServerFn } from '@tanstack/react-start';
 
+import { baseLocale } from '@/paraglide/runtime.js';
+
 import {
   getLocalPosts,
   loadLocalPost,
@@ -38,7 +40,10 @@ async function getDbPosts(): Promise<BlogPost[]> {
 export const getBlogPostsFn = createServerFn()
   .inputValidator((data: { locale: string; limit?: number }) => data)
   .handler(async ({ data }) => {
-    const dbPosts = await getDbPosts();
+    // Database articles currently have no locale column, so they belong to
+    // the base locale only. This prevents English content from appearing at
+    // a Chinese canonical URL.
+    const dbPosts = data.locale === baseLocale ? await getDbPosts() : [];
     return mergePosts(dbPosts, getLocalPosts(data.locale), {
       limit: data.limit,
     });
@@ -52,24 +57,26 @@ export const getBlogPostsFn = createServerFn()
 export const getBlogPostFn = createServerFn()
   .inputValidator((data: { slug: string; locale: string }) => data)
   .handler(async ({ data }): Promise<BlogPostDetail | null> => {
-    try {
-      const { findPublishedBySlug } = await import('@/modules/posts/service');
-      const row = await findPublishedBySlug(data.slug);
-      if (row) {
-        return {
-          slug: row.slug,
-          title: row.title || row.slug,
-          description: row.description || '',
-          image: row.image || undefined,
-          createdAt: new Date(row.createdAt).toISOString(),
-          authorName: row.authorName || undefined,
-          authorImage: row.authorImage || undefined,
-          source: 'db',
-          content: row.content || '',
-        };
+    if (data.locale === baseLocale) {
+      try {
+        const { findPublishedBySlug } = await import('@/modules/posts/service');
+        const row = await findPublishedBySlug(data.slug);
+        if (row) {
+          return {
+            slug: row.slug,
+            title: row.title || row.slug,
+            description: row.description || '',
+            image: row.image || undefined,
+            createdAt: new Date(row.createdAt).toISOString(),
+            authorName: row.authorName || undefined,
+            authorImage: row.authorImage || undefined,
+            source: 'db',
+            content: row.content || '',
+          };
+        }
+      } catch {
+        // Database not configured/reachable — fall through to local posts.
       }
-    } catch {
-      // Database not configured/reachable — fall through to local posts.
     }
 
     const mod = loadLocalPost(data.slug, data.locale);

@@ -13,7 +13,7 @@ const productLinks = [
   { label: () => m['landing.footer.faq'](), href: '/#faq' },
   {
     label: () => m['landing.footer.blog'](),
-    href: `${envConfigs.app_url}/blog`,
+    href: '/blog',
   },
 ] as const;
 

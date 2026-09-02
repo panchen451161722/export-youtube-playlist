@@ -6,32 +6,52 @@ import { Link } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
 import { absoluteUrl, localizedPageUrl, publicPageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
-import { getLocale } from '@/paraglide/runtime.js';
+import { baseLocale, getLocale } from '@/paraglide/runtime.js';
 import { Footer } from '@/blocks/footer';
 import { Header } from '@/blocks/header';
 import { MarkdownContent } from '@/components/markdown-content';
 import { mdxComponents } from '@/components/mdx-components';
-import { formatPostDate, loadLocalPost } from '@/content/posts';
+import {
+  formatPostDate,
+  getLocalPostLocales,
+  loadLocalPost,
+} from '@/content/posts';
 import { getBlogPostFn } from '@/content/posts/server';
 
 export const Route = createFileRoute('/blog/$slug')({
   loader: async ({ params }) => {
-    if (getLocale() !== 'en') {
-      throw redirect({
-        href: absoluteUrl(`/blog/${params.slug}`),
-        statusCode: 308,
-      });
-    }
-    const locale = 'en';
+    const locale = getLocale();
     const post = await getBlogPostFn({
       data: { slug: params.slug, locale },
     });
-    if (!post) throw notFound();
-    return { locale, post };
+    if (!post) {
+      // An explicitly requested untranslated locale resolves permanently to
+      // the real base-locale article, but only when that article exists.
+      if (locale !== baseLocale) {
+        const basePost = await getBlogPostFn({
+          data: { slug: params.slug, locale: baseLocale },
+        });
+        if (basePost) {
+          throw redirect({
+            href: absoluteUrl(`/blog/${params.slug}`),
+            statusCode: 308,
+          });
+        }
+      }
+      throw notFound();
+    }
+
+    const localPostLocales = getLocalPostLocales(post.slug);
+    const availableLocales =
+      post.source === 'db' && !localPostLocales.includes(baseLocale)
+        ? [baseLocale, ...localPostLocales]
+        : localPostLocales;
+
+    return { availableLocales, locale, post };
   },
   head: ({ loaderData }) => {
     if (!loaderData) return {};
-    const { locale, post } = loaderData;
+    const { availableLocales, locale, post } = loaderData;
     const path = `/blog/${post.slug}`;
     const title = `${post.title} | ${envConfigs.app_name}`;
     const author = post.authorName || envConfigs.app_name;
@@ -41,7 +61,7 @@ export const Route = createFileRoute('/blog/$slug')({
       description: post.description,
       path,
       locale,
-      availableLocales: ['en'],
+      availableLocales,
       type: 'article',
       image,
       imageAlt: post.title,

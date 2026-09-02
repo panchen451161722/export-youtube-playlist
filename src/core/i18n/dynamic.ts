@@ -367,6 +367,8 @@ const dynamicMessages = {
     m['tools.extra.thumbnail.seo_description'],
   'tools.extra.thumbnail.eyebrow': m['tools.extra.thumbnail.eyebrow'],
   'tools.extra.thumbnail.submit': m['tools.extra.thumbnail.submit'],
+  'tools.extra.thumbnail.rights_notice':
+    m['tools.extra.thumbnail.rights_notice'],
   'tools.extra.thumbnail.step_2': m['tools.extra.thumbnail.step_2'],
   'tools.extra.thumbnail.step_3': m['tools.extra.thumbnail.step_3'],
   'tools.extra.thumbnail.benefit_export':

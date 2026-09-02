@@ -93,6 +93,14 @@ export const Route = createRootRoute({
       meta: [
         { charSet: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        {
+          name: 'referrer',
+          content: 'strict-origin-when-cross-origin',
+        },
+        {
+          name: 'google-adsense-account',
+          content: 'ca-pub-5428651211440842',
+        },
         { title: envConfigs.app_name },
         { name: 'description', content: envConfigs.app_description },
       ],
@@ -103,6 +111,13 @@ export const Route = createRootRoute({
           rel: 'apple-touch-icon',
           href: '/apple-touch-icon.png',
           sizes: '180x180',
+        },
+      ],
+      scripts: [
+        {
+          async: true,
+          src: 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5428651211440842',
+          crossOrigin: 'anonymous',
         },
       ],
     };

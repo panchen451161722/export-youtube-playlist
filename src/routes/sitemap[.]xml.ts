@@ -3,7 +3,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { envConfigs } from '@/config';
 import { baseLocale, locales, localizeUrl } from '@/paraglide/runtime.js';
 import { PUBLIC_TOOL_DEFINITIONS } from '@/components/tools/public-tool-definitions';
-import { BLOG_POST_SLUGS } from '@/content/posts';
+import { BLOG_POST_SLUGS, getLocalPostLocales } from '@/content/posts';
 
 const STATIC_PATHS = [
   '',
@@ -80,7 +80,6 @@ export const Route = createFileRoute('/sitemap.xml')({
       GET: async () => {
         const entries: Entry[] = STATIC_PATHS.map((path) => ({
           path,
-          availableLocales: path === '/blog' ? ['en'] : undefined,
           changeFrequency: path === '' ? 'weekly' : 'monthly',
           priority:
             path === ''
@@ -96,7 +95,7 @@ export const Route = createFileRoute('/sitemap.xml')({
         for (const slug of BLOG_POST_SLUGS) {
           blogEntries.set(slug, {
             path: `/blog/${slug}`,
-            availableLocales: ['en'],
+            availableLocales: getLocalPostLocales(slug),
             changeFrequency: 'monthly',
             priority: 0.7,
           });
@@ -107,9 +106,12 @@ export const Route = createFileRoute('/sitemap.xml')({
             await import('@/modules/posts/service');
           const posts = await listPublishedArticles({ limit: 1000 });
           for (const post of posts) {
+            const localPostLocales = getLocalPostLocales(post.slug);
             blogEntries.set(post.slug, {
               path: `/blog/${post.slug}`,
-              availableLocales: ['en'],
+              availableLocales: localPostLocales.includes(baseLocale)
+                ? localPostLocales
+                : [baseLocale, ...localPostLocales],
               lastModified: new Date(post.createdAt).toISOString(),
               changeFrequency: 'monthly',
               priority: 0.7,
