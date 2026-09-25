@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   ArrowRight,
   Check,
@@ -21,6 +22,7 @@ type CompatibilityRow = {
 };
 
 type ExportFormatDetailsProps = {
+  fieldReference: ReactNode;
   heading: string;
   description: string;
   useCases: TextItem[];
@@ -44,6 +46,7 @@ type ExportFormatDetailsProps = {
 };
 
 export function ExportFormatDetails({
+  fieldReference,
   heading,
   description,
   useCases,
@@ -169,6 +172,8 @@ export function ExportFormatDetails({
           </div>
         </div>
       </section>
+
+      {fieldReference}
 
       <section className="border-border bg-muted/25 border-y px-5 py-20 sm:px-8 sm:py-24">
         <div className="mx-auto max-w-6xl">

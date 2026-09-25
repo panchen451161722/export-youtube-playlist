@@ -7,6 +7,7 @@ import {
   Rows3,
 } from 'lucide-react';
 
+import { Link } from '@/core/i18n/navigation';
 import { m } from '@/paraglide/messages.js';
 
 export function Features() {
@@ -86,6 +87,20 @@ export function Features() {
             <p className="text-muted-foreground mt-3 leading-7">
               {m['landing.features.spreadsheets.description']()}
             </p>
+            <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+              <Link
+                href="/tools/export-youtube-playlist-to-csv"
+                className="text-primary py-2 font-medium underline underline-offset-4"
+              >
+                {m['landing.features.spreadsheets.csv_link']()}
+              </Link>
+              <Link
+                href="/tools/export-youtube-playlist-to-excel"
+                className="text-primary py-2 font-medium underline underline-offset-4"
+              >
+                {m['landing.features.spreadsheets.excel_link']()}
+              </Link>
+            </div>
             <div className="text-muted-foreground mt-7 flex flex-wrap gap-4 text-sm">
               <span className="inline-flex items-center gap-2">
                 <ListFilter aria-hidden="true" className="size-4" />

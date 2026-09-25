@@ -2,6 +2,7 @@ import { Check } from 'lucide-react';
 
 import { m } from '@/paraglide/messages.js';
 import { Hero } from '@/blocks/hero';
+import { ExportFieldReference } from '@/blocks/tools/export-field-reference';
 import { ExportFormatDetails } from '@/components/tools/export-format-details';
 
 export function PlaylistExcelExporter() {
@@ -115,6 +116,7 @@ export function PlaylistExcelExporter() {
       </section>
 
       <ExportFormatDetails
+        fieldReference={<ExportFieldReference />}
         heading={m['tools.excel.details_title']()}
         description={m['tools.excel.details_description']()}
         useCases={[
