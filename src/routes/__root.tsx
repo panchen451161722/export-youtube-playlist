@@ -144,7 +144,7 @@ function RootComponent() {
         {rootData?.gaId ? (
           <GoogleAnalytics measurementId={rootData.gaId} />
         ) : null}
-        {rootData?.plausibleDomain ? (
+        {rootData?.plausibleDomain || rootData?.plausibleSrc ? (
           <Plausible
             domain={rootData.plausibleDomain}
             src={rootData.plausibleSrc || undefined}

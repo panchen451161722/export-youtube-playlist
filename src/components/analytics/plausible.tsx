@@ -1,32 +1,23 @@
-// Plausible script — rendered as native <script> elements (not next/script)
-// so the tags land in the SSR HTML directly. next/script in App Router is a
-// Client Component; inside an async Server Component it only emits an RSC
-// reference and the real <script> is injected post-hydration — invisible in
-// View Source and to crawlers. Plain <script async defer> loads in parallel
-// with the HTML and is visible to everyone.
-export function Plausible({
-  domain,
-  src = 'https://plausible.io/js/script.js',
-}: {
-  domain: string;
-  src?: string;
-}) {
-  if (!domain) return null;
+// Render the tracker and its initialization directly in the SSR HTML.
+// Keep data-domain for legacy/self-hosted scripts; modern site-specific
+// scripts get their domain from the script itself and require init().
+export function Plausible({ domain, src }: { domain?: string; src?: string }) {
+  if (!domain && !src) return null;
   return (
     <>
-      {/* async={true} flags this to React 19 as a hoistable resource —
-          see google-analytics.tsx for the full rationale. */}
+      {/* Preserve init if the async tracker has already loaded. Otherwise,
+          store its options for the tracker to consume when it loads. */}
       <script
         id="plausible-init"
         async
         dangerouslySetInnerHTML={{
-          __html: `window.plausible=window.plausible||function(){(window.plausible.q=window.plausible.q||[]).push(arguments)};`,
+          __html: `window.plausible=window.plausible||function(){(window.plausible.q=window.plausible.q||[]).push(arguments)};window.plausible.init=window.plausible.init||function(i){window.plausible.o=i||{}};window.plausible.init();`,
         }}
       />
       <script
         id="plausible-loader"
-        data-domain={domain}
-        src={src}
+        data-domain={domain || undefined}
+        src={src || 'https://plausible.io/js/script.js'}
         defer
         async
       />

@@ -1,0 +1,18 @@
+
+> shipany-tanstack@0.1.0 dev /Users/stepan/Desktop/projects/export-youtube-playlist
+> vite dev --port 3000
+
+✔ [paraglide-js] Compilation complete (message-modules)
+
+  VITE v8.0.16  ready in 3820 ms
+
+  ➜  Local:   http://localhost:3000/
+  ➜  Network: use --host to expose
+11:15:15 PM [vite] .env.local changed, restarting server...
+11:15:15 PM [vite] .env.local changed, restarting server...
+✔ [paraglide-js] Compilation complete (message-modules)
+11:15:17 PM [vite] server restarted.
+1:19:41 AM [vite] (client) [Unhandled error] Error: Script error.
+ > ../../../../../@vite/client:531:50
+
+ ELIFECYCLE  Command failed with exit code 143.

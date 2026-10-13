@@ -117,9 +117,25 @@ Run all checks in parallel; every later phase reads these results.
 
 **Postgres backend** (`wrangler.jsonc` has a `hyperdrive` binding): skip the D1 commands below (`d1 list` / `d1 migrations list` / `d1 execute`) — instead check the Hyperdrive id is real (`npx wrangler hyperdrive list`), and probe RBAC/admin via `pnpm rbac:init` later (it's a no-op when seeded).
 
+Read `wrangler.jsonc` with the installed Wrangler parser: it supports comments and trailing commas without corrupting URLs such as `https://`. Pass the source config path explicitly so preflight does not read a generated deployment config. Stop on parsing errors or missing resource names; do not continue with empty `WORKER` / `DB_NAME` values.
+
 ```bash
-WORKER=$(node -e "const fs=require('fs');const s=fs.readFileSync('wrangler.jsonc','utf8').replace(/\/\/.*$/gm,'');console.log(JSON.parse(s).name)")
-DB_NAME=$(node -e "const fs=require('fs');const s=fs.readFileSync('wrangler.jsonc','utf8').replace(/\/\/.*$/gm,'');console.log(JSON.parse(s).d1_databases[0].database_name)")
+WORKER=$(node <<'NODE'
+const { unstable_readConfig } = require('wrangler');
+const config = unstable_readConfig({ config: 'wrangler.jsonc' }, { hideWarnings: true });
+if (!config.name) throw new Error('wrangler.jsonc: name is required');
+console.log(config.name);
+NODE
+) || exit 1
+
+DB_NAME=$(node <<'NODE'
+const { unstable_readConfig } = require('wrangler');
+const config = unstable_readConfig({ config: 'wrangler.jsonc' }, { hideWarnings: true });
+const name = config.d1_databases?.[0]?.database_name;
+if (!name) throw new Error('wrangler.jsonc: d1_databases[0].database_name is required');
+console.log(name);
+NODE
+) || exit 1
 
 npx wrangler d1 list 2>&1 | grep -w "$DB_NAME"                                   # D1 created?
 grep -q 'REPLACE_WITH_OUTPUT_OF_WRANGLER_D1_CREATE' wrangler.jsonc && echo "database_id: placeholder"  # real UUID?
