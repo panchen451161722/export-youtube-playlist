@@ -1,13 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import { envConfigs } from '@/config';
+import { isIndexablePath } from '@/lib/seo';
 import { baseLocale, locales, localizeUrl } from '@/paraglide/runtime.js';
 import { PUBLIC_TOOL_DEFINITIONS } from '@/components/tools/public-tool-definitions';
 import { BLOG_POST_SLUGS, getLocalPostLocales } from '@/content/posts';
 
 const STATIC_PATHS = [
   '',
-  '/pricing',
   '/about',
   '/contact',
   '/privacy-policy',
@@ -20,7 +20,7 @@ const STATIC_PATHS = [
   '/tools/youtube-playlist-title-extractor',
   '/tools/youtube-playlist-analyzer',
   ...PUBLIC_TOOL_DEFINITIONS.map((tool) => `/tools/${tool.slug}`),
-];
+].filter(isIndexablePath);
 
 type Entry = {
   path: string;
@@ -84,7 +84,7 @@ export const Route = createFileRoute('/sitemap.xml')({
           priority:
             path === ''
               ? 1
-              : path === '/pricing' || path === '/tools'
+              : path === '/tools'
                 ? 0.8
                 : path.startsWith('/tools/')
                   ? 0.7

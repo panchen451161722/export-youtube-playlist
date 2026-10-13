@@ -100,4 +100,36 @@ export const mdxComponents: MDXComponents = {
   hr: ({ className, ...props }: HTMLAttributes<HTMLHRElement>) => (
     <hr className={cn('border-border my-8', className)} {...props} />
   ),
+  table: ({ className, ...props }: HTMLAttributes<HTMLTableElement>) => (
+    <div className="border-border my-5 overflow-x-auto rounded-lg border">
+      <table
+        className={cn('w-full border-collapse text-left text-sm', className)}
+        {...props}
+      />
+    </div>
+  ),
+  thead: ({ className, ...props }: HTMLAttributes<HTMLTableSectionElement>) => (
+    <thead className={cn('bg-muted/60', className)} {...props} />
+  ),
+  tr: ({ className, ...props }: HTMLAttributes<HTMLTableRowElement>) => (
+    <tr
+      className={cn('border-border border-b last:border-b-0', className)}
+      {...props}
+    />
+  ),
+  th: ({ className, ...props }: HTMLAttributes<HTMLTableCellElement>) => (
+    <th
+      className={cn(
+        'text-foreground px-3 py-2 align-top font-semibold whitespace-nowrap',
+        className
+      )}
+      {...props}
+    />
+  ),
+  td: ({ className, ...props }: HTMLAttributes<HTMLTableCellElement>) => (
+    <td
+      className={cn('text-foreground/90 px-3 py-2 align-top', className)}
+      {...props}
+    />
+  ),
 };

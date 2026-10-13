@@ -1,0 +1,119 @@
+export const meta = {
+  title: 'A practical guide to the YouTube Playlist Analyzer',
+  updated_at: '2026-10-12',
+};
+
+## What the analyzer actually measures
+
+The YouTube Playlist Analyzer answers one question before you commit to a playlist: how big is it, really? You paste a playlist URL, and we read the playlist through the official YouTube Data API v3, then look up every video in it to get its duration and public statistics. Nothing is scraped from the YouTube page, and you do not sign in.
+
+Every figure comes from the videos the API actually returned. Here is how each card is built:
+
+| Card                     | How it is calculated                                                                               |
+| ------------------------ | -------------------------------------------------------------------------------------------------- |
+| Available videos         | Number of videos the API returned with full details. Deleted and private entries are not included. |
+| Total duration           | Sum of the durations of every video that reports one.                                              |
+| Average duration         | Total duration divided by the number of videos that report a duration.                             |
+| Unique channels          | Number of distinct channel names among the returned videos.                                        |
+| Total / average views    | Sum of view counts, and that sum divided by the number of videos that report views.                |
+| Total / average likes    | Same method, using only videos that expose a like count.                                           |
+| Total / average comments | Same method, using only videos that expose a comment count.                                        |
+
+Under each total and average you will see a line such as "Based on 36 of 38 videos". That is the number of videos that actually contributed to the figure. If a creator hides likes or turns off comments, that video is left out of the calculation instead of being counted as zero, so one hidden value does not drag an average down.
+
+Below the summary there are three more blocks:
+
+- **Estimated watch time** shows the total duration at normal speed and divided by 1.25, 1.5 and 2. It is simple arithmetic: it does not include ads, pauses or replays.
+- **Duration highlights** names the longest and the shortest video, with the channel and length of each.
+- **Most-viewed videos** lists the top five videos by current view count, and **Top channels** lists the five channels that contribute the most videos. Ties are broken alphabetically.
+
+Durations are shown as `HH:MM:SS`, so a 14.5-hour playlist reads `14:30:00`.
+
+## The analysis CSV
+
+The **Download analysis CSV** button saves one row per analyzed video with these columns:
+
+```text
+Index, Video ID, Title, URL, Channel, Duration Seconds, Views, Likes, Comments, Uploaded Time
+```
+
+`Duration Seconds` is a plain integer, which makes it easy to sum or chart. A missing view, like or comment count is left empty, not written as 0. `Uploaded Time` is the date the video was published on YouTube (in UTC, without the trailing `Z`), not the date it was added to the playlist. The file is UTF-8 with a byte-order mark, so Excel opens titles in any language correctly. Titles that start with `=`, `+`, `-` or `@` get a leading apostrophe so a spreadsheet does not treat them as formulas.
+
+The file name keeps only the Latin letters, digits and hyphens from the playlist title. A title written entirely in another script falls back to `youtube-playlist-analysis.csv`.
+
+If you need descriptions, tags, thumbnails or other file formats, use the [playlist CSV exporter](/tools/export-youtube-playlist-to-csv) instead; the analyzer CSV is deliberately narrow.
+
+## A worked example: planning a course playlist
+
+_Illustrative example. The numbers below are invented to show how to read the results; they do not describe a real playlist._
+
+Say you found a 40-entry programming course and want to know if you can finish it in a month. YouTube shows 40 items, but the analyzer reports 38 available videos: two lessons were deleted or made private since the playlist was created. The summary looks like this:
+
+| Metric           | Value                               |
+| ---------------- | ----------------------------------- |
+| Available videos | 38                                  |
+| Total duration   | 14:25:00 (based on 38 of 38 videos) |
+| Average duration | 00:22:46                            |
+| Unique channels  | 3                                   |
+| Total likes      | based on 36 of 38 videos            |
+| Total comments   | based on 35 of 38 videos            |
+
+And the watch-time block:
+
+| Speed  | Estimated time |
+| ------ | -------------- |
+| Normal | 14:25:00       |
+| 1.25×  | 11:32:00       |
+| 1.5×   | 09:36:40       |
+| 2×     | 07:12:30       |
+
+At 1.5× and 45 minutes a day, the course takes about 13 sessions, which fits comfortably in a month. "Unique channels: 3" tells you the playlist is a compilation rather than one instructor's series, so expect differences in style. The "36 of 38" note simply means two videos hide their like counts; it is not an error.
+
+To build a schedule, open the CSV in a spreadsheet and add a running total in column K that converts seconds to hours at 1.5×:
+
+```text
+K2: =SUM($F$2:F2)/1.5/3600
+```
+
+Fill it down, and every time the value crosses a multiple of 0.75 (45 minutes) you have a natural break point.
+
+## Other ways people use it
+
+- **Checking a queue before a trip.** Collect videos in a public or unlisted playlist and see whether it fits a flight at 1.25×.
+- **Curating a teaching playlist.** Teachers use Duration highlights to spot one 2-hour lecture hiding among 10-minute clips, and Top channels to make sure no single source dominates.
+- **Reviewing a collaborative or music playlist.** Most-viewed videos shows which entries carry the playlist; Unique channels shows how varied it is.
+- **Comparing two versions of a course.** Run both playlists and compare total duration and average duration side by side before choosing one.
+
+## Reading the results correctly
+
+- **Statistics are a snapshot.** Views, likes and comments are current at the moment you clicked Analyze playlist. Run it again tomorrow and the numbers will have moved.
+- **The video count can be lower than YouTube's.** Deleted, private and otherwise unavailable entries are skipped quietly. The difference between YouTube's count and "Available videos" is the number of dead entries.
+- **"Not available" is not zero.** It appears when no video in the playlist exposes that statistic.
+- **Unique channels counts names.** Two different channels with exactly the same display name are counted as one.
+- **Live streams can lack a duration.** A stream that is live or scheduled may not report a length yet, and is then left out of duration totals; the "Based on" line will show it.
+
+## Limitations
+
+- The analyzer reads up to **500 available videos** per playlist. For a longer playlist, a notice says "Showing the first 500 available videos", and every figure covers only those 500.
+- Only public and unlisted playlists you have the link to can be read. Private playlists, Watch Later and Liked videos are tied to an account and cannot be accessed through a public API key.
+- Auto-generated Mix playlists usually cannot be read through the API either.
+- Requests share one daily YouTube API quota across all visitors, so on very busy days the tool can temporarily stop answering.
+
+## Troubleshooting
+
+| Message or symptom                                                                  | Likely cause                                                                                                 | What to do                                                                                   |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| "Enter a valid YouTube playlist URL that includes a list ID."                       | The link has no `list=` parameter, is not a YouTube address, or the ID is too short (for example `list=WL`). | Open the playlist itself and copy its URL, or use a video link that still contains `&list=`. |
+| "This playlist is private, missing, or unavailable through the public YouTube API." | Private, deleted or account-only playlist.                                                                   | Ask the owner to make it public or unlisted, then retry.                                     |
+| "The YouTube API quota is temporarily exhausted."                                   | The shared daily quota ran out.                                                                              | Try again later; the quota resets daily.                                                     |
+| "YouTube took too long to respond."                                                 | The API did not answer within about 15 seconds.                                                              | Retry; large playlists occasionally need a second attempt.                                   |
+| "Please wait a moment before loading another playlist."                             | Two runs within about two seconds.                                                                           | Wait a couple of seconds and click again.                                                    |
+| "No public videos are available in this playlist."                                  | Every entry is deleted or private.                                                                           | Check the playlist on YouTube.                                                               |
+
+## Related guides
+
+- [Export a YouTube playlist to CSV](/tools/export-youtube-playlist-to-csv) for the complete column set
+- [Export a YouTube playlist to Excel](/tools/export-youtube-playlist-to-excel)
+- [How to export a YouTube playlist to CSV or Excel](/blog/how-to-export-a-youtube-playlist-to-csv-or-excel)
+- [Export a YouTube channel](/tools/export-youtube-channel)
+- [YouTube Channel Analyzer](/tools/youtube-channel-analyzer)

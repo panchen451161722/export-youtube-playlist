@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { createFileRoute, notFound, redirect } from '@tanstack/react-router';
 import { MDXProvider } from '@mdx-js/react';
 import { ArrowLeft, Calendar } from 'lucide-react';
@@ -13,8 +14,8 @@ import { MarkdownContent } from '@/components/markdown-content';
 import { mdxComponents } from '@/components/mdx-components';
 import {
   formatPostDate,
+  getLocalPostComponent,
   getLocalPostLocales,
-  loadLocalPost,
 } from '@/content/posts';
 import { getBlogPostFn } from '@/content/posts/server';
 
@@ -42,7 +43,7 @@ export const Route = createFileRoute('/blog/$slug')({
     }
 
     const localPostLocales = getLocalPostLocales(post.slug);
-    const availableLocales =
+    const availableLocales: ReturnType<typeof getLocalPostLocales> =
       post.source === 'db' && !localPostLocales.includes(baseLocale)
         ? [baseLocale, ...localPostLocales]
         : localPostLocales;
@@ -96,10 +97,10 @@ export const Route = createFileRoute('/blog/$slug')({
 function BlogPostPage() {
   const { locale, post } = Route.useLoaderData();
 
-  // Local posts render their bundled MDX component; database posts render
+  // Local posts load only their own MDX component; database posts render
   // raw markdown through MarkdownContent.
   const LocalContent =
-    post.source === 'local' ? loadLocalPost(post.slug, locale)?.default : null;
+    post.source === 'local' ? getLocalPostComponent(post.slug, locale) : null;
 
   return (
     <div className="bg-background text-foreground flex min-h-screen flex-col">
@@ -154,7 +155,9 @@ function BlogPostPage() {
           {LocalContent ? (
             <div className="text-foreground/90 text-[15px] leading-7">
               <MDXProvider components={mdxComponents}>
-                <LocalContent />
+                <Suspense fallback={null}>
+                  <LocalContent />
+                </Suspense>
               </MDXProvider>
             </div>
           ) : (

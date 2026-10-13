@@ -1,0 +1,171 @@
+export const meta = {
+  title:
+    'How Long Does a YouTube Playlist Take to Watch? Calculating Total Watch Time',
+  description:
+    'How total YouTube playlist duration is calculated, what 1.25x, 1.5x and 2x speed really save, and how to turn the total into a realistic study schedule.',
+  created_at: '2026-10-12',
+  author_name: 'Export YouTube Playlist',
+};
+
+"How long is this course?" sounds like a simple question, but YouTube does not answer it. A playlist page shows the number of videos, not the total running time. If you are about to start a 60-video programming course or a lecture series, the difference between "about ten hours" and "about thirty hours" changes how you plan the next few weeks.
+
+This guide explains how the total is calculated, what faster playback actually saves, how to convert the number into a daily schedule, and why the result sometimes looks different from what you expected.
+
+## How total playlist duration is calculated
+
+Every YouTube video has a duration stored in its metadata. The YouTube Data API returns it in ISO 8601 format, for example `PT1H4M30S` for one hour, four minutes and thirty seconds. To get a playlist total you:
+
+1. List every item in the playlist.
+2. Look up each video's metadata, including its duration.
+3. Convert each duration to seconds.
+4. Add the seconds together.
+
+That is exactly what the [YouTube Playlist Analyzer](/tools/youtube-playlist-analyzer) does. It reads the public playlist through the official API, converts each duration to seconds, and adds up every available video. It also shows the average duration and the longest and shortest videos, which helps you see whether the playlist is made of 5-minute clips or 90-minute lectures.
+
+Two details matter for accuracy:
+
+- **Only available videos are counted.** If a video was deleted or made private, the API does not return its metadata, so it cannot contribute to the total. The analyzer reports how many available videos were analyzed.
+- **Missing durations are excluded, not guessed.** Under the total duration card, the analyzer shows a note such as "Based on 47 of 48 videos", so you can see when one or more entries had no usable duration.
+
+The analyzer handles up to 500 available videos per playlist. For larger playlists it shows a notice and analyzes the first 500.
+
+## The playback speed formula
+
+Watching faster does not change the content; it just compresses time. The formula is:
+
+```text
+time at speed = total duration ÷ playback speed
+```
+
+Here is a worked example for an illustrative playlist with a total duration of **18 hours 40 minutes**, which is 1,120 minutes or 67,200 seconds.
+
+| Speed | Calculation  | Watch time       | Time saved |
+| ----- | ------------ | ---------------- | ---------- |
+| 1x    | 1,120 ÷ 1    | 18 h 40 min      | none       |
+| 1.25x | 1,120 ÷ 1.25 | 14 h 56 min      | 3 h 44 min |
+| 1.5x  | 1,120 ÷ 1.5  | 12 h 26 min 40 s | 6 h 13 min |
+| 2x    | 1,120 ÷ 2    | 9 h 20 min       | 9 h 20 min |
+
+A common mistake is to subtract a percentage instead of dividing. Watching at 1.5x does not save 50% of the time; it saves one third (1 − 1 ÷ 1.5 ≈ 33%). Watching at 1.25x saves 20%, and 2x saves 50%.
+
+The analyzer's "Estimated watch time" section shows the same four values: normal speed, 1.25x, 1.5x and 2x. They are estimates of uninterrupted playback, not a prediction of how long learning will take.
+
+### Which speed is realistic?
+
+Faster is not always better. In my experience, 1.25x to 1.5x works well for talking-head lectures and slow-paced explanations. Dense material, such as live coding, math derivations or a language you are still learning, often needs 1x plus pauses. A practical approach is to choose a speed per playlist, or even per section, rather than one speed for everything.
+
+## Turning the total into a study schedule
+
+Once you know the total, divide it by the time you can actually spend each day:
+
+```text
+days needed = (total minutes ÷ speed) ÷ minutes per day
+```
+
+Round up, because you cannot watch a fraction of a day's session.
+
+The table below uses the same **illustrative 18 h 40 min playlist**. It is an example, not a benchmark for any real course.
+
+| Daily budget | Days at 1x | Days at 1.5x | Days at 2x |
+| ------------ | ---------- | ------------ | ---------- |
+| 30 min       | 38         | 25           | 19         |
+| 45 min       | 25         | 17           | 13         |
+| 60 min       | 19         | 13           | 10         |
+
+For example, at 1.5x the playlist takes 746.7 minutes. At 45 minutes a day, 746.7 ÷ 45 = 16.6, which rounds up to 17 days.
+
+### Add time for practice
+
+The numbers above cover playback only. If you pause to take notes, rewind a confusing section, or type out code examples, real study time is longer. A personal rule of thumb I use for tutorials is to plan for about 1.5 times the playback time, and roughly double for hands-on coding courses. These are planning assumptions, not measured averages, so adjust them after the first week based on how long sessions actually take you.
+
+Also plan rest days. A schedule of "45 minutes, five days a week" is easier to keep than "45 minutes every day", and it only adds a few calendar days.
+
+## Why the total can differ from what you expected
+
+Sometimes the analyzer reports a number that looks too small or too large. These are the usual reasons.
+
+### Deleted, private or unavailable videos
+
+YouTube playlists can keep entries for videos that were later deleted or made private. The playlist may say "48 videos" while only 45 can be loaded. Those missing entries have no duration available, so the total is lower than the owner's original running time. Region-restricted or age-restricted videos can also return less metadata.
+
+### Live streams and premieres
+
+A video that is currently live or scheduled as an upcoming premiere does not have a final duration yet. The API reports a zero-length placeholder, which the analyzer treats as missing. That is why the "Based on X of Y videos" note matters: it tells you when the total excludes something. Once a stream ends and the replay is processed, it gets a normal duration.
+
+### The playlist is still growing
+
+The analyzer reads the playlist as it is at that moment. Ongoing series, weekly podcasts and courses that are still being published keep adding videos. If you plan a schedule around today's total, re-run the analysis every few weeks to see how much was added.
+
+### Shorts and very short clips
+
+Shorts in a playlist count as videos but add very little time. A playlist with 100 items might be mostly 30-second clips and only total an hour. Check the average duration and the shortest video: if the average is very low, the video count is a poor proxy for effort.
+
+### Duplicates and the 500-video limit
+
+If the same video was added to a playlist twice, it appears twice in the list and is counted twice. And for playlists larger than 500 videos, the analyzer only covers the first 500, so the true total is higher.
+
+## Doing the calculation yourself in a spreadsheet
+
+If you want to filter, re-order, or plan day by day, export the data and calculate it yourself. You have two options:
+
+- The analyzer's **Download analysis CSV** button gives you one row per video with Index, Video ID, Title, URL, Channel, Duration Seconds, Views, Likes, Comments and Uploaded Time.
+- The [CSV exporter](/tools/export-youtube-playlist-to-csv) creates a fuller file that includes "Duration in seconds", "Duration in minutes" and "Duration in timestamp" alongside titles, descriptions and tags.
+
+Open the file in Excel, Google Sheets or LibreOffice. In the examples below, assume the seconds are in column D, the data starts in row 2, and there are 48 videos (rows 2 to 49). Adjust the ranges to your file.
+
+Total hours:
+
+```text
+=SUM(D2:D49)/3600
+```
+
+Total as a clock value (format the cell as `[h]:mm:ss` so it can exceed 24 hours):
+
+```text
+=SUM(D2:D49)/86400
+```
+
+Minutes at 1.5x:
+
+```text
+=SUM(D2:D49)/1.5/60
+```
+
+Days needed at 1.5x with 45 minutes per day:
+
+```text
+=ROUNDUP(SUM(D2:D49)/1.5/60/45, 0)
+```
+
+Count videos with no duration, so you know what the total leaves out:
+
+```text
+=COUNTBLANK(D2:D49)
+```
+
+Total excluding clips shorter than one minute:
+
+```text
+=SUMIF(D2:D49, ">=60")
+```
+
+### A day-by-day plan
+
+To assign each video to a study day, add a running total in column K and a day number in column L. In K2 put `=D2` and in K3 put `=K2+D3`, then fill down. In L2 put:
+
+```text
+=ROUNDUP(K2/(45*60*1.5), 0)
+```
+
+and fill down. Each video now has a day number based on a 45-minute daily budget at 1.5x. A long video will sometimes push a day slightly over budget, which is usually better than stopping halfway through a lesson. Change the `45` and `1.5` to match your own plan.
+
+The spreadsheet approach also lets you delete rows for videos you already know, skip optional sections, or sort by duration to schedule the longest lectures on days off.
+
+## Summary
+
+- Total watch time is the sum of every available video's duration; deleted, private and live entries cannot contribute.
+- Faster playback divides the total: 1.25x saves 20%, 1.5x saves a third, 2x saves half.
+- Days needed = (total minutes ÷ speed) ÷ minutes per day, rounded up, plus time for practice.
+- Check the "Based on X of Y videos" note and re-run the analysis for playlists that are still growing.
+
+Paste a playlist into the [YouTube Playlist Analyzer](/tools/youtube-playlist-analyzer) to get the total and the speed estimates, then download the CSV if you want to build your own schedule.

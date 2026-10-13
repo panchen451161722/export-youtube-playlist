@@ -26,6 +26,8 @@ export type ToolPageShellProps = {
   relatedToolsTitle: string;
   relatedTools: ToolLink[];
   openToolLabel: string;
+  /** Optional long-form guide rendered after the how-to steps. */
+  guide?: ReactNode;
 };
 
 export function ToolPageShell({
@@ -44,6 +46,7 @@ export function ToolPageShell({
   relatedToolsTitle,
   relatedTools,
   openToolLabel,
+  guide,
 }: ToolPageShellProps) {
   return (
     <main className="bg-background">
@@ -122,6 +125,8 @@ export function ToolPageShell({
           </ol>
         </div>
       </section>
+
+      {guide}
 
       <section className="px-5 py-20 sm:px-8 sm:py-24">
         <div className="mx-auto grid max-w-6xl gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">

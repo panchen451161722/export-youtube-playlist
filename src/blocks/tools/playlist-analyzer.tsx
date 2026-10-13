@@ -1,5 +1,6 @@
 import { m } from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
+import { ToolGuideSection } from '@/blocks/tools/tool-guide';
 import { PlaylistAnalyzerTool } from '@/components/tools/playlist-analyzer-tool';
 import { ToolPageShell } from '@/components/tools/tool-page-shell';
 
@@ -128,14 +129,14 @@ export function PlaylistAnalyzer() {
       relatedToolsTitle={m['tools.common.related_title']()}
       relatedTools={[
         {
-          title: m['tools.catalog.links.title'](),
-          description: m['tools.catalog.links.description'](),
-          href: '/tools/youtube-playlist-link-extractor',
+          title: m['tools.csv.title'](),
+          description: m['tools.csv.description'](),
+          href: '/tools/export-youtube-playlist-to-csv',
         },
         {
-          title: m['tools.catalog.titles.title'](),
-          description: m['tools.catalog.titles.description'](),
-          href: '/tools/youtube-playlist-title-extractor',
+          title: m['tools.extra.channel_analyzer.title'](),
+          description: m['tools.extra.channel_analyzer.description'](),
+          href: '/tools/youtube-channel-analyzer',
         },
         {
           title: m['tools.catalog.export.title'](),
@@ -144,6 +145,7 @@ export function PlaylistAnalyzer() {
         },
       ]}
       openToolLabel={m['tools.catalog.open']()}
+      guide={<ToolGuideSection slug="youtube-playlist-analyzer" />}
     />
   );
 }

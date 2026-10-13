@@ -44,7 +44,7 @@ export const getBlogPostsFn = createServerFn()
     // the base locale only. This prevents English content from appearing at
     // a Chinese canonical URL.
     const dbPosts = data.locale === baseLocale ? await getDbPosts() : [];
-    return mergePosts(dbPosts, getLocalPosts(data.locale), {
+    return mergePosts(dbPosts, await getLocalPosts(data.locale), {
       limit: data.limit,
     });
   });
@@ -52,7 +52,7 @@ export const getBlogPostsFn = createServerFn()
 /**
  * Single blog post by slug: database first, local MDX as fallback.
  * Local posts return meta only — the route component resolves the MDX
- * Content from the bundled glob map (components don't serialize).
+ * Content from the lazy glob map (components don't serialize).
  */
 export const getBlogPostFn = createServerFn()
   .inputValidator((data: { slug: string; locale: string }) => data)
@@ -79,7 +79,7 @@ export const getBlogPostFn = createServerFn()
       }
     }
 
-    const mod = loadLocalPost(data.slug, data.locale);
+    const mod = await loadLocalPost(data.slug, data.locale);
     if (!mod) return null;
     const meta = mod.meta;
     return {

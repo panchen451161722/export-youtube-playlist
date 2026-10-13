@@ -1,0 +1,119 @@
+export const meta = {
+  title:
+    'How the YouTube channel exporter works, and how to get clean files out of it',
+  updated_at: '2026-10-12',
+};
+
+## What gets exported
+
+The channel exporter turns a channel's public uploads into files you can keep, search and load into other software. It reads the channel's uploads list through the official YouTube Data API v3, fetches full details for each video in batches of 50, and then builds the files you selected directly in your browser.
+
+You can identify the channel in several ways:
+
+- a channel URL such as `https://www.youtube.com/@handle` or `https://www.youtube.com/channel/UC...`
+- a bare handle (`@handle`) or a channel ID starting with `UC`
+- a legacy `/user/` URL
+- the URL of any video from that channel, which we resolve to its channel
+
+Older `/c/` custom URLs are looked up as handles. If one fails, paste the `@handle` or a video link instead.
+
+Before exporting, pick a **Media type**: All uploads, Videos, Shorts or Live streams. The filter is applied after the uploads are loaded, so it narrows the file without changing which uploads were read.
+
+## The 17 columns
+
+Every format carries the same fields, in this order:
+
+| Column                  | What it contains                                   |
+| ----------------------- | -------------------------------------------------- |
+| Title                   | Video title                                        |
+| Description             | Full description text                              |
+| Thumbnail url           | Largest thumbnail available                        |
+| Channel name            | Channel display name                               |
+| Views, Likes, Comments  | Public counts at export time; empty when hidden    |
+| Duration in seconds     | Integer, e.g. `754`                                |
+| Duration in minutes     | Decimal with two places, e.g. `12.57`              |
+| Duration in timestamp   | `M:SS` or `H:MM:SS`, e.g. `12:34`                  |
+| Duration                | Readable text, e.g. `12 Minutes, 34 Seconds`       |
+| Uploaded Time           | Publish date in UTC, e.g. `2025-03-14T15:00:00`    |
+| Video url               | Canonical `watch?v=` link                          |
+| Tags                    | Creator-supplied tags, written as `[#tag1, #tag2]` |
+| Tags (in description)   | Hashtags found in the description                  |
+| Emails (in description) | Email addresses found in the description           |
+| Links (in description)  | URLs found in the description                      |
+
+The last three are pattern matches on the description text, not structured YouTube data. Duplicates are removed, but anything that looks like an address or link is included.
+
+## The 13 formats
+
+| Format        | File                                        | Best for                                           |
+| ------------- | ------------------------------------------- | -------------------------------------------------- |
+| CSV           | `.csv`, UTF-8 with BOM                      | Spreadsheets, Airtable, Notion imports             |
+| Excel         | `.xlsx` with a bold frozen header           | Reviewing in Excel without import steps            |
+| Text          | `.txt`, one block per video                 | Reading or grepping                                |
+| Bookmark HTML | `.html` in browser bookmark format          | Importing every video as a browser bookmark folder |
+| JSON          | `.json`, an array of objects                | Scripts and data pipelines                         |
+| Markdown      | `.md`, one section per video                | Notes apps and wikis                               |
+| XML           | `.xml`, one item per video                  | Older tools that expect XML                        |
+| HTML          | `_Export.html`, a styled table              | Sharing a readable page                            |
+| YAML          | `.yaml`                                     | Config-style or static-site workflows              |
+| SQLite        | `.sqlite` with a `videos` table             | SQL queries on large catalogs                      |
+| Word          | `.docx`, one page per video                 | Printing or editing as a document                  |
+| M3U / M3U8    | playlist files of video URLs with durations | Media players that accept YouTube links            |
+
+Select one format and you get that file alone. Select several and they arrive together in one ZIP named after the channel. Select none and all 13 formats are packed into the ZIP.
+
+## A worked example: backing up a channel
+
+_Illustrative example. The channel and numbers are made up to show the workflow._
+
+A small education channel with 1,240 public uploads wants an offline record of its catalog, including descriptions, before reorganizing its playlists.
+
+1. Paste `https://www.youtube.com/@example-channel`, leave the media type at **All uploads**, and tick **CSV**, **JSON** and **SQLite**.
+2. Click **Export channel**. The tool loads the uploads and the download starts automatically: one ZIP containing three files.
+3. The results panel shows **Count: 1240**. Compare it with the video count on the channel page; if they match, nothing was cut off.
+4. Change **Sort** to **Oldest first** and click **Download selected formats** to get a second copy in chronological order. This regenerates the files from data already in your browser, so it does not make another YouTube request.
+
+With the SQLite file you can answer questions immediately. Every column is stored as text and named after its label (non-alphanumeric characters become underscores), so cast numbers before sorting:
+
+```sql
+SELECT Title, CAST(Views AS INTEGER) AS views, Uploaded_Time
+FROM videos
+ORDER BY views DESC
+LIMIT 10;
+```
+
+Hidden counts are stored as empty strings, which cast to 0, so filter them out when averaging.
+
+## Use cases we see most often
+
+- **Catalog backups.** Creators keep a dated copy of titles, descriptions and tags. If a video is removed, the text is still on record.
+- **Description audits.** Sort the CSV by the Links (in description) column to find expired affiliate links, old social profiles or a sponsor URL that needs updating across hundreds of videos.
+- **Research datasets.** JSON or SQLite gives a clean input for scripts that study titles, tags, upload timing or duration across a channel.
+- **Watching offline-friendly lists.** Bookmark HTML imports the whole catalog into a browser folder; M3U lists the videos with titles and durations for players that can open YouTube links.
+
+## Things to know before you rely on the file
+
+- **Up to 5,000 uploads.** The exporter reads at most the 5,000 most recent uploads, in the order YouTube returns the uploads list, which is normally newest first. The page does not show a separate warning, so compare the Count with the channel's total.
+- **Only public uploads.** Private videos, and videos YouTube removed, are not part of the public uploads list and never appear.
+- **Statistics are a snapshot,** taken when the data was loaded. To limit duplicate API calls the server may reuse data for the same channel for a few minutes, so re-running immediately can return identical numbers.
+- **Shorts are detected by length.** A video under 60 seconds that is not a live stream is labelled a Short. Shorts longer than that are counted as Videos, and an ordinary sub-minute clip is counted as a Short. Anything with live-stream details, including scheduled streams, is labelled Live.
+- **Formula protection.** Text beginning with `=`, `+`, `-` or `@` gets a leading apostrophe in CSV and Excel so a spreadsheet does not run it.
+- **File names.** Only Latin letters, digits and hyphens from the channel name are kept. A name in another script falls back to `youtube-channel`.
+
+## Troubleshooting
+
+| Symptom                                                                  | Likely cause                                                                                  | What to do                                                        |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| "We could not load this channel. Check the URL or handle and try again." | Typo in the handle, an unrecognized `/c/` name, or a second request within about two seconds. | Wait a moment, then try the `@handle`, channel ID or a video URL. |
+| "The YouTube API quota is temporarily exhausted."                        | The site's shared daily quota is used up.                                                     | Try again later.                                                  |
+| "YouTube took too long to respond."                                      | A very large channel did not finish loading within about two minutes.                         | Retry, or use a media-type filter and export in parts.            |
+| Count is 0                                                               | The chosen media type has no matching uploads.                                                | Switch to All uploads.                                            |
+| Count is lower than the channel total                                    | The 5,000 limit, or private and removed videos.                                               | Expected; see the notes above.                                    |
+
+## Related guides
+
+- [YouTube Channel Analyzer](/tools/youtube-channel-analyzer) for totals and engagement instead of raw files
+- [YouTube Playlist Analyzer](/tools/youtube-playlist-analyzer)
+- [Export a YouTube playlist to CSV](/tools/export-youtube-playlist-to-csv)
+- [Export a YouTube playlist to Excel](/tools/export-youtube-playlist-to-excel)
+- [How to export a YouTube playlist to CSV or Excel](/blog/how-to-export-a-youtube-playlist-to-csv-or-excel)

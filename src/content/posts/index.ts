@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import { lazy, type ComponentType } from 'react';
 
 import { locales } from '@/paraglide/runtime.js';
 
@@ -15,6 +15,10 @@ export const BLOG_POST_SLUGS = [
   'how-i-created-the-youtube-playlist-export-web-app',
   'how-i-learned-python-using-youtube-playlists',
   'how-to-export-a-youtube-playlist-to-csv-or-excel',
+  'analyze-youtube-playlist-in-google-sheets',
+  'back-up-youtube-playlists',
+  'calculate-youtube-playlist-watch-time',
+  'audit-a-youtube-channel-with-public-data',
 ] as const;
 
 export type BlogPostMeta = {
@@ -48,22 +52,43 @@ export type BlogPostDetail = BlogPost & {
   content?: string;
 };
 
-// Eagerly bundle the local MDX posts (small markdown files), mirroring the
-// static-pages pattern. Keys are absolute from the project root.
-const postModules = import.meta.glob<PostModule>('/src/content/posts/*.mdx', {
-  eager: true,
-});
+// Each article/locale is its own async chunk. Locale checks use only the keys;
+// metadata is loaded by the blog server functions, never eagerly by the router.
+const postLoaders = import.meta.glob<PostModule>('/src/content/posts/*.mdx');
+const postComponents = new Map<string, ComponentType>();
 
-export function loadLocalPost(slug: string, locale: string): PostModule | null {
+function localPostLoader(slug: string, locale: string) {
   if (!BLOG_POST_SLUGS.includes(slug as (typeof BLOG_POST_SLUGS)[number])) {
     return null;
   }
-  return postModules[`/src/content/posts/${slug}.${locale}.mdx`] ?? null;
+  return postLoaders[`/src/content/posts/${slug}.${locale}.mdx`] ?? null;
+}
+
+export async function loadLocalPost(
+  slug: string,
+  locale: string
+): Promise<PostModule | null> {
+  return localPostLoader(slug, locale)?.() ?? null;
+}
+
+export function getLocalPostComponent(
+  slug: string,
+  locale: string
+): ComponentType | null {
+  const loader = localPostLoader(slug, locale);
+  if (!loader) return null;
+  const key = `/src/content/posts/${slug}.${locale}.mdx`;
+  let component = postComponents.get(key);
+  if (!component) {
+    component = lazy(loader);
+    postComponents.set(key, component);
+  }
+  return component;
 }
 
 /** Locales with a real MDX file for this post; no cross-locale fallback. */
 export function getLocalPostLocales(slug: string): (typeof locales)[number][] {
-  return locales.filter((locale) => loadLocalPost(slug, locale) !== null);
+  return locales.filter((locale) => localPostLoader(slug, locale) !== null);
 }
 
 function localPostToItem(slug: string, meta: BlogPostMeta): BlogPost {
@@ -79,11 +104,14 @@ function localPostToItem(slug: string, meta: BlogPostMeta): BlogPost {
   };
 }
 
-export function getLocalPosts(locale: string): BlogPost[] {
-  return BLOG_POST_SLUGS.map((slug) => ({
-    slug: slug as string,
-    mod: loadLocalPost(slug, locale),
-  }))
+export async function getLocalPosts(locale: string): Promise<BlogPost[]> {
+  const posts = await Promise.all(
+    BLOG_POST_SLUGS.map(async (slug) => ({
+      slug: slug as string,
+      mod: await loadLocalPost(slug, locale),
+    }))
+  );
+  return posts
     .filter((m): m is { slug: string; mod: PostModule } => m.mod !== null)
     .map(({ slug, mod }) => localPostToItem(slug, mod.meta));
 }

@@ -1,0 +1,183 @@
+export const meta = {
+  title: 'How to Analyze a YouTube Playlist in Google Sheets',
+  description:
+    'Import an exported YouTube playlist CSV into Google Sheets, fix durations and dates, and answer real questions with SUM, QUERY, SORTN, FILTER and pivot tables.',
+  created_at: '2026-10-12',
+  author_name: 'Export YouTube Playlist',
+};
+
+Exporting a playlist is only half the job. The useful part starts when you can ask the data questions: how long would it take to watch everything, which videos are the longest, which channels dominate the list, and which uploads are actually gaining views. This guide walks through doing that in Google Sheets with a CSV file from the [CSV exporter](/tools/export-youtube-playlist-to-csv).
+
+If you have not exported a playlist yet, the [step-by-step export guide](/blog/how-to-export-a-youtube-playlist-to-csv-or-excel) covers that part. Here we assume you already have a `.csv` file on your computer.
+
+## What the CSV contains
+
+Every export has one header row and one row per available video, with the same 17 columns in the same order. Knowing the column letters makes the formulas below copy-paste ready:
+
+- **A, Title**: Video title
+- **B, Description**: Full description, may contain line breaks
+- **C, Thumbnail url**: A link, not an image
+- **D, Channel name**: The channel that uploaded the video
+- **E, Views**: Blank when YouTube does not expose it
+- **F, Likes**: Blank when hidden or unavailable
+- **G, Comments**: Blank when comments are off or unavailable
+- **H, Duration in seconds**: Whole number, best column for math
+- **I, Duration in minutes**: Seconds divided by 60, two decimals
+- **J, Duration in timestamp**: `M:SS` or `H:MM:SS` text
+- **K, Duration**: Readable text, for example `12 Minutes, 34 Seconds`
+- **L, Uploaded Time**: ISO 8601 date and time, for example `2026-01-15T10:30:00`
+- **M, Video url**: `https://www.youtube.com/watch?v=...`
+- **N, Tags**: Bracketed list such as `[#research, #workflow]`
+- **O, Tags (in description)**: Hashtags found in the description
+- **P, Emails (in description)**: Email addresses found in the description
+- **Q, Links (in description)**: URLs found in the description
+
+Two details matter for analysis. First, a blank Views, Likes or Comments cell means the value was not available, not zero. Second, the exporter already converts YouTube's internal ISO 8601 duration (the `PT12M34S` style value returned by the API) into seconds, so you rarely need to parse durations yourself.
+
+## Step 1: Import the CSV into Google Sheets
+
+Opening the file by double-clicking it in Google Drive works, but the import dialog gives you more control:
+
+1. Create a blank spreadsheet, or open an existing one.
+2. Go to **File > Import**, then choose the **Upload** tab and select your `.csv` file.
+3. For **Import location**, pick **Insert new sheet(s)** if you want to keep other tabs, or **Create new spreadsheet** for a clean file.
+4. For **Separator type**, choose **Comma**. Detect automatically usually works too, but choosing Comma removes the guesswork.
+5. Leave **Convert text to numbers, dates, and formulas** checked. This turns Views, Likes and Duration in seconds into real numbers.
+6. Click **Import data**, then rename the new tab to `Export` so the formulas in this article work as written.
+
+### About encoding and the byte-order mark
+
+The CSV is UTF-8 and starts with a byte-order mark (BOM). The BOM is there mostly for Microsoft Excel, which otherwise tends to garble non-Latin titles. Google Sheets reads UTF-8 natively, so Chinese, Japanese, Cyrillic or emoji titles should import correctly either way. If the first header ever shows up with odd characters in front of `Title`, the file was re-saved by another program with a different encoding; download a fresh copy rather than editing it.
+
+### Formula-like text
+
+Titles that begin with `=`, `+`, `-` or `@` are prefixed with an apostrophe during export so they display as text instead of running as formulas. You may see that apostrophe in the formula bar for a few titles; that is intentional.
+
+## Step 2: Fix the two columns that need care
+
+### Durations: use seconds, not the timestamp
+
+It is tempting to sum column J, but `Duration in timestamp` is text like `12:34` for videos under an hour. With conversion turned on, Sheets can read `12:34` as twelve hours and thirty-four minutes, which quietly breaks any total. Use column H instead and convert at the end:
+
+```text
+=SUM(Export!H2:H)/3600
+```
+
+That returns total hours as a decimal. If you prefer a clock-style answer, divide by 86400 and apply **Format > Number > Duration**:
+
+```text
+=SUM(Export!H2:H)/86400
+```
+
+Occasionally an entry has a blank seconds cell and a raw value like `P0D` in the duration text columns. That usually means YouTube did not report a normal duration, for example for a live or upcoming stream. `SUM` and `AVERAGE` skip blanks, so these rows simply drop out of duration math.
+
+### Upload times: turn text into real dates
+
+`Uploaded Time` looks like `2026-01-15T10:30:00` and is in UTC (the trailing `Z` is removed). Depending on your locale, Sheets may or may not recognize the `T` separator. This helper column works in both cases. Put it in R2 and fill down:
+
+```text
+=IF(L2="", "", --SUBSTITUTE(L2, "T", " "))
+```
+
+Format column R as **Date time** and you have a sortable timestamp. If the cell is already a date, `SUBSTITUTE` returns its serial number unchanged, so the formula is safe to use either way.
+
+## Step 3: Answer real questions
+
+### How long is the whole playlist?
+
+```text
+=SUM(Export!H2:H)/3600
+=AVERAGE(Export!H2:H)/60
+=COUNT(Export!H2:H)
+```
+
+Total hours, average minutes per video, and the number of videos that have a duration.
+
+### Which videos are the longest?
+
+`SORTN` returns the top rows without touching the original data. This lists the ten longest videos with title, channel and seconds:
+
+```text
+=SORTN(Export!A2:H, 10, 0, 8, FALSE)
+```
+
+The `8` is the eighth column of the range (H). To show only the title and length in minutes, wrap a `FILTER` in `SORT`:
+
+```text
+=SORT(FILTER(Export!A2:I, Export!H2:H > 1800), 8, FALSE)
+```
+
+This returns every video over 30 minutes, longest first.
+
+### Which channels dominate the playlist?
+
+`COUNTIF` answers it for a single channel:
+
+```text
+=COUNTIF(Export!D2:D, "Example Channel")
+```
+
+For all channels at once, `QUERY` is cleaner. It groups by channel, counts videos, and adds up hours:
+
+```text
+=QUERY(Export!A1:Q, "select D, count(A), sum(H)/3600 where D <> '' group by D order by count(A) desc label count(A) 'Videos', sum(H)/3600 'Hours'", 1)
+```
+
+Video count and watch time often tell different stories. A channel with three long lectures can outweigh one with ten short clips.
+
+### Which videos are gaining views fastest?
+
+Raw view counts favour older uploads. Dividing by the age of the video is fairer. Put the date you exported the file in a cell, say T1, because view counts are a snapshot from that moment. Then, in S2:
+
+```text
+=IF(OR(E2="", R2=""), "", E2 / MAX(1, $T$1 - INT(R2)))
+```
+
+`MAX(1, ...)` avoids dividing by zero for videos published on the export day, and the blank check keeps hidden view counts out of the ranking.
+
+### Which videos use a particular tag?
+
+The Tags column is plain text, so `REGEXMATCH` works:
+
+```text
+=FILTER(Export!A2:A, REGEXMATCH(Export!N2:N, "#research"))
+```
+
+## Step 4: Pivot tables and conditional formatting
+
+If you prefer clicking to typing formulas, select the data and go to **Insert > Pivot table**. Add `Channel name` under **Rows**, then add `Title` under **Values** summarized by COUNTA, and `Duration in seconds` summarized by SUM. You get the same channel breakdown as the `QUERY` above and can drag in `Uploaded Time` later to see activity over time.
+
+Conditional formatting makes long playlists easier to scan. Select A2:Q, open **Format > Conditional formatting**, choose **Custom formula is**, and enter:
+
+```text
+=$H2 > 3600
+```
+
+Every video over an hour is now highlighted across the full row. A **Color scale** rule on column E is a quick way to spot outliers in views.
+
+## A worked example
+
+The table below is **illustrative**: invented titles and numbers chosen to show the method, not data from a real playlist. It uses the same column names as a real export.
+
+```text
+Title                  Channel name  Views  Duration in seconds  Uploaded Time
+Intro to pandas        Channel A     48000  1320                 2025-11-02T14:00:00
+Cleaning messy CSVs    Channel B     9500   2710                 2026-03-18T09:30:00
+GroupBy explained      Channel A     21300  905                  2026-01-07T16:15:00
+Plotting basics        Channel C     3200   640                  2026-06-25T12:00:00
+Time series in pandas  Channel A     15800  3945                 2026-02-11T18:45:00
+```
+
+Running the formulas above, with an export date of 2026-10-12:
+
+- **Total watch time:** 9,520 seconds, which is 2 hours 38 minutes 40 seconds.
+- **Average length:** 1,904 seconds, about 31.7 minutes.
+- **Longest video:** Time series in pandas, 3,945 seconds (1:05:45).
+- **Channel share:** Channel A has 3 of 5 videos and 6,170 seconds, roughly 65% of total watch time.
+- **Views per day:** Intro to pandas leads at about 140 per day over 344 days. GroupBy explained follows at about 77, then Time series in pandas at 65, Cleaning messy CSVs at 46, and Plotting basics at 29.
+
+The ranking by views per day matches the ranking by raw views in this tiny sample, but in larger playlists the two often diverge: a recent upload with modest totals can turn out to be growing faster than an old favourite.
+
+## Keep the snapshot honest
+
+An export reflects what YouTube's public API returned at that moment. Views and likes keep changing, and unavailable videos are not included. When you share findings, note the export date next to the numbers. If you want a quick overview without building a sheet, the [YouTube Playlist Analyzer](/tools/youtube-playlist-analyzer) summarizes a playlist in the browser; the spreadsheet route is for when you need your own questions answered. Exports are limited to the first 500 available videos per playlist, so very large playlists will be analyzed only partially.

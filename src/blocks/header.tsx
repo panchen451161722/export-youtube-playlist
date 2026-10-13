@@ -4,6 +4,7 @@ import { ChevronDown, Menu, X } from 'lucide-react';
 
 import { Link } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
+import { isIndexablePath } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { LocaleSelector } from '@/components/locale-selector';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -80,7 +81,7 @@ function ToolsMenu({
       label: publicToolTitles[tool.key](),
       href: `/tools/${tool.slug}`,
     })),
-  ];
+  ].filter((tool) => isIndexablePath(tool.href));
 
   useEffect(() => {
     const closeOnOutsideClick = (event: PointerEvent) => {

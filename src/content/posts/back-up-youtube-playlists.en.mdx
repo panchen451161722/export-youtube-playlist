@@ -1,0 +1,150 @@
+export const meta = {
+  title: 'How to Back Up YouTube Playlists Before Videos Disappear',
+  description:
+    'Why YouTube playlists lose titles when videos are deleted or made private, what metadata to save, which formats to use, and how to spot removed videos.',
+  created_at: '2026-10-12',
+  author_name: 'Export YouTube Playlist',
+};
+
+Anyone who has kept a playlist for a few years has seen it happen: an entry that used to be a favourite lecture, song or tutorial now reads "Deleted video" or "Private video", with a grey thumbnail and no title. Sometimes YouTube simply hides unavailable videos and shows a smaller count. Either way, the information you would need to find that video again, usually its title and channel, is gone from the playlist page.
+
+The fix is boring but effective: keep a regular metadata backup of the playlists you care about. This post explains what to save, which file formats are worth keeping, a routine that takes a couple of minutes, and how to compare two backups to find exactly what disappeared.
+
+## Why playlists lose information
+
+A playlist is a list of references to videos, not a copy of them. When the owner of a video deletes it, makes it private, or it is removed for a policy or copyright reason, the reference stays in your playlist but YouTube stops showing the video's details to you. That is why the placeholder carries no title.
+
+A few common situations:
+
+- **Deleted videos.** The uploader removed the video or their channel was closed.
+- **Private videos.** The uploader changed visibility. The video still exists but you can no longer see it, or its title.
+- **Blocked or restricted videos.** A video may be unavailable in your region or for other reasons, and can be hidden from playlist views.
+- **Renamed videos.** Less dramatic, but creators often retitle uploads, which makes old notes or bookmarks hard to match.
+
+If you saved the title and channel name before any of this happened, you can at least search for a re-upload, a newer version, or the creator's other work. Without them you are left guessing.
+
+## What a useful backup should contain
+
+You do not need much to recognise a video later. The essentials are:
+
+- **Video ID** (inside `Video url`, after `v=`): The only stable identifier; titles change, IDs do not
+- **Title** (`Title`): What you will actually search for later
+- **Channel** (`Channel name`): Helps find re-uploads and the creator's other videos
+- **Link** (`Video url`): Lets you check whether the video still exists
+- **Publish date** (`Uploaded Time`): Distinguishes versions and re-uploads
+
+The exporter includes all of these, plus description, duration, tags, links found in the description, and public view, like and comment counts. Descriptions are worth keeping too: they often contain the speaker's name, a course code, or a link to slides that outlive the video itself.
+
+There is no separate video ID column, but it is easy to pull out of the URL. In Google Sheets or Excel, with the URL in column M:
+
+```text
+=REGEXEXTRACT(M2, "v=([^&]+)")
+```
+
+`REGEXEXTRACT` is a Google Sheets function. In Excel 365 you can use `=TEXTAFTER(M2, "v=")` instead, since exported URLs contain nothing after the ID.
+
+## Choosing formats
+
+The [playlist exporter](/) can produce CSV, Excel, Text, Bookmark HTML, JSON, Markdown, XML, HTML, YAML, SQLite, Word, M3U and M3U8. Selecting more than one format downloads a single ZIP, and leaving every format unchecked downloads all of them. For a backup you do not need everything. Here is how they compare for this specific job:
+
+- **CSV** is the best default. It is plain UTF-8 text with a byte-order mark, opens in any spreadsheet app, can be read by scripts, and will still be readable decades from now. It also keeps all 17 columns. The [CSV exporter](/tools/export-youtube-playlist-to-csv) page has a sample file you can inspect.
+- **JSON** is ideal if you might compare backups with a script. Each video is an object whose keys are the same column labels, such as `"Video url"` and `"Channel name"`.
+- **Excel (.xlsx)** is the most comfortable to read by hand, with a frozen header and wrapped descriptions. It is a binary file, though, so it is less convenient for automated comparisons. Keep it alongside CSV rather than instead of it.
+- **SQLite** puts everything into a single table named `videos`, which is handy if you want to keep many backups in one place and query them with SQL.
+- **Bookmark HTML** contains only titles and links, but you can import it into a browser's bookmarks, which makes it a quick human-friendly safety net.
+- **Markdown** and **Text** are readable in any notes app and easy to skim, at the cost of being harder to process automatically.
+
+A sensible minimum is **CSV plus JSON**. Add Excel or Bookmark HTML if you want something pleasant to browse.
+
+## A practical backup routine
+
+### 1. Decide what to back up
+
+Make a short list of playlists that would genuinely hurt to lose: research collections, course material, music you curated over years. The exporter reads public playlists and accessible unlisted ones; it never signs in to your account, so it cannot read private playlists. If one of your own playlists is private, you can switch it to unlisted while you export and switch it back afterwards.
+
+### 2. Name files with the date
+
+Exported files are named after the playlist title, and identical titles will overwrite or collide over time. Rename each file so it sorts by date and identifies the playlist:
+
+```text
+2026-10-12_ml-lectures_PLxxxxxxxx.csv
+2026-10-12_ml-lectures_PLxxxxxxxx.json
+```
+
+Including the playlist ID (the `list=` value from the URL) matters, because the CSV itself stores video rows, not the playlist's own ID. Note also that the exporter keeps only Latin letters, digits, spaces, hyphens and underscores in file names; a playlist titled entirely in Chinese or another non-Latin script is saved as `youtube-playlist`, so renaming is essential there.
+
+### 3. Store copies in two places
+
+Keep one copy on your computer and one in cloud storage or on an external drive. Metadata files are small, so storing years of monthly backups costs almost nothing.
+
+### 4. Repeat on a schedule
+
+For active playlists, monthly is plenty. For playlists you rarely touch, a quarterly backup is enough. Always export before you reorganise or delete anything yourself.
+
+## Comparing two backups to find removed videos
+
+Deleted and private videos do not appear in a new export, because the YouTube Data API no longer returns their details. That makes comparison straightforward: anything present in the old file but missing from the new one has become unavailable, or was removed from the playlist.
+
+Always compare by `Video url` (or the video ID), never by title, since titles can change.
+
+### In a spreadsheet
+
+Import the old export into a tab named `Old` and the new one into a tab named `New`. In the `Old` tab, add this in R2 and fill down:
+
+```text
+=IF(COUNTIF(New!M:M, M2)=0, "Missing", "")
+```
+
+To get a clean list of everything that disappeared in one formula:
+
+```text
+=FILTER(Old!A2:M, COUNTIF(New!M2:M, Old!M2:M)=0)
+```
+
+If you also want to catch renamed videos, `XLOOKUP` returns the current title or a marker:
+
+```text
+=XLOOKUP(M2, New!M:M, New!A:A, "Missing")
+```
+
+Put that next to the old title and any row where the two differ has been renamed. These formulas use Google Sheets range syntax; in Excel, replace open-ended ranges such as `M2:M` with fixed ones such as `M2:M600`.
+
+### With a short command
+
+If you saved JSON, `jq` and `comm` will list removed URLs on macOS or Linux:
+
+```bash
+jq -r '.[]["Video url"]' 2026-09-12_ml-lectures.json | sort > old.txt
+jq -r '.[]["Video url"]' 2026-10-12_ml-lectures.json | sort > new.txt
+comm -23 old.txt new.txt
+```
+
+The same comparison with Python and the CSV files, using `utf-8-sig` so the byte-order mark is handled:
+
+```python
+import csv
+
+def load(path):
+    with open(path, newline="", encoding="utf-8-sig") as f:
+        return {row["Video url"]: row for row in csv.DictReader(f)}
+
+old = load("2026-09-12_ml-lectures.csv")
+new = load("2026-10-12_ml-lectures.csv")
+for url in old.keys() - new.keys():
+    print(old[url]["Title"], "|", old[url]["Channel name"], "|", url)
+```
+
+The output gives you the title and channel of every missing video, which is exactly what the "Deleted video" placeholder would have hidden.
+
+## What a metadata backup is not
+
+It is worth being clear about the limits:
+
+- **It does not save the videos.** The export contains text and links. Thumbnail fields are URLs, which typically stop working once a video is gone. The exporter does not download video or audio files, and it is not meant to.
+- **It cannot recover data YouTube no longer exposes.** If a video is already deleted or private when you export, it will not be in the file. Backups only help when they are made beforehand.
+- **Large playlists are partly covered.** The exporter reads up to 500 available videos per playlist, so for very large playlists the backup covers the first 500 available entries.
+- **Numbers are a snapshot.** Views, likes and comments reflect the export date and will drift.
+
+Keeping titles, channels and links for your own reference is a reasonable personal record. Re-uploading or redistributing someone else's video is a different matter: if a video you valued disappears, the respectful route is to look for an official re-upload or contact the creator, not to source a copy that the rights holder chose to remove.
+
+A few minutes of exporting each month means the next time a playlist entry turns grey, you will know exactly what it was.

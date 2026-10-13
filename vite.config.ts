@@ -5,6 +5,7 @@ import mdx from '@mdx-js/rollup';
 import tailwindcss from '@tailwindcss/vite';
 import viteReact from '@vitejs/plugin-react';
 import { nitro } from 'nitro/vite';
+import remarkGfm from 'remark-gfm';
 import { defineConfig } from 'vite';
 
 import { loadEnvFiles } from './src/lib/env';
@@ -47,6 +48,25 @@ const workersDb = isCloudflareBuild ? workersDbProvider() : '';
 const keepPostgres = workersDb === 'postgresql' || workersDb === 'postgres';
 
 export default defineConfig({
+  environments: {
+    client: {
+      build: {
+        rolldownOptions: {
+          output: {
+            codeSplitting: {
+              groups: [
+                {
+                  name: 'react-vendor',
+                  test: /\/node_modules\/(?:react|react-dom|scheduler)\//,
+                  priority: 20,
+                },
+              ],
+            },
+          },
+        },
+      },
+    },
+  },
   server: {
     port: 3000,
   },
@@ -61,7 +81,13 @@ export default defineConfig({
   },
   plugins: [
     // MDX must run before the react plugin so JSX in compiled MDX gets transformed.
-    { enforce: 'pre', ...mdx({ providerImportSource: '@mdx-js/react' }) },
+    {
+      enforce: 'pre',
+      ...mdx({
+        providerImportSource: '@mdx-js/react',
+        remarkPlugins: [remarkGfm],
+      }),
+    },
     tailwindcss(),
     paraglideVitePlugin({
       project: './project.inlang',

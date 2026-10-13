@@ -3,6 +3,40 @@ import { baseLocale, locales, localizeUrl } from '@/paraglide/runtime.js';
 
 type AppLocale = (typeof locales)[number];
 
+/**
+ * Core tools and tools retained based on Search Console traffic or impressions.
+ * This search-indexing policy also controls sitemap inclusion; it does not
+ * control AdSense review or ad placement. Other `/tools/*` pages remain usable
+ * with `noindex, follow` and are left out of the sitemap.
+ */
+export const INDEXED_TOOL_PATHS: readonly string[] = [
+  '/tools/export-youtube-playlist-to-csv',
+  '/tools/export-youtube-playlist-to-excel',
+  '/tools/youtube-playlist-analyzer',
+  '/tools/export-youtube-channel',
+  '/tools/youtube-channel-analyzer',
+  // Retain the 11 tools with clicks in the 2026-09-13–2026-10-10 GSC window.
+  '/tools/youtube-channel-keywords',
+  '/tools/youtube-playlist-link-extractor',
+  '/tools/youtube-playlist-title-extractor',
+  '/tools/youtube-channel-title-extractor',
+  '/tools/youtube-channel-playlist-extractor',
+  '/tools/youtube-subscribe-link-generator',
+  '/tools/youtube-channel-to-playlist',
+  '/tools/youtube-region-restriction-checker',
+  '/tools/youtube-description-extractor',
+  '/tools/youtube-channel-id-finder',
+  '/tools/youtube-embed-code-generator',
+  // Retain the tag extractor for its existing search impressions.
+  '/tools/youtube-tag-extractor',
+];
+
+/** Whether a locale-free public path should be indexed by search engines. */
+export function isIndexablePath(path: string): boolean {
+  if (!path.startsWith('/tools/')) return true;
+  return INDEXED_TOOL_PATHS.includes(path);
+}
+
 type PublicSeoOptions = {
   title: string;
   description: string;
@@ -16,6 +50,8 @@ type PublicSeoOptions = {
   modifiedTime?: string;
   author?: string;
   structuredData?: Record<string, unknown>;
+  /** Force `noindex, follow`; defaults to the tool indexing policy. */
+  noindex?: boolean;
 };
 
 function appOrigin(): string {
@@ -52,6 +88,7 @@ export function publicPageSeo({
   modifiedTime,
   author,
   structuredData,
+  noindex = !isIndexablePath(path),
 }: PublicSeoOptions) {
   const canonical = localizedPageUrl(path, locale);
   const socialImage = absoluteUrl(image);
@@ -66,7 +103,9 @@ export function publicPageSeo({
       { name: 'description', content: description },
       {
         name: 'robots',
-        content: 'index, follow, max-image-preview:large, max-snippet:-1',
+        content: noindex
+          ? 'noindex, follow'
+          : 'index, follow, max-image-preview:large, max-snippet:-1',
       },
       { property: 'og:title', content: title },
       { property: 'og:description', content: description },

@@ -1,0 +1,115 @@
+export const meta = {
+  title:
+    'Reading a channel by the numbers: a guide to the YouTube Channel Analyzer',
+  updated_at: '2026-10-12',
+};
+
+## What the channel analyzer reports
+
+The YouTube Channel Analyzer summarizes a channel's public uploads in one screen. It accepts a channel URL, an `@handle`, a channel ID or any video link from the channel, reads the channel's uploads list through the official YouTube Data API v3, and aggregates duration and public statistics across the uploads it loaded. The header shows the channel name, its handle, its channel ID and its country when the channel lists one.
+
+Here is exactly how each figure is produced:
+
+| Metric                         | Calculation                                                                            |
+| ------------------------------ | -------------------------------------------------------------------------------------- |
+| Uploads                        | Number of uploads analyzed, after the media-type filter                                |
+| Total duration                 | Sum of all upload durations, shown as `H:MM:SS` (hours can exceed 24, e.g. `61:16:00`) |
+| Average duration               | Total duration divided by the uploads that report a duration                           |
+| Total views                    | Sum of public view counts                                                              |
+| Average views                  | Total views divided by **all** analyzed uploads                                        |
+| Total likes / Total comments   | Sums of public like and comment counts                                                 |
+| Engagement rate                | (total likes + total comments) ÷ total views × 100, to two decimals                    |
+| Videos / Shorts / Live streams | How many analyzed uploads fall into each type                                          |
+| Top videos                     | The five uploads with the most views                                                   |
+
+Two details make this analyzer behave differently from the [playlist analyzer](/tools/youtube-playlist-analyzer). First, a hidden view, like or comment count is treated as zero in totals, and average views divides by every upload, not only those that report views. Second, engagement rate is a ratio of channel totals. That makes it a view-weighted figure: a single video with ten million views moves it far more than fifty videos with a few thousand each.
+
+## Shorts, videos and live streams
+
+The type of each upload is decided by a simple rule:
+
+1. If the video has live-stream details (an actual or scheduled start time) or is live right now, it is **Live**.
+2. Otherwise, if its duration is under 60 seconds, it is a **Short**.
+3. Everything else is a **Video**.
+
+YouTube does not expose a "this is a Short" flag in the Data API, so length is the practical signal. It is right for most channels, but it has two blind spots: Shorts between one and three minutes long are counted as Videos, and an ordinary horizontal clip under a minute is counted as a Short. Keep that in mind on channels that publish many 60 to 180 second Shorts.
+
+The **Media type** selector next to the input (All uploads, Videos, Shorts, Live streams) filters the uploads before any metric is calculated. With Shorts selected, every card describes Shorts only, and the Videos and Live counts naturally read 0.
+
+## A worked example: Shorts versus long-form
+
+_Illustrative example. The channel and every number below are invented to show how to read the results._
+
+A cooking channel posts long recipes, quick Shorts and the occasional live Q&A. The creator wants to know whether Shorts are pulling their weight. Running the analyzer once per media type gives:
+
+| Run          | Uploads | Total views | Average views | Engagement rate |
+| ------------ | ------- | ----------- | ------------- | --------------- |
+| All uploads  | 312     | 9,840,000   | 31,538.5      | 3.39%           |
+| Videos       | 180     | 6,300,000   | 35,000        | 3.67%           |
+| Shorts       | 120     | 3,180,000   | 26,500        | 2.83%           |
+| Live streams | 12      | 360,000     | 30,000        | 3.50%           |
+
+The "All uploads" run also shows a total duration of `61:16:00` and an average duration of `0:11:47`.
+
+How to read it:
+
+- Shorts make up 38% of uploads but about 32% of views, and they draw fewer likes and comments per view. That is common, because Shorts are watched in a feed and rarely commented on.
+- Videos earn the highest engagement rate, so the audience that clicks into a full recipe is the most invested.
+- Twelve live streams account for roughly 18 of the 61 hours of total content, which is why the average duration of all uploads looks longer than a typical recipe video.
+
+None of this measures watch time or revenue, which only the channel owner can see in YouTube Studio. It does tell you where public attention and visible interaction are going.
+
+## Use cases
+
+- **Comparing formats.** Run the analyzer once per media type, as above, to compare Shorts, long-form and live output.
+- **Auditing upload cadence.** Download the CSV and count uploads per month from the `Uploaded Time` column. Gaps and bursts are easy to see in a pivot table or a bar chart.
+- **Benchmarking similar channels.** Average views per upload and engagement rate make channels of different ages roughly comparable; total views alone favors older channels.
+- **Checking a channel before a collaboration.** The top five videos and the type breakdown show what the channel is known for and how often it goes live.
+
+## The per-video CSV
+
+**Download CSV** saves one row per analyzed upload:
+
+```text
+Index, Video ID, Title, URL, Channel, Duration Seconds, Views, Likes, Comments, Uploaded Time, Media Type
+```
+
+`Media Type` is `videos`, `shorts` or `live`, using the same rule as above. Hidden counts are left empty. Two formulas are worth adding in a spreadsheet:
+
+```text
+L2: =LEFT(J2,7)                     month of upload, e.g. 2026-04
+M2: =IF(G2>0,(H2+I2)/G2,"")         engagement rate of this one video
+```
+
+A pivot of column L gives uploads per month. The median of column M is a better "typical video" figure than the channel-wide engagement rate, because it is not dominated by a few viral uploads.
+
+## Pitfalls when interpreting the numbers
+
+- **Hidden likes and disabled comments lower the engagement rate.** Their views still count, but their likes or comments count as zero. Channels made for kids, where comments are turned off, will look less engaged than they are.
+- **Old uploads have had more time.** A video from 2019 has had years to collect views; last week's upload has not. When comparing recent performance, filter the CSV by date first.
+- **Statistics are a snapshot,** captured when the data was loaded. The server may reuse a channel's data for a few minutes to avoid duplicate API calls.
+- **Live comments are not chat.** The comment count covers regular comments, not live chat messages during a stream.
+- **Subscribers are not part of the calculation.** Engagement here is per view, not per subscriber.
+
+## Limitations
+
+- The analyzer covers up to the **5,000 most recent uploads**. For larger channels, every metric describes that recent slice, and the page does not show a separate warning, so compare the Uploads figure with the channel's total.
+- Only public uploads are included; private and removed videos are not in the public uploads list.
+- Dislikes, watch time, impressions and audience retention are not available through the public API, so they are not shown.
+
+## Troubleshooting
+
+| Symptom                                                                  | Likely cause                                                                                  | What to do                                                            |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| "We could not load this channel. Check the URL or handle and try again." | Mistyped handle, an old `/c/` URL that does not resolve, or two runs within about two seconds | Wait briefly and retry with the `@handle`, channel ID or a video link |
+| Message about the YouTube API quota                                      | The site's shared daily quota is used up                                                      | Try again later                                                       |
+| "YouTube took too long to respond."                                      | A very large channel did not load within about two minutes                                    | Retry; analyzing one media type at a time can help                    |
+| All cards show 0                                                         | The selected media type has no uploads                                                        | Switch to All uploads                                                 |
+
+## Related guides
+
+- [Export a YouTube channel](/tools/export-youtube-channel) to get every upload's full metadata in 13 formats
+- [YouTube Playlist Analyzer](/tools/youtube-playlist-analyzer)
+- [Export a YouTube playlist to CSV](/tools/export-youtube-playlist-to-csv)
+- [Export a YouTube playlist to Excel](/tools/export-youtube-playlist-to-excel)
+- [How to export a YouTube playlist to CSV or Excel](/blog/how-to-export-a-youtube-playlist-to-csv-or-excel)

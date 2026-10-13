@@ -26,6 +26,8 @@ export const Route = createFileRoute('/pricing')({
       description: loaderData.description,
       path: '/pricing',
       locale: loaderData.locale,
+      // Only a free tier exists today; keep the placeholder plan out of search.
+      noindex: true,
       structuredData: {
         '@context': 'https://schema.org',
         '@type': 'WebPage',

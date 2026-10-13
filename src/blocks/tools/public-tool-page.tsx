@@ -1,5 +1,7 @@
 import { tDynamic } from '@/core/i18n/dynamic';
+import { isIndexablePath } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
+import { ToolGuideSection } from '@/blocks/tools/tool-guide';
 import {
   ChannelUtilityTool,
   type ChannelUtilityLabels,
@@ -146,10 +148,17 @@ export function PublicToolPage({ toolKey }: { toolKey: string }) {
   const title = tDynamic(`${prefix}.title`);
   const description = tDynamic(`${prefix}.description`);
   const submit = tDynamic(`${prefix}.submit`);
+  // Same-category tools, with the indexed core guides linked first.
   const related = PUBLIC_TOOL_DEFINITIONS.filter(
     (item) =>
       item.category === definition.category && item.key !== definition.key
-  ).slice(0, 3);
+  )
+    .sort(
+      (a, b) =>
+        Number(isIndexablePath(`/tools/${b.slug}`)) -
+        Number(isIndexablePath(`/tools/${a.slug}`))
+    )
+    .slice(0, 3);
 
   return (
     <ToolPageShell
@@ -239,6 +248,7 @@ export function PublicToolPage({ toolKey }: { toolKey: string }) {
         href: `/tools/${item.slug}`,
       }))}
       openToolLabel={m['tools.catalog.open']()}
+      guide={<ToolGuideSection slug={definition.slug} />}
     />
   );
 }

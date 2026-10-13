@@ -1,0 +1,157 @@
+export const meta = {
+  title: 'How to Audit a YouTube Channel Using Only Public Data',
+  description:
+    'A step-by-step method to audit any YouTube channel from public data: upload cadence, Shorts mix, durations, engagement, outlier videos and tag patterns.',
+  created_at: '2026-10-12',
+  author_name: 'Export YouTube Playlist',
+};
+
+You do not need access to someone's YouTube Studio to learn a lot about their channel. Every public upload exposes a title, publish date, duration, tags, and (usually) view, like and comment counts. Put a few hundred of those rows in a spreadsheet and patterns appear quickly.
+
+This guide walks through a practical channel audit using only public data. It works for your own channel, when you want an outside view without Studio's dashboards, and for competitors or channels you are considering for a sponsorship or collaboration.
+
+## Step 0: Get the data
+
+There are two ways to collect it with the tools on this site:
+
+- The [YouTube Channel Analyzer](/tools/youtube-channel-analyzer) gives an instant summary: total uploads, total and average duration, total and average views, total likes, total comments, an engagement rate, counts of regular videos, Shorts and live videos, and the five most-viewed uploads. Its **Download CSV** gives one row per video with Video ID, Title, URL, Channel, Duration Seconds, Views, Likes, Comments, Uploaded Time and Media Type.
+- [Export a YouTube channel](/tools/export-youtube-channel) produces a fuller file in up to 13 formats, including CSV and Excel. Besides statistics and durations, it includes the description, tags, hashtags found in the description, links and emails found in the description, and the thumbnail URL.
+
+Both tools accept a channel URL, handle or ID, read the channel's public uploads through the official YouTube Data API, and cover up to 5,000 public uploads. Both also let you limit the result to regular videos, Shorts or live videos.
+
+I usually run the analyzer for a first impression, then export the full channel to Excel for the detailed work below. The spreadsheet formulas in this guide use the column letters of the analyzer CSV: F is Duration Seconds, G is Views, H is Likes, I is Comments and J is Uploaded Time. Adjust them if your file is laid out differently.
+
+## 1. Upload cadence
+
+Cadence is the easiest signal to read and one of the most revealing. Sort the export by **Uploaded Time** and look at:
+
+- **Uploads per month.** Add a helper column with the month, then count rows per month:
+
+```text
+=LEFT(J2, 7)
+```
+
+This returns a value such as `2026-03`, which you can count with a pivot table.
+
+- **Gaps between uploads.** With the list sorted oldest to newest, the number of days since the previous upload is:
+
+```text
+=DATEVALUE(LEFT(J3,10)) - DATEVALUE(LEFT(J2,10))
+```
+
+- **Changes over time.** A channel that went from weekly to three times a week, or one that stopped for six months, tells you something about its strategy or team size.
+
+Later, compare cadence with results: a higher upload rate with falling views per video is a different story from one with stable views.
+
+## 2. Shorts vs long-form mix
+
+The analyzer separates uploads into regular videos, Shorts and live. It is worth knowing how that classification works, because it is a heuristic:
+
+- Anything with live streaming details (past streams, scheduled streams and premieres) is counted as **live**.
+- Anything else shorter than 60 seconds is counted as a **Short**.
+- Everything else is counted as a regular **video**.
+
+The public API does not include a "this is a Short" flag. Since YouTube has allowed Shorts longer than one minute for some time now, vertical Shorts between one and three minutes long will appear as regular videos in this count. Treat the Shorts number as a lower bound and check borderline durations manually if the mix matters to your conclusions.
+
+When you compare performance, always compare within the same type. Shorts and long-form videos are discovered and counted differently, so averaging them together hides more than it reveals. Use the media type filter, or filter the Media Type column in the CSV.
+
+## 3. Duration distribution
+
+The average duration alone is misleading: a channel with half 30-second clips and half 40-minute videos averages around 20 minutes, a length it never actually publishes. Look at the distribution instead. Bucket the seconds column into ranges:
+
+| Bucket      | Range in seconds |
+| ----------- | ---------------- |
+| Under 1 min | 0–59             |
+| 1–4 min     | 60–239           |
+| 4–10 min    | 240–599          |
+| 10–20 min   | 600–1,199        |
+| 20+ min     | 1,200 and up     |
+
+`COUNTIFS` on the duration column does this quickly, for example `=COUNTIFS(F:F, ">=600", F:F, "<1200")`. Then check whether certain lengths consistently get more views per day (see below). Often a channel has a "home length" where most of its successful videos sit.
+
+## 4. Views, likes, comments and engagement rate
+
+The analyzer reports an engagement rate calculated as:
+
+```text
+engagement rate = (total likes + total comments) ÷ total views × 100
+```
+
+It is a quick health signal, but it has caveats you should know before quoting it.
+
+### Hidden like counts and disabled comments
+
+Creators can hide like counts, and comments can be turned off. In the analyzer's channel totals, a hidden or missing value is treated as zero, while that video's views still count in the denominator. A channel that hides likes on some videos will therefore show a lower engagement rate than it really has. In the CSV, those cells are blank, so you can filter them out and recompute.
+
+### It is weighted by views
+
+Because the formula divides channel totals, a single viral video with millions of views dominates the result. If that video had a low like ratio, the whole channel looks less engaging. For a fairer picture, calculate engagement per video and take the **median**:
+
+```text
+=(H2 + I2) / G2
+```
+
+Then take the median of that column, skipping rows with zero views.
+
+### Older videos have had more time
+
+A five-year-old video and a five-day-old video cannot be compared on raw views. Normalize by age with **views per day since publish**:
+
+```text
+=G2 / MAX(1, TODAY() - DATEVALUE(LEFT(J2,10)))
+```
+
+It is imperfect, since most videos get the bulk of their views early, but far better than raw totals for comparing uploads.
+
+## 5. Finding top and outlier videos
+
+The analyzer lists the five most-viewed uploads, which is a good start. But "most viewed" usually just means "oldest successful". To find genuine outliers:
+
+1. Filter to one media type, and ideally to the last 12 months.
+2. Calculate views per day for each video.
+3. Find the median views per day for that group.
+4. Divide each video's views per day by the median.
+
+Videos at three times the median or more are worth studying closely. That threshold is a rule of thumb, not a standard; pick whatever separates the obvious winners in your data. For each outlier, note the topic, title structure, length and publish date. Then look at the underperformers the same way: a pattern among the bottom 10% is just as useful.
+
+## 6. Keyword and tag patterns
+
+Video tags are not shown on the YouTube watch page, but they are public metadata, and the channel export includes them in a **Tags** column (column C of the export) alongside **Tags (in description)** for hashtags written in descriptions. Each cell holds a bracketed list such as `[#python, #tutorial]`.
+
+Simple ways to use them:
+
+- Count how often a tag appears: `=COUNTIF(C:C, "*#tutorial*")`.
+- Compare the tags on outlier videos with those on average videos.
+- Check consistency: does the channel tag a recurring series the same way each time?
+
+Titles often tell you more than tags. Look for repeated title formats ("I tried…", "X vs Y", numbered lists), recurring keywords, and how titles changed over time. For channel-level keywords set in the channel's own settings, the [YouTube Channel Keywords Extractor](/tools/youtube-channel-keywords) shows what the creator added to their profile.
+
+Tags are a minor ranking signal; use them to understand how a creator describes their content, not as a growth trick.
+
+## A step-by-step audit checklist
+
+1. Run the channel through the [YouTube Channel Analyzer](/tools/youtube-channel-analyzer) and note uploads, mix, engagement rate and top videos.
+2. [Export the channel](/tools/export-youtube-channel) to Excel or CSV.
+3. Sort by upload time; chart uploads per month and note gaps.
+4. Split the data by media type and treat each type separately from here on.
+5. Bucket durations and find the channel's "home length".
+6. Add views per day and per-video engagement columns, and compute medians, not just averages.
+7. Flag outliers above your chosen multiple of the median, and the bottom 10%.
+8. Compare titles, topics and tags of outliers against the rest.
+9. Write down three to five hypotheses, such as "tutorials over 15 minutes outperform shorter ones", and test them on the next round of uploads.
+10. Save the export with the date in the filename. Running the same export a month later gives you a growth comparison that a single snapshot cannot.
+
+## What public data cannot tell you
+
+A public-data audit has real limits. The following metrics are only available to the channel owner in YouTube Studio:
+
+- **Watch time and average view duration.** A video with many views can still be one viewers abandon quickly.
+- **Audience retention curves.** Where people drop off is invisible from outside.
+- **Impressions and click-through rate.** You cannot tell whether a video had low views because few people saw it or because few clicked.
+- **Traffic sources.** Search, suggested videos, browse and external sites all look the same in a view count.
+- **Revenue, RPM and CPM.** Any public "earnings estimate" is a guess based on views.
+- **Subscribers gained per video and audience demographics.**
+
+Public counts are also snapshots: they show the current total, not the history of how views arrived. That is why repeating the export over time is valuable.
+
+If you are auditing your own channel, use the public-data audit for a quick, shareable overview and to compare yourself with peers on equal terms, then go to YouTube Studio for the metrics above. If you are auditing someone else's channel, state your conclusions as hypotheses, because the most important numbers are not visible to you.

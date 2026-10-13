@@ -63,3 +63,17 @@
 - Google CMP requirements: https://support.google.com/adsense/answer/13554020
 - Create a European regulations message: https://support.google.com/adsense/answer/10960768
 - Google Publisher Policies: https://support.google.com/publisherpolicies/answer/10502938
+
+## 第二次被拒（低价值内容）后的整改 · 2026-10-12
+
+原因判断：约七成可索引页面是同一模板生成的单功能工具页，每页独有内容约 150 词，且多个工具功能重叠。
+
+已完成：
+
+- **索引范围（按 GSC 数据调整）**：`src/lib/seo.ts` 中 `INDEXED_TOOL_PATHS` 保留原有 5 个核心工具页，以及 2026-09-13 至 2026-10-10 有搜索点击的 11 个工具页和有曝光的标签提取页，共 17 个工具页，中英文均允许索引并进入站点地图。仅缩略图下载、频道视频链接提取、频道横幅与 Logo 下载这 3 个工具页继续输出 `noindex, follow` 并移出站点地图，功能保留。价格页继续 noindex，且不进入站点地图。此策略仅控制搜索索引，不代表排除 AdSense 审核或广告投放。
+- **核心工具页加深**：播放列表分析器、频道导出、频道分析器新增中英文长篇指南（`src/content/tool-guides/`），每篇约 1,300–1,400 英文词。
+- **新增 4 篇中英文教程**：Google Sheets 分析、播放列表备份、观看时长计算、用公开数据审计频道。
+- **页头菜单**：展示允许索引的 17 个工具页、首页导出入口及“全部 YouTube 工具”；菜单按同一索引白名单过滤，中英文和移动端同步。
+- **MDX 启用 GFM 表格**，示例 CSV/XLSX 的时长格式改为与实际导出一致。
+
+再次申请前：部署后在 Search Console 重新提交站点地图，对核心页面和新文章请求编入索引，等待 3–4 周，确认 noindex 页面已退出索引后再提交审核。
