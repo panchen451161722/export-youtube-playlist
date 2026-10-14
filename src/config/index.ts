@@ -81,6 +81,9 @@ export const envConfigs: Record<string, string> = {
 
   // YouTube Data API (server-only)
   youtube_api_key: procEnv.YOUTUBE_API_KEY ?? '',
+  playlist_guard_job_secret: procEnv.PLAYLIST_GUARD_JOB_SECRET ?? '',
+  playlist_guard_scheduler_enabled:
+    procEnv.PLAYLIST_GUARD_SCHEDULER_ENABLED ?? 'false',
 
   // Locale (public)
   locale: publicEnv('VITE_DEFAULT_LOCALE') ?? 'en',

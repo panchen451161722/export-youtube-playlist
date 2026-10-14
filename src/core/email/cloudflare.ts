@@ -32,14 +32,14 @@ export class CloudflareEmailProvider implements EmailProvider {
   async sendEmail(email: EmailMessage): Promise<EmailSendResult> {
     try {
       const from = email.from || this.configs.defaultFrom || '';
-      const to = Array.isArray(email.to) ? email.to[0] : email.to;
+      const to = email.to;
 
       let html = email.html;
       if (email.react) {
         html = await render(email.react);
       }
 
-      const body: Record<string, any> = {
+      const body: Record<string, unknown> = {
         from,
         to,
         subject: email.subject,
@@ -49,10 +49,25 @@ export class CloudflareEmailProvider implements EmailProvider {
       if (email.text) body.text = email.text;
       if (!html && !email.text) body.text = '';
 
+      if (email.cc) body.cc = email.cc;
+      if (email.bcc) body.bcc = email.bcc;
+      if (email.replyTo) body.reply_to = email.replyTo;
+      if (email.headers) body.headers = email.headers;
+      if (email.attachments)
+        body.attachments = email.attachments.map((attachment) => ({
+          filename: attachment.filename,
+          content: Buffer.isBuffer(attachment.content)
+            ? attachment.content.toString('base64')
+            : attachment.content,
+          type: attachment.contentType || 'application/octet-stream',
+          disposition: 'attachment',
+        }));
+
       const url = `https://api.cloudflare.com/client/v4/accounts/${this.configs.accountId}/email/sending/send`;
 
       const resp = await fetch(url, {
         method: 'POST',
+        signal: AbortSignal.timeout(30_000),
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${this.configs.apiToken}`,
@@ -60,7 +75,16 @@ export class CloudflareEmailProvider implements EmailProvider {
         body: JSON.stringify(body),
       });
 
-      const data: any = await resp.json().catch(() => ({}));
+      const data = (await resp.json().catch(() => ({}))) as {
+        success?: boolean;
+        errors?: { message?: string }[];
+        messages?: string[];
+        result?: {
+          delivered?: string[];
+          queued?: string[];
+          permanent_bounces?: string[];
+        };
+      };
 
       if (!resp.ok || data.success === false) {
         const errMsg =
@@ -74,9 +98,21 @@ export class CloudflareEmailProvider implements EmailProvider {
         };
       }
 
+      if (
+        data.result?.permanent_bounces?.length ||
+        !(
+          (data.result?.delivered?.length ?? 0) +
+          (data.result?.queued?.length ?? 0)
+        )
+      ) {
+        return {
+          success: false,
+          error: 'The provider did not accept the email recipient.',
+          provider: this.name,
+        };
+      }
       return {
         success: true,
-        messageId: data?.result?.delivered?.[0] || undefined,
         provider: this.name,
       };
     } catch (error) {

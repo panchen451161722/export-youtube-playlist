@@ -9,6 +9,7 @@
  */
 
 import { PaymentInterval, PaymentType } from '@/core/payment/types';
+import { GUARD_PLANS, guardProductId } from '@/config/guard-plans';
 
 export type PricingPlanInfo = {
   name: string;
@@ -33,7 +34,36 @@ export type PricingProduct = {
  * Default demo catalog. Replace with your real products when launching.
  * Keys MUST match what the pricing UI sends as product_id.
  */
+const guardPricingProducts: Record<string, PricingProduct> = Object.fromEntries(
+  GUARD_PLANS.flatMap((plan) =>
+    (['monthly', 'yearly'] as const).map((period) => {
+      const productId = guardProductId(plan.id, period);
+      const product: PricingProduct = {
+        productId,
+        productName: `Playlist Monitoring ${plan.name}`,
+        planName: plan.name,
+        description: `${plan.name} ${period} — ${plan.collectionLimit} collections`,
+        type: PaymentType.SUBSCRIPTION,
+        priceInCents:
+          period === 'monthly'
+            ? plan.monthlyPriceInCents
+            : plan.yearlyPriceInCents,
+        currency: 'usd',
+        credits: 0,
+        plan: {
+          name: plan.name,
+          interval:
+            period === 'monthly' ? PaymentInterval.MONTH : PaymentInterval.YEAR,
+          intervalCount: 1,
+        },
+      };
+      return [productId, product];
+    })
+  )
+);
+
 export const pricingCatalog: Record<string, PricingProduct> = {
+  ...guardPricingProducts,
   starter_monthly: {
     productId: 'starter_monthly',
     productName: 'Starter',

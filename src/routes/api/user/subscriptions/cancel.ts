@@ -6,6 +6,9 @@ import { respData, respErr } from '@/lib/resp';
 
 async function POST({ request }: { request: Request }) {
   try {
+    if (request.headers.get('origin') !== new URL(request.url).origin) {
+      return respErr('Invalid request origin', { status: 403 });
+    }
     const auth = getAuth();
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user) return respErr('Unauthorized');

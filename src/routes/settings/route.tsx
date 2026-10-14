@@ -1,19 +1,9 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router';
-import {
-  Coins,
-  CreditCard,
-  Home,
-  Key,
-  LayoutDashboard,
-  LifeBuoy,
-  Receipt,
-  User,
-} from 'lucide-react';
+import { CreditCard, Home, ListVideo, Receipt, User } from 'lucide-react';
 
 import { envConfigs } from '@/config';
 import { privatePageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
-import { SupportWidget } from '@/blocks/support-widget';
 import { AppLayout } from '@/components/app-layout';
 
 export const Route = createFileRoute('/settings')({
@@ -21,15 +11,13 @@ export const Route = createFileRoute('/settings')({
   component: SettingsLayout,
 });
 
-const SHOW_DEFERRED_ACCOUNT_FEATURES = false;
-
 function SettingsLayout() {
   const group = m['common.systems.settings']();
-  const deferredNavItems = [
+  const navItems = [
     {
-      href: '/settings',
-      label: m['settings.nav.overview'](),
-      icon: LayoutDashboard,
+      href: '/settings/collections',
+      label: m['guardPricing.nav_collections'](),
+      icon: ListVideo,
       group,
     },
     {
@@ -45,45 +33,24 @@ function SettingsLayout() {
       group,
     },
     {
-      href: '/settings/credits',
-      label: m['settings.nav.credits'](),
-      icon: Coins,
-      group,
-    },
-    {
-      href: '/settings/apikeys',
-      label: m['settings.nav.apikeys'](),
-      icon: Key,
-      group,
-    },
-    {
-      href: '/settings/tickets',
-      label: m['settings.nav.tickets'](),
-      icon: LifeBuoy,
-      group,
-    },
-  ];
-  const navItems = SHOW_DEFERRED_ACCOUNT_FEATURES ? deferredNavItems : [];
-
-  const footerNavItems = [
-    {
       href: '/settings/profile',
       label: m['settings.nav.profile'](),
       icon: User,
+      group,
     },
+  ];
+  const footerNavItems = [
     { href: '/', label: m['common.systems.home'](), icon: Home, newTab: true },
   ];
-
   return (
     <AppLayout
       navItems={navItems}
       footerNavItems={footerNavItems}
       brand={envConfigs.app_name}
-      brandHref="/settings/profile"
+      brandHref="/settings/collections"
       profileHref="/settings/profile"
     >
       <Outlet />
-      {SHOW_DEFERRED_ACCOUNT_FEATURES ? <SupportWidget /> : null}
     </AppLayout>
   );
 }

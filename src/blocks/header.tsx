@@ -174,7 +174,12 @@ export function Header() {
       disabled: false,
     },
     { href: '/pricing', label: m['landing.nav.pricing'](), disabled: false },
-    { href: '#', label: m['landing.nav.feedback'](), disabled: true },
+    {
+      href: '/settings/collections',
+      label: m['guardPricing.nav_monitoring'](),
+      disabled: false,
+    },
+    { href: '/demo', label: m['guardPricing.nav_demo'](), disabled: false },
     { href: '/contact', label: m['landing.nav.contact'](), disabled: false },
     { href: '/about', label: m['landing.nav.about'](), disabled: false },
   ];
@@ -211,7 +216,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#18213b]/8 bg-[#f7f5ef]/90 backdrop-blur-xl dark:border-white/10 dark:bg-[#111827]/90">
-      <div className="mx-auto flex h-[4.5rem] max-w-6xl items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto flex h-[4.5rem] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6">
         <Link href="/#exporter" className="flex min-w-0 items-center gap-2.5">
           <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#18213b] text-base font-black text-white shadow-sm dark:bg-white dark:text-[#18213b]">
             E
@@ -222,7 +227,7 @@ export function Header() {
         </Link>
 
         <nav
-          className="hidden items-center gap-4 lg:flex"
+          className="hidden items-center gap-3 xl:flex"
           aria-label={m['landing.nav.primary']()}
         >
           {renderNavItem(navItems[0])}
@@ -230,7 +235,7 @@ export function Header() {
           {navItems.slice(1).map((item) => renderNavItem(item))}
         </nav>
 
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden items-center gap-2 xl:flex">
           <LocaleSelector />
           <ThemeToggle />
           {user ? (
@@ -253,7 +258,7 @@ export function Header() {
 
         <button
           type="button"
-          className="grid size-10 place-items-center rounded-xl border border-[#18213b]/10 bg-white/70 lg:hidden dark:border-white/10 dark:bg-white/5"
+          className="grid size-10 place-items-center rounded-xl border border-[#18213b]/10 bg-white/70 xl:hidden dark:border-white/10 dark:bg-white/5"
           aria-label={open ? m['landing.nav.close']() : m['landing.nav.open']()}
           aria-expanded={open}
           onClick={() => setOpen((value) => !value)}
@@ -263,7 +268,7 @@ export function Header() {
       </div>
 
       {open ? (
-        <div className="border-t border-[#18213b]/8 bg-[#f7f5ef] px-4 py-4 lg:hidden dark:border-white/10 dark:bg-[#111827]">
+        <div className="border-t border-[#18213b]/8 bg-[#f7f5ef] px-4 py-4 xl:hidden dark:border-white/10 dark:bg-[#111827]">
           <nav
             className="mx-auto grid max-w-6xl gap-1"
             aria-label={m['landing.nav.mobile']()}

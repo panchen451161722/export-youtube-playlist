@@ -6,7 +6,13 @@
  */
 
 import { sql } from 'drizzle-orm';
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from 'drizzle-orm/sqlite-core';
 
 const table = sqliteTable;
 
@@ -697,3 +703,74 @@ export type InviteCode = typeof inviteCode.$inferSelect;
 export type NewInviteCode = typeof inviteCode.$inferInsert;
 export type UserInvite = typeof userInvite.$inferSelect;
 export type NewUserInvite = typeof userInvite.$inferInsert;
+
+// ─── Playlist Guard ──────────────────────────────────────────────────────────
+// ISO timestamps compare consistently across all supported SQL dialects.
+export const guardWorkspace = table('guard_workspace', {
+  userId: text('user_id')
+    .primaryKey()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  trialStartedAt: text('trial_started_at'),
+  trialEndsAt: text('trial_ends_at'),
+});
+
+export const guardCollection = table(
+  'guard_collection',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    slot: integer('slot'),
+    sourceKey: text('source_key'),
+    document: text('document').notNull(),
+    summary: text('summary').notNull(),
+    version: integer('version').notNull().default(0),
+    enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
+    nextSyncAt: text('next_sync_at'),
+    leaseToken: text('lease_token'),
+    leaseExpiresAt: text('lease_expires_at'),
+    lastAttemptAt: text('last_attempt_at'),
+    createdAt: text('created_at').notNull(),
+    deletedAt: text('deleted_at'),
+  },
+  (t) => [
+    uniqueIndex('uq_guard_user_slot').on(t.userId, t.slot),
+    uniqueIndex('uq_guard_user_source').on(t.userId, t.sourceKey),
+    index('idx_guard_due').on(t.enabled, t.nextSyncAt),
+    index('idx_guard_owner').on(t.userId, t.deletedAt),
+  ]
+);
+
+export type GuardWorkspaceRow = typeof guardWorkspace.$inferSelect;
+export type GuardCollectionRow = typeof guardCollection.$inferSelect;
+
+// Durable mail outbox: snapshot persistence and insertion happen atomically.
+export const guardDelivery = table(
+  'guard_delivery',
+  {
+    id: text('id').primaryKey(),
+    collectionId: text('collection_id')
+      .notNull()
+      .references(() => guardCollection.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    recipient: text('recipient').notNull(),
+    payload: text('payload').notNull(),
+    status: text('status').notNull().default('pending'),
+    attempts: integer('attempts').notNull().default(0),
+    nextAttemptAt: text('next_attempt_at').notNull(),
+    leaseToken: text('lease_token'),
+    leaseExpiresAt: text('lease_expires_at'),
+    createdAt: text('created_at').notNull(),
+    sentAt: text('sent_at'),
+    lastError: text('last_error'),
+    providerMessageId: text('provider_message_id'),
+  },
+  (t) => [
+    index('idx_guard_delivery_due').on(t.status, t.nextAttemptAt),
+    index('idx_guard_delivery_owner').on(t.userId, t.collectionId, t.createdAt),
+  ]
+);
+export type GuardDeliveryRow = typeof guardDelivery.$inferSelect;

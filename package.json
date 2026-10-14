@@ -22,7 +22,9 @@
     "rbac:assign": "tsx scripts/with-env.ts tsx scripts/assign-role.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "guard:mail-preview": "node scripts/guard-mail-preview.mjs",
+    "guard:local": "node --use-env-proxy --env-file=.env.guard.local .output/server/index.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs}": "prettier --write",

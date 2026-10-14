@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
+import { getGuardCheckoutProvider } from '@/config/guard-plans';
 import { filterPublicConfigs, getAllConfigs } from '@/modules/config/service';
 import { respData } from '@/lib/resp';
 
@@ -47,6 +48,9 @@ function isEmailSendingConfigured(configs: Record<string, string>): boolean {
 async function GET({ request }: { request: Request }) {
   const configs = await getAllConfigs();
   const result = filterPublicConfigs(configs, publicKeys);
+  // Expose capability only; credentials stay on the server. Guard plans use
+  // Stripe's dynamic recurring-price checkout rather than provider product IDs.
+  result.guard_checkout_provider = getGuardCheckoutProvider(configs);
   result.email_auth_enabled =
     configs.email_auth_enabled === 'true' ? 'true' : 'false';
   result.google_auth_enabled =

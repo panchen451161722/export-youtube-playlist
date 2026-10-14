@@ -1,110 +1,183 @@
-import { Check, Clock3, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
+import { useSession } from '@/core/auth/client';
+import { useRouter } from '@/core/i18n/navigation';
+import {
+  GUARD_PLANS,
+  GUARD_SCAN_LIMIT,
+  GUARD_SNAPSHOT_LIMIT,
+  GUARD_TRIAL_COLLECTION_LIMIT,
+  GUARD_TRIAL_DAYS,
+  guardProductId,
+  type GuardBillingPeriod,
+  type GuardPlanId,
+} from '@/config/guard-plans';
+import { apiPost } from '@/lib/api-client';
 import { m } from '@/paraglide/messages.js';
+import { usePublicConfig } from '@/hooks/use-public-config';
+import {
+  GuardPricing,
+  type GuardPricingContent,
+} from '@/components/guard-pricing';
 
-const freeFeatures = [
-  () => m['landing.pricing.free.feature_limit'](),
-  () => m['landing.pricing.free.feature_formats'](),
-  () => m['landing.pricing.free.feature_preview'](),
-] as const;
+export function Pricing({ asPage = false }: { asPage?: boolean }) {
+  const [period, setPeriod] = useState<GuardBillingPeriod>('monthly');
+  const config = usePublicConfig();
+  const { data: session } = useSession();
+  const router = useRouter();
+  const checkoutProvider = config.data?.guard_checkout_provider;
+  const checkoutAvailable = checkoutProvider === 'stripe';
+  const checkout = useMutation({
+    mutationFn: (planId: GuardPlanId) =>
+      apiPost<{ checkout_url: string }>('/api/payment/checkout', {
+        product_id: guardProductId(planId, period),
+        payment_provider: checkoutProvider,
+        redirect: '/settings/collections',
+      }),
+    onSuccess: (result) => {
+      // Only a successful, explicit checkout request may leave this page.
+      const url = new URL(result.checkout_url);
+      if (url.protocol !== 'https:') {
+        throw new Error(m['guardPricing.checkout_error']());
+      }
+      window.location.assign(url.href);
+    },
+    onError: () => toast.error(m['guardPricing.checkout_error']()),
+  });
 
-const proFeatures = [
-  () => m['landing.pricing.pro.feature_limit'](),
-  () => m['landing.pricing.pro.feature_history'](),
-  () => m['landing.pricing.pro.feature_priority'](),
-] as const;
+  const descriptions = {
+    lite: m['guardPricing.lite_description'](),
+    pro: m['guardPricing.pro_description'](),
+    ultra: m['guardPricing.ultra_description'](),
+  };
+  const sharedFeatures = [
+    m['guardPricing.feature_sources'](),
+    m['guardPricing.feature_snapshots']({ count: GUARD_SNAPSHOT_LIMIT }),
+    m['guardPricing.feature_changes'](),
+    m['guardPricing.feature_exports'](),
+  ];
+  const same = (value: string) => GUARD_PLANS.map(() => value);
+  const content: GuardPricingContent = {
+    eyebrow: m['guardPricing.eyebrow'](),
+    title: m['guardPricing.title'](),
+    description: m['guardPricing.description'](),
+    monthly: m['guardPricing.monthly'](),
+    yearly: m['guardPricing.yearly'](),
+    annualSaving: m['guardPricing.annual_saving'](),
+    billingLabel: m['guardPricing.billing_label'](),
+    trial: m['guardPricing.trial']({ days: GUARD_TRIAL_DAYS }),
+    trialNote: m['guardPricing.trial_note']({
+      days: GUARD_TRIAL_DAYS,
+      count: GUARD_TRIAL_COLLECTION_LIMIT,
+    }),
+    demo: m['guardPricing.demo'](),
+    recommended: m['guardPricing.recommended'](),
+    buy: m['guardPricing.buy'](),
+    buying: m['guardPricing.buying'](),
+    checkoutUnavailable: m['guardPricing.checkout_unavailable'](),
+    checkoutLoading: m['guardPricing.checkout_loading'](),
+    footerNote: m['guardPricing.footer_note'](),
+    freeTitle: m['guardPricing.free_title'](),
+    freeDescription: m['guardPricing.free_description'](),
+    freeLink: m['guardPricing.free_link'](),
+    comparisonTitle: m['guardPricing.comparison_title'](),
+    comparisonDescription: m['guardPricing.comparison_description'](),
+    featureLabel: m['guardPricing.feature_label'](),
+    supportNote: m['guardPricing.support_note']({ count: GUARD_SCAN_LIMIT }),
+    faqTitle: m['guardPricing.faq_title'](),
+    faq: [
+      {
+        question: m['guardPricing.faq_collection_q'](),
+        answer: m['guardPricing.faq_collection_a'](),
+      },
+      {
+        question: m['guardPricing.faq_trial_q'](),
+        answer: m['guardPricing.faq_trial_a']({
+          days: GUARD_TRIAL_DAYS,
+          count: GUARD_TRIAL_COLLECTION_LIMIT,
+        }),
+      },
+      {
+        question: m['guardPricing.faq_video_q'](),
+        answer: m['guardPricing.faq_video_a'](),
+      },
+      {
+        question: m['guardPricing.faq_private_q'](),
+        answer: m['guardPricing.faq_private_a'](),
+      },
+      {
+        question: m['guardPricing.faq_cancel_q'](),
+        answer: m['guardPricing.faq_cancel_a'](),
+      },
+    ],
+    plans: GUARD_PLANS.map((plan) => ({
+      id: plan.id,
+      name: plan.name,
+      description: descriptions[plan.id],
+      price: `$${((period === 'monthly' ? plan.monthlyPriceInCents : plan.yearlyPriceInCents) / 100).toFixed(2)}`,
+      period:
+        period === 'monthly'
+          ? m['guardPricing.per_month']()
+          : m['guardPricing.per_year'](),
+      collectionLabel: m['guardPricing.collections']({
+        count: plan.collectionLimit,
+      }),
+      features: sharedFeatures,
+    })),
+    comparison: [
+      {
+        feature: m['guardPricing.compare_collections'](),
+        values: GUARD_PLANS.map((plan) => String(plan.collectionLimit)),
+      },
+      {
+        feature: m['guardPricing.compare_items'](),
+        values: same(String(GUARD_SCAN_LIMIT)),
+      },
+      {
+        feature: m['guardPricing.compare_sources'](),
+        values: same(m['guardPricing.compare_sources_value']()),
+      },
+      {
+        feature: m['guardPricing.compare_history'](),
+        values: same(
+          m['guardPricing.compare_history_value']({
+            count: GUARD_SNAPSHOT_LIMIT,
+          })
+        ),
+      },
+      {
+        feature: m['guardPricing.compare_exports'](),
+        values: same('CSV / Excel / JSON'),
+      },
+      {
+        feature: m['guardPricing.compare_schedule'](),
+        values: same(m['guardPricing.compare_schedule_value']()),
+      },
+      {
+        feature: m['guardPricing.compare_alerts'](),
+        values: same(m['guardPricing.compare_alerts_value']()),
+      },
+    ],
+  };
 
-export function Pricing() {
   return (
-    <section id="pricing" className="scroll-mt-20 px-5 py-24 sm:px-8">
-      <div className="mx-auto max-w-[1280px]">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-foreground text-sm font-medium">
-            {m['landing.pricing.eyebrow']()}
-          </p>
-          <h2 className="mt-4 text-3xl font-medium tracking-[-0.025em] text-balance sm:text-5xl">
-            {m['landing.pricing.title']()}
-          </h2>
-          <p className="text-muted-foreground mt-5 text-base leading-7 sm:text-lg">
-            {m['landing.pricing.description']()}
-          </p>
-        </div>
-
-        <div className="mx-auto mt-12 grid max-w-4xl gap-6 md:grid-cols-2">
-          <article className="border-border bg-card flex flex-col rounded-xl border p-7 sm:p-8">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium">
-                  {m['landing.pricing.free.name']()}
-                </p>
-                <p className="mt-4 text-4xl font-medium tracking-[-0.025em]">
-                  {m['landing.pricing.free.price']()}
-                </p>
-              </div>
-              <span className="bg-secondary text-muted-foreground rounded-md px-3 py-1.5 text-xs font-medium">
-                {m['landing.pricing.free.badge']()}
-              </span>
-            </div>
-            <p className="text-muted-foreground mt-4 min-h-12 text-sm leading-6">
-              {m['landing.pricing.free.description']()}
-            </p>
-            <ul className="mt-8 space-y-4">
-              {freeFeatures.map((feature, index) => (
-                <li key={index} className="flex items-start gap-3 text-sm">
-                  <span className="bg-primary/9 text-primary mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full">
-                    <Check aria-hidden="true" className="size-3.5" />
-                  </span>
-                  <span>{feature()}</span>
-                </li>
-              ))}
-            </ul>
-            <a
-              href="#exporter"
-              className="border-input bg-card hover:bg-secondary focus-visible:ring-ring/50 mt-9 inline-flex min-h-11 items-center justify-center rounded-lg border px-5 text-sm font-medium transition-colors outline-none focus-visible:ring-3"
-            >
-              {m['landing.pricing.free.button']()}
-            </a>
-          </article>
-
-          <article className="bg-primary text-primary-foreground flex flex-col rounded-xl border border-black p-7 sm:p-8">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="flex items-center gap-2 text-sm font-medium">
-                  <Sparkles aria-hidden="true" className="size-4 text-white" />
-                  {m['landing.pricing.pro.name']()}
-                </p>
-                <p className="mt-4 text-4xl font-medium tracking-[-0.025em]">
-                  {m['landing.pricing.pro.price']()}
-                </p>
-              </div>
-              <span className="rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-white">
-                {m['landing.pricing.pro.badge']()}
-              </span>
-            </div>
-            <p className="mt-4 min-h-12 text-sm leading-6 text-white/65">
-              {m['landing.pricing.pro.description']()}
-            </p>
-            <ul className="mt-8 space-y-4">
-              {proFeatures.map((feature, index) => (
-                <li key={index} className="flex items-start gap-3 text-sm">
-                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-white">
-                    <Check aria-hidden="true" className="size-3.5" />
-                  </span>
-                  <span className="text-white/85">{feature()}</span>
-                </li>
-              ))}
-            </ul>
-            <button
-              type="button"
-              disabled
-              className="mt-9 inline-flex min-h-11 cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/5 px-5 text-sm font-medium text-white/45"
-            >
-              <Clock3 aria-hidden="true" className="size-4" />
-              {m['landing.pricing.pro.button']()}
-            </button>
-          </article>
-        </div>
-      </div>
-    </section>
+    <GuardPricing
+      content={content}
+      period={period}
+      onPeriodChange={setPeriod}
+      onBuy={(planId) => {
+        if (!session?.user) {
+          router.push('/sign-in?callbackUrl=%2Fpricing');
+          return;
+        }
+        if (checkoutAvailable) checkout.mutate(planId);
+      }}
+      pendingPlan={checkout.isPending ? checkout.variables : undefined}
+      checkoutAvailable={checkoutAvailable}
+      checkoutLoading={config.isPending}
+      asPage={asPage}
+    />
   );
 }

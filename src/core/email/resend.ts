@@ -60,8 +60,10 @@ export class ResendProvider implements EmailProvider {
       if (email.attachments) {
         resendEmail.attachments = email.attachments.map((att) => ({
           filename: att.filename,
-          content: att.content,
-          content_type: att.contentType,
+          content: Buffer.isBuffer(att.content)
+            ? att.content.toString('base64')
+            : att.content,
+          contentType: att.contentType,
         }));
       }
       if (email.tags) {
@@ -80,8 +82,15 @@ export class ResendProvider implements EmailProvider {
         resendEmail.html = html;
       }
 
+      // This SDK forwards request options to fetch; keep requests shorter than
+      // the outbox lease so another worker cannot claim an in-flight send.
+      const requestOptions = {
+        idempotencyKey: email.idempotencyKey,
+        signal: AbortSignal.timeout(30_000),
+      };
       const result = await this.client.emails.send(
-        resendEmail as CreateEmailOptions
+        resendEmail as CreateEmailOptions,
+        requestOptions
       );
 
       if (result.error) {

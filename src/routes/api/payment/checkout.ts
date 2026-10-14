@@ -1,9 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import { getAuth } from '@/core/auth';
+import { getGuardPlan } from '@/config/guard-plans';
 import { getPricingProduct } from '@/config/pricing';
 import { getAllConfigs } from '@/modules/config/service';
 import { createCheckout } from '@/modules/payment/service';
+import { createGuardStore } from '@/modules/playlist-guard/service';
 import { enforceMinIntervalRateLimit } from '@/lib/rate-limit';
 import { respData, respErr } from '@/lib/resp';
 
@@ -50,6 +52,24 @@ async function POST({ request }: { request: Request }) {
     const product = getPricingProduct(product_id);
     if (!product) {
       return respErr('Unknown product');
+    }
+
+    if (getGuardPlan(product_id)) {
+      if (request.headers.get('origin') !== new URL(request.url).origin) {
+        return respErr('Invalid request origin', { status: 403 });
+      }
+      if (payment_provider !== 'stripe') {
+        return respErr('Monitoring subscriptions currently use Stripe.', {
+          status: 400,
+        });
+      }
+      const entitlement = await createGuardStore().entitlement(session.user.id);
+      if (['lite', 'pro', 'ultra'].includes(entitlement.plan)) {
+        return respErr(
+          'You already have a monitoring subscription. Manage it from Billing before purchasing another.',
+          { status: 409 }
+        );
+      }
     }
 
     // Optional per-provider "test amount" override (admin-configured).

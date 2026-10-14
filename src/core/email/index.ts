@@ -25,6 +25,7 @@ export interface EmailMessage {
   priority?: 'high' | 'normal' | 'low';
   tags?: string[];
   headers?: Record<string, string>;
+  idempotencyKey?: string;
   react?: ReactNode;
 }
 

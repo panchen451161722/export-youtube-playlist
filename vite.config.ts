@@ -126,6 +126,15 @@ export default defineConfig({
       srcDirectory: 'src',
     }),
     viteReact(),
-    nitro(),
+    nitro({
+      experimental: { tasks: true },
+      tasks: {
+        'playlist-guard': {
+          handler: new URL('./server/tasks/playlist-guard.ts', import.meta.url)
+            .pathname,
+        },
+      },
+      scheduledTasks: { '*/5 * * * *': ['playlist-guard'] },
+    }),
   ],
 });

@@ -5,6 +5,7 @@ import { oneTap } from 'better-auth/plugins';
 import { db } from '@/core/db';
 import type { EmailProvider } from '@/core/email';
 import { CloudflareEmailProvider } from '@/core/email/cloudflare';
+import { PreviewEmailProvider, previewMailUrl } from '@/core/email/preview';
 import { ResendProvider } from '@/core/email/resend';
 import { VerifyEmail } from '@/core/email/templates/verify-email';
 import { AUTH_SECRET_PLACEHOLDER, envConfigs } from '@/config';
@@ -116,6 +117,12 @@ function getSocialSignature(configs: Record<string, string>) {
 function getEmailProvider(
   configs: Record<string, string>
 ): { provider: EmailProvider; from: string } | null {
+  const preview = previewMailUrl();
+  if (preview)
+    return {
+      provider: new PreviewEmailProvider(preview),
+      from: 'preview@localhost',
+    };
   const selected = configs.email_provider || 'resend';
 
   if (selected === 'cloudflare') {
@@ -141,6 +148,8 @@ function getEmailProvider(
 }
 
 /** Check whether email sending is available for the selected provider */
+let emailProviderAvailableLoaded: boolean | null = null;
+
 function isEmailConfigured(configs: Record<string, string>): boolean {
   return getEmailProvider(configs) !== null;
 }
@@ -178,6 +187,13 @@ export function getAuth(configs?: Record<string, string>) {
     }
   }
 
+  if (configs) {
+    const nextMailAvailable = isEmailConfigured(configs);
+    if (nextMailAvailable !== emailProviderAvailableLoaded) {
+      authInstance = null;
+      emailProviderAvailableLoaded = nextMailAvailable;
+    }
+  }
   // Rebuild if the email-verification flag changed
   if (configs) {
     const nextVerificationEnabled =
@@ -275,7 +291,7 @@ export function getAuth(configs?: Record<string, string>) {
         }
       },
     },
-    ...(emailVerificationEnabled
+    ...(configs && isEmailConfigured(configs)
       ? {
           emailVerification: {
             sendOnSignUp: false,
@@ -304,10 +320,7 @@ export function getAuth(configs?: Record<string, string>) {
                 const all = await getAllConfigs();
                 const emailCtx = getEmailProvider(all);
                 if (!emailCtx) {
-                  console.error(
-                    '[auth] sendVerificationEmail: No email provider configured'
-                  );
-                  return;
+                  throw new Error('Email verification is not configured.');
                 }
                 const appName = all.app_name || envConfigs.app_name;
                 // Email clients don't render SVG <img>; only embed a raster logo,
@@ -325,13 +338,16 @@ export function getAuth(configs?: Record<string, string>) {
                   react: VerifyEmail({ appName, logoUrl, url }),
                 });
                 if (!result.success) {
-                  console.error(
-                    '[auth] sendVerificationEmail failed:',
-                    result.error
+                  throw new Error(
+                    'Verification email could not be sent. Please try again.'
                   );
                 }
               } catch (e) {
-                console.error('[auth] sendVerificationEmail error:', e);
+                recentVerificationEmailSentAt.delete(
+                  String(user?.email || '').toLowerCase()
+                );
+                console.error('[auth] Verification email delivery failed');
+                throw e;
               }
             },
           },

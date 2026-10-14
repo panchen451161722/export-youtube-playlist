@@ -14,6 +14,7 @@ import {
   mysqlTable,
   text,
   timestamp,
+  uniqueIndex,
   varchar,
 } from 'drizzle-orm/mysql-core';
 
@@ -559,3 +560,74 @@ export type NewTicketMessage = typeof ticketMessage.$inferInsert;
 
 // ─── Custom tables ───────────────────────────────────────────────────────────
 // Add your own tables below this line.
+
+// ─── Playlist Guard ──────────────────────────────────────────────────────────
+// ISO timestamps compare consistently across all supported SQL dialects.
+export const guardWorkspace = table('guard_workspace', {
+  userId: varchar191('user_id')
+    .primaryKey()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  trialStartedAt: varchar191('trial_started_at'),
+  trialEndsAt: varchar191('trial_ends_at'),
+});
+
+export const guardCollection = table(
+  'guard_collection',
+  {
+    id: varchar191('id').primaryKey(),
+    userId: varchar191('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    slot: int('slot'),
+    sourceKey: varchar191('source_key'),
+    document: longtext('document').notNull(),
+    summary: text('summary').notNull(),
+    version: int('version').notNull().default(0),
+    enabled: boolean('enabled').notNull().default(true),
+    nextSyncAt: varchar191('next_sync_at'),
+    leaseToken: varchar191('lease_token'),
+    leaseExpiresAt: varchar191('lease_expires_at'),
+    lastAttemptAt: varchar191('last_attempt_at'),
+    createdAt: varchar191('created_at').notNull(),
+    deletedAt: varchar191('deleted_at'),
+  },
+  (t) => [
+    uniqueIndex('uq_guard_user_slot').on(t.userId, t.slot),
+    uniqueIndex('uq_guard_user_source').on(t.userId, t.sourceKey),
+    index('idx_guard_due').on(t.enabled, t.nextSyncAt),
+    index('idx_guard_owner').on(t.userId, t.deletedAt),
+  ]
+);
+
+export type GuardWorkspaceRow = typeof guardWorkspace.$inferSelect;
+export type GuardCollectionRow = typeof guardCollection.$inferSelect;
+
+// Durable mail outbox: snapshot persistence and insertion happen atomically.
+export const guardDelivery = table(
+  'guard_delivery',
+  {
+    id: varchar191('id').primaryKey(),
+    collectionId: varchar191('collection_id')
+      .notNull()
+      .references(() => guardCollection.id, { onDelete: 'cascade' }),
+    userId: varchar191('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    recipient: varchar191('recipient').notNull(),
+    payload: longtext('payload').notNull(),
+    status: varchar191('status').notNull().default('pending'),
+    attempts: int('attempts').notNull().default(0),
+    nextAttemptAt: varchar191('next_attempt_at').notNull(),
+    leaseToken: varchar191('lease_token'),
+    leaseExpiresAt: varchar191('lease_expires_at'),
+    createdAt: varchar191('created_at').notNull(),
+    sentAt: varchar191('sent_at'),
+    lastError: text('last_error'),
+    providerMessageId: text('provider_message_id'),
+  },
+  (t) => [
+    index('idx_guard_delivery_due').on(t.status, t.nextAttemptAt),
+    index('idx_guard_delivery_owner').on(t.userId, t.collectionId, t.createdAt),
+  ]
+);
+export type GuardDeliveryRow = typeof guardDelivery.$inferSelect;

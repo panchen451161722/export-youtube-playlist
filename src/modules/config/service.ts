@@ -73,6 +73,9 @@ export async function getAllConfigs(): Promise<ConfigMap> {
  */
 const PROTECTED_CONFIG_KEYS: ReadonlySet<string> = new Set([
   'auth_secret',
+  'playlist_guard_job_secret',
+  'playlist_guard_scheduler_enabled',
+  'playlist_guard_mail_preview_url',
   'database_url',
   'database_auth_token',
   'database_provider',

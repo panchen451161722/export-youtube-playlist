@@ -26,7 +26,7 @@ export const Route = createFileRoute('/pricing')({
       description: loaderData.description,
       path: '/pricing',
       locale: loaderData.locale,
-      // Only a free tier exists today; keep the placeholder plan out of search.
+      // Keep pricing out of search while the SaaS offering is being validated.
       noindex: true,
       structuredData: {
         '@context': 'https://schema.org',
@@ -51,8 +51,7 @@ function PricingPage() {
       <GoogleOneTap callbackURL="/pricing" />
       <Header />
       <main className="flex-1">
-        <h1 className="sr-only">{m['landing.pricing.title']()}</h1>
-        <Pricing />
+        <Pricing asPage />
       </main>
       <Footer />
     </div>

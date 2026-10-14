@@ -11,6 +11,7 @@ src/paraglide
 # env files — .env.production is created by CI and needed at build time
 # so Vite can inline VITE_* into the client bundle.
 .env
+.env.*
 .env.local
 .env.development
 !.env.example

@@ -343,10 +343,12 @@ export class StripeProvider implements PaymentProvider {
         throw new Error('subscriptionId is required');
       }
 
-      const subscription =
-        await this.client.subscriptions.cancel(subscriptionId);
+      const subscription = await this.client.subscriptions.update(
+        subscriptionId,
+        { cancel_at_period_end: true }
+      );
 
-      if (!subscription.canceled_at) {
+      if (!subscription.cancel_at_period_end) {
         throw new Error('Cancel subscription failed');
       }
 
@@ -565,8 +567,11 @@ export class StripeProvider implements PaymentProvider {
       metadata: subscription.metadata,
     };
 
-    if (subscription.status === 'active') {
-      if (subscription.cancel_at) {
+    if (
+      subscription.status === 'active' ||
+      subscription.status === 'trialing'
+    ) {
+      if (subscription.cancel_at || subscription.cancel_at_period_end) {
         subscriptionInfo.status = SubscriptionStatus.PENDING_CANCEL;
         // cancel apply at
         subscriptionInfo.canceledAt = new Date(
@@ -574,14 +579,17 @@ export class StripeProvider implements PaymentProvider {
         );
         // cancel end date
         subscriptionInfo.canceledEndAt = new Date(
-          subscription.cancel_at * 1000
+          (subscription.cancel_at || data.current_period_end) * 1000
         );
         subscriptionInfo.canceledReason =
           subscription.cancellation_details?.comment || '';
         subscriptionInfo.canceledReasonType =
           subscription.cancellation_details?.feedback || '';
       } else {
-        subscriptionInfo.status = SubscriptionStatus.ACTIVE;
+        subscriptionInfo.status =
+          subscription.status === 'trialing'
+            ? SubscriptionStatus.TRIALING
+            : SubscriptionStatus.ACTIVE;
       }
     } else if (subscription.status === 'canceled') {
       // subscription canceled
