@@ -3,22 +3,21 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { apiGet, apiPost } from '@/lib/api-client';
-import type {
-  YoutubeConnectionsOverview,
-  YoutubeReturnPath,
+import {
+  isYoutubeConnectionNotice,
+  type YoutubeConnectionNotice,
+  type YoutubeConnectionsOverview,
+  type YoutubeReturnPath,
 } from '@/lib/youtube-connections/types';
 
 export function useYoutubeConnections(
   userId: string | undefined,
   returnTo: YoutubeReturnPath
 ) {
-  const [notice, setNotice] = useState<'' | 'connected' | 'denied' | 'failed'>(
-    ''
-  );
+  const [notice, setNotice] = useState<'' | YoutubeConnectionNotice>('');
   useEffect(() => {
     const status = new URLSearchParams(window.location.search).get('youtube');
-    if (status === 'connected' || status === 'denied' || status === 'failed')
-      setNotice(status);
+    if (isYoutubeConnectionNotice(status)) setNotice(status);
   }, []);
   const queryClient = useQueryClient();
   const queryKey = ['youtube-connections', userId];

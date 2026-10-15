@@ -27,9 +27,16 @@ for (const table of [config, credit, order, subscription, user]) {
 const { handleWebhook, createUserBillingPortal } = await import('./service');
 const originalFetch = globalThis.fetch;
 let providerStatus = 'active';
+let providerId = 'sub_test';
+let trialStart: number | null = null;
+let trialEnd: number | null = null;
+let periodOffset = 0;
 const start = Math.floor(Date.now() / 1000);
 const providerSub = () => ({
-  id: 'sub_test',
+  id: providerId,
+  trial_start: trialStart,
+  trial_end: trialEnd,
+  default_payment_method: 'pm_fixture',
   status: providerStatus,
   cancel_at_period_end: false,
   metadata: {},
@@ -43,15 +50,15 @@ const providerSub = () => ({
           currency: 'usd',
         },
         plan: { interval: 'year', interval_count: 1 },
-        current_period_start: start,
-        current_period_end: start + 31536000,
+        current_period_start: start + periodOffset,
+        current_period_end: start + periodOffset + 31536000,
       },
     ],
   },
 });
 globalThis.fetch = async (input) => {
   const url = String(input);
-  assert.match(url, /api\.stripe\.com\/v1\/subscriptions\/sub_test/);
+  assert.match(url, /api\.stripe\.com\/v1\/subscriptions\/sub_/);
   return Response.json(providerSub());
 };
 after(() => {
@@ -186,5 +193,93 @@ test('signed checkout is idempotent, renewals create one order, failed invoices 
   await assert.rejects(
     createUserBillingPortal('different-user', 'SUBORD_TEST'),
     /not found/
+  );
+});
+
+test('trial activation records zero charged, renews after seven days and cancellation never grants another trial', async () => {
+  providerId = 'sub_cardtrial';
+  providerStatus = 'trialing';
+  trialStart = start;
+  trialEnd = start + 7 * 86400;
+  await database.insert(order).values({
+    id: 'trial-order',
+    orderNo: 'ORD_TRIAL',
+    userId: 'test-user',
+    status: 'created',
+    amount: 990,
+    currency: 'usd',
+    productId: 'guard_lite_yearly',
+    paymentType: 'subscription',
+    paymentProvider: 'stripe',
+    paymentSessionId: 'cs_trial',
+    checkoutInfo: '{}',
+  });
+  const trialCheckout = {
+    ...checkout,
+    id: 'cs_trial',
+    subscription: providerId,
+    amount_total: 0,
+    payment_status: 'no_payment_required',
+  };
+  await handleWebhook(event('checkout.session.completed', trialCheckout));
+  await handleWebhook(event('checkout.session.completed', trialCheckout));
+  const receipt = (await database.select().from(order)).find(
+    (o) => o.id === 'trial-order'
+  )!;
+  assert.equal(receipt.status, 'trialing');
+  assert.equal(receipt.paymentAmount, 0);
+  assert.equal(receipt.paidAt, null);
+  const trialSub = (await database.select().from(subscription)).find(
+    (s) => s.subscriptionId === providerId
+  )!;
+  assert.equal(trialSub.status, 'trialing');
+  assert.equal(trialSub.trialPeriodDays, 7);
+  assert.equal(trialSub.currentPeriodEnd!.getTime(), trialEnd * 1000);
+  providerStatus = 'active';
+  periodOffset = 7 * 86400;
+  await handleWebhook(event('customer.subscription.updated', providerSub()));
+  const unpaidSub = (await database.select().from(subscription)).find(
+    (s) => s.subscriptionId === providerId
+  )!;
+  assert.equal(unpaidSub.status, 'trialing');
+  assert.equal(unpaidSub.currentPeriodEnd!.getTime(), trialEnd * 1000);
+
+  const invoice = {
+    id: 'in_after_trial',
+    status: 'paid',
+    amount_paid: 990,
+    currency: 'usd',
+    billing_reason: 'subscription_update',
+    created: start + periodOffset,
+    customer: 'cus_test',
+    lines: {
+      data: [
+        { parent: { subscription_item_details: { subscription: providerId } } },
+      ],
+    },
+  };
+  await handleWebhook(event('invoice.payment_succeeded', invoice));
+  await handleWebhook(event('invoice.payment_succeeded', invoice));
+  const paidSub = (await database.select().from(subscription)).find(
+    (s) => s.subscriptionId === providerId
+  )!;
+  assert.equal(paidSub.status, 'active');
+  assert.equal(
+    paidSub.currentPeriodEnd!.getTime(),
+    (start + periodOffset + 31536000) * 1000
+  );
+  assert.equal(
+    (await database.select().from(order)).filter(
+      (o) => o.transactionId === 'in_after_trial'
+    ).length,
+    1
+  );
+  providerStatus = 'canceled';
+  await handleWebhook(event('customer.subscription.deleted', providerSub()));
+  assert.equal(
+    (await database.select().from(subscription)).find(
+      (s) => s.subscriptionId === providerId
+    )!.status,
+    'canceled'
   );
 });

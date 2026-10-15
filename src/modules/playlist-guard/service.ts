@@ -17,8 +17,6 @@ import {
   GUARD_PLANS,
   GUARD_SCAN_LIMIT,
   GUARD_SNAPSHOT_LIMIT,
-  GUARD_TRIAL_COLLECTION_LIMIT,
-  GUARD_TRIAL_DAYS,
 } from '@/config/guard-plans';
 import { getUuid } from '@/lib/hash';
 import {
@@ -105,7 +103,7 @@ export function nextRun(frequency: GuardFrequency, now: number): string {
 
 export function entitlementFor(
   rows: Subscription[],
-  workspace: GuardWorkspaceRow | undefined,
+  _workspace: GuardWorkspaceRow | undefined,
   now: number
 ): GuardEntitlement {
   // Only server-created, active provider subscriptions with an unexpired period grant access.
@@ -120,29 +118,30 @@ export function entitlementFor(
       (!row.currentPeriodStart || row.currentPeriodStart.getTime() <= now)
   );
   for (const plan of [...GUARD_PLANS].reverse()) {
-    if (
-      eligible.some(
-        (row) =>
-          row.productId === `guard_${plan.id}_monthly` ||
-          row.productId === `guard_${plan.id}_yearly`
-      )
-    ) {
-      return {
-        plan: plan.id,
-        limit: plan.collectionLimit,
-        trialEndsAt: workspace?.trialEndsAt ?? null,
-        canStartTrial: false,
-      };
+    const row = eligible.find(
+      (row) =>
+        row.productId === `guard_${plan.id}_yearly` ||
+        row.productId === `guard_${plan.id}_monthly`
+    );
+    if (!row) continue;
+    let trialing = row.status === 'trialing';
+    if (row.status === 'pending_cancel') {
+      try {
+        trialing =
+          JSON.parse(row.subscriptionResult || '{}').status === 'trialing';
+      } catch {
+        /* Older subscriptions have no provider snapshot. */
+      }
     }
+    return {
+      plan: plan.id,
+      limit: plan.collectionLimit,
+      trialEndsAt: trialing ? row.currentPeriodEnd!.toISOString() : null,
+      canStartTrial: false,
+    };
   }
-  const activeTrial =
-    workspace?.trialEndsAt && Date.parse(workspace.trialEndsAt) > now;
-  return {
-    plan: activeTrial ? 'trial' : 'free',
-    limit: activeTrial ? GUARD_TRIAL_COLLECTION_LIMIT : 0,
-    trialEndsAt: workspace?.trialEndsAt ?? null,
-    canStartTrial: !workspace?.trialStartedAt,
-  };
+  // Legacy no-card workspace trials are retained as records, never as access grants.
+  return { plan: 'free', limit: 0, trialEndsAt: null, canStartTrial: false };
 }
 
 /** A complete scan tracks unique videos; a disappearing video keeps its last known metadata. */
@@ -294,31 +293,6 @@ export function createGuardStore(
         .where(eq(subscription.userId, userId)),
     ]);
     return entitlementFor(subscriptions, workspaces[0], clock());
-  }
-  async function startTrial(userId: string) {
-    const access = await entitlement(userId);
-    if (!access.canStartTrial)
-      throw new GuardError(
-        'trial_unavailable',
-        'Your trial has already been used or you already have an active plan.',
-        409
-      );
-    const now = clock();
-    try {
-      await database.insert(guardWorkspace).values({
-        userId,
-        trialStartedAt: new Date(now).toISOString(),
-        trialEndsAt: new Date(now + GUARD_TRIAL_DAYS * DAY).toISOString(),
-      });
-    } catch (error) {
-      if (!isConflict(error)) throw error;
-      throw new GuardError(
-        'trial_unavailable',
-        'Your trial has already been used.',
-        409
-      );
-    }
-    return entitlement(userId);
   }
   async function list(userId: string): Promise<GuardCollection[]> {
     const rows: { summary: string }[] = await database
@@ -949,7 +923,6 @@ export function createGuardStore(
 
   return {
     entitlement,
-    startTrial,
     list,
     detail,
     create,

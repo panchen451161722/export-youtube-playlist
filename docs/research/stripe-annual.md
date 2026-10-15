@@ -143,3 +143,73 @@ policy is unchanged and was not part of this acceptance. Deployment still needs
 the same live mappings and endpoint secret in its own config store, followed by
 enabling this prepared endpoint after the new handler is available. There was
 no deployment or Git commit.
+
+## Production activation — 2026-10-15
+
+After deployment, the production admin had saved the server and signing secrets,
+but the annual price mapping and portal configuration were absent. This kept
+`guard_checkout_provider` empty: the available free-trial link led directly to
+Collections, as designed, without opening Checkout.
+
+Saved the three live mappings above and the dedicated portal ID through the
+authenticated production admin configuration API (HTTP 200/code 0). Re-read the
+mapping and confirmed the public API reports `guard_checkout_provider: stripe`.
+The existing webhook `we_1UQhd7PX7HdkZlWUxGZAmrt3` is now enabled; its URL and
+eight subscribed events are unchanged. All three live annual Prices and the
+portal configuration were re-read and confirmed active.
+
+Clicked Lite's “Or subscribe now” on the production pricing page. Stripe hosted
+Checkout opened successfully for YouTube Playlist Backup Lite at USD 9.90/year,
+with the correct two-collection description. Stripe initially offered local CNY
+conversion; selecting USD confirmed the catalog amount. Returned using Stripe's
+back link without entering payment information or submitting a payment. The
+account remains on its website trial. This proves Checkout creation/redirect,
+not a completed live charge or signed production webhook delivery. Those claims
+must remain separate from the earlier isolated test-mode payment acceptance.
+
+This activation changed runtime configuration only; it did not require another
+application deployment.
+
+## Card-required trial implementation — 2026-10-15 (not deployed)
+
+New subscriptions now start through Stripe Checkout with a required card and a
+seven-day subscription trial. The chosen annual plan determines both the trial
+quota and the subsequent annual price. The website-only `start_trial` action
+has been removed; legacy workspace trial dates no longer grant access. Existing
+snapshots remain saved, and existing paid subscriptions retain their access.
+No database migration is required.
+
+Eligibility is checked server-side against local subscription history and the
+app-owned Stripe customer's subscriptions. Previously subscribed accounts cannot
+claim another trial. Open Checkout sessions are reused, and clients must confirm
+the currently displayed trial eligibility before a Checkout is created. Trial
+orders show zero charged and no payment date. Only a successful annual invoice
+extends paid access beyond the trial deadline.
+
+Isolated acceptance used `data/stripe-test.db`, localhost:3103, test credentials,
+and Stripe's official 4242 test card. Production credentials and billing were not
+changed for this verification:
+
+- Checkout `cs_test_b1XHCjXo3E3sZ7WzuwcvZFtdaeqENvSVwhnENQNGteuDy2GFEELxRrdVBO`
+  displayed USD 0 today, seven free days, then USD 29.90/year for Pro.
+- Subscription `sub_1UQqgjPX7HdkZlWU3pLZq4LE` had a saved payment method,
+  trialing status, and a seven-day deadline. The local workspace received Pro's
+  15-collection quota only after the confirmed Checkout.
+- Cancellation through the website returned `pending_cancel`, preserving access
+  to the trial deadline and preventing another free trial.
+- The test subscription was resumed and its trial ended early through the Stripe
+  test API to exercise conversion without waiting seven days. Annual invoice
+  `in_1UQqjUPX7HdkZlWUW3X3aDlw` was paid for USD 29.90 with the test card.
+  This forced transition produces `subscription_update`; the handler supports
+  it alongside the normal `subscription_cycle` renewal reason.
+- The actual paid event `evt_1UQqjXPX7HdkZlWU3WZkiYO8` was replayed twice with
+  the local signing secret after the handler fix. Both responses were HTTP 200 /
+  code 0, with exactly one annual order and one zero-dollar trial order.
+- The test subscription was subsequently canceled immediately to stop future
+  test billing. Eligibility then returned `trialEligible: false` and
+  `hasSubscription: false`.
+
+All 44 focused tests, TypeScript checking, and the production build passed.
+This implementation is not deployed. Stripe's account-level trial reminder
+email setting and production scheduler/email activation are separate runtime
+configuration; this verification does not claim they are enabled.

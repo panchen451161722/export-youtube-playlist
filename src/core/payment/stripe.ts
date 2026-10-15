@@ -48,6 +48,28 @@ export class StripeProvider implements PaymentProvider {
     });
   }
 
+  async getSubscriptionAccess(email: string, userId: string) {
+    const customers = await this.client.customers.list({ email, limit: 100 });
+    let hasHistory = false;
+    let hasCurrent = false;
+    for (const customer of customers.data.filter(
+      (c) =>
+        c.metadata.app === 'export-youtube-playlist' &&
+        c.metadata.user_id === userId
+    )) {
+      const subscriptions = await this.client.subscriptions.list({
+        customer: customer.id,
+        status: 'all',
+        limit: 100,
+      });
+      hasHistory ||= subscriptions.data.length > 0;
+      hasCurrent ||= subscriptions.data.some(
+        (s) => !['canceled', 'incomplete_expired'].includes(s.status)
+      );
+    }
+    return { hasHistory, hasCurrent };
+  }
+
   async createPayment({
     order,
   }: {
@@ -127,17 +149,74 @@ export class StripeProvider implements PaymentProvider {
         if (existing) {
           customerId = existing.id;
         } else {
-          const customer = await this.client.customers.create({
-            email: order.customer.email,
-            name: order.customer.name,
-            metadata: {
-              ...order.customer.metadata,
-              app: order.metadata?.app || '',
-              user_id: order.metadata?.user_id || '',
+          const customer = await this.client.customers.create(
+            {
+              email: order.customer.email,
+              name: order.customer.name,
+              metadata: {
+                ...order.customer.metadata,
+                app: order.metadata?.app || '',
+                user_id: order.metadata?.user_id || '',
+              },
             },
-          });
+            order.metadata?.user_id
+              ? {
+                  idempotencyKey: `guard-customer-${order.metadata.user_id}`,
+                }
+              : undefined
+          );
           customerId = customer.id;
         }
+      }
+
+      // One open Checkout per account. Reuse retries and expire an abandoned
+      // selection before changing plans. Stripe also serializes concurrent
+      // creations with the same generation key (including different plans).
+      let checkoutGeneration: string | undefined;
+      if (customerId && order.metadata?.app === 'export-youtube-playlist') {
+        const subscriptions = await this.client.subscriptions.list({
+          customer: customerId,
+          status: 'all',
+          limit: 100,
+        });
+        if (
+          subscriptions.data.some(
+            (s) => !['canceled', 'incomplete_expired'].includes(s.status)
+          )
+        ) {
+          throw new Error(
+            'An existing subscription must be managed from Billing.'
+          );
+        }
+        if (order.plan?.trialPeriodDays && subscriptions.data.length) {
+          throw new Error(
+            'This account has already subscribed. Refresh pricing to subscribe without another trial.'
+          );
+        }
+        const sessions = await this.client.checkout.sessions.list({
+          customer: customerId,
+          limit: 100,
+        });
+        const open = sessions.data.find(
+          (s) => s.status === 'open' && s.metadata?.app === order.metadata?.app
+        );
+        if (
+          open &&
+          open.metadata?.product_id === order.metadata.product_id &&
+          open.metadata?.trial_days ===
+            String(order.plan?.trialPeriodDays || 0) &&
+          open.url
+        ) {
+          return {
+            provider: this.name,
+            checkoutParams: {},
+            checkoutResult: open,
+            checkoutInfo: { sessionId: open.id, checkoutUrl: open.url },
+            metadata: open.metadata,
+          };
+        }
+        if (open) await this.client.checkout.sessions.expire(open.id);
+        checkoutGeneration = `${customerId}-${sessions.data[0]?.id || 'first'}`;
       }
 
       // create payment session params
@@ -150,6 +229,14 @@ export class StripeProvider implements PaymentProvider {
       if (order.type === PaymentType.SUBSCRIPTION) {
         sessionParams.payment_method_types = ['card'];
         sessionParams.subscription_data = { metadata: order.metadata };
+        sessionParams.payment_method_collection = 'always';
+        if (order.plan?.trialPeriodDays) {
+          sessionParams.subscription_data.trial_period_days =
+            order.plan.trialPeriodDays;
+          sessionParams.subscription_data.trial_settings = {
+            end_behavior: { missing_payment_method: 'cancel' },
+          };
+        }
       }
 
       // pre-set promotion code
@@ -219,7 +306,12 @@ export class StripeProvider implements PaymentProvider {
         sessionParams.cancel_url = order.cancelUrl;
       }
 
-      const session = await this.client.checkout.sessions.create(sessionParams);
+      const session = await this.client.checkout.sessions.create(
+        sessionParams,
+        checkoutGeneration
+          ? { idempotencyKey: `guard-checkout-${checkoutGeneration}` }
+          : undefined
+      );
       if (!session.id || !session.url) {
         throw new Error('create payment failed');
       }
@@ -313,11 +405,15 @@ export class StripeProvider implements PaymentProvider {
         );
       } else if (eventType === PaymentEventType.SUBSCRIBE_UPDATED) {
         paymentSession = await this.buildPaymentSessionFromSubscription(
-          event.data.object as Stripe.Response<Stripe.Subscription>
+          await this.client.subscriptions.retrieve(
+            (event.data.object as Stripe.Subscription).id
+          )
         );
       } else if (eventType === PaymentEventType.SUBSCRIBE_CANCELED) {
         paymentSession = await this.buildPaymentSessionFromSubscription(
-          event.data.object as Stripe.Response<Stripe.Subscription>
+          await this.client.subscriptions.retrieve(
+            (event.data.object as Stripe.Subscription).id
+          )
         );
       }
 
@@ -502,6 +598,14 @@ export class StripeProvider implements PaymentProvider {
     };
 
     if (subscription) {
+      if (
+        subscription.status === 'trialing' &&
+        !subscription.default_payment_method
+      ) {
+        throw new Error(
+          'Trial payment method has not been confirmed by Stripe.'
+        );
+      }
       result.subscriptionId = subscription.id;
       result.subscriptionInfo = await this.buildSubscriptionInfo(subscription);
       result.subscriptionResult = subscription;
@@ -568,7 +672,8 @@ export class StripeProvider implements PaymentProvider {
         subscriptionCycleType:
           invoice.billing_reason === 'subscription_create'
             ? SubscriptionCycleType.CREATE
-            : invoice.billing_reason === 'subscription_cycle'
+            : invoice.billing_reason === 'subscription_cycle' ||
+                invoice.billing_reason === 'subscription_update'
               ? SubscriptionCycleType.RENEWAL
               : undefined,
       },
@@ -618,10 +723,26 @@ export class StripeProvider implements PaymentProvider {
       currency: data.price.currency,
       currentPeriodStart: new Date(data.current_period_start * 1000),
       currentPeriodEnd: new Date(data.current_period_end * 1000),
+      trialPeriodDays:
+        subscription.trial_start && subscription.trial_end
+          ? Math.round(
+              (subscription.trial_end - subscription.trial_start) / 86400
+            )
+          : 0,
       interval: data.plan.interval as PaymentInterval,
       intervalCount: data.plan.interval_count || 1,
       metadata: subscription.metadata,
     };
+
+    // The trial grants access only until trial_end, never an unpaid annual period.
+    if (subscription.status === 'trialing' && subscription.trial_end) {
+      subscriptionInfo.currentPeriodStart = new Date(
+        (subscription.trial_start || data.current_period_start) * 1000
+      );
+      subscriptionInfo.currentPeriodEnd = new Date(
+        subscription.trial_end * 1000
+      );
+    }
 
     if (
       subscription.status === 'active' ||

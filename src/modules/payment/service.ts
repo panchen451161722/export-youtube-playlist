@@ -16,7 +16,12 @@ import {
   type PaymentEvent,
   type PaymentOrder,
 } from '@/core/payment/types';
-import { credit, order, subscription } from '@/config/db/schema';
+import {
+  credit,
+  order,
+  subscription,
+  type Subscription,
+} from '@/config/db/schema';
 import { getGuardPlan, getGuardStripePriceId } from '@/config/guard-plans';
 import { getAllConfigs } from '@/modules/config/service';
 import { calculateCreditExpirationTime } from '@/modules/credits/service';
@@ -37,6 +42,7 @@ enum OrderStatus {
   CREATED = 'created',
   PAID = 'paid',
   FAILED = 'failed',
+  TRIALING = 'trialing',
 }
 
 // --- Payment Manager ---
@@ -130,6 +136,26 @@ async function getPaymentManager(): Promise<PaymentManager> {
 
 // --- Checkout ---
 
+export async function getGuardCheckoutOptions(userId: string, email: string) {
+  const rows: Subscription[] = await db()
+    .select()
+    .from(subscription)
+    .where(eq(subscription.userId, userId));
+  const history = rows.filter((s) => getGuardPlan(s.productId || ''));
+  const provider = (await getPaymentManager()).getProvider('stripe');
+  if (!(provider instanceof StripeProvider))
+    throw new Error('Stripe is not configured');
+  const remote = await provider.getSubscriptionAccess(email, userId);
+  return {
+    trialEligible: history.length === 0 && !remote.hasHistory,
+    hasSubscription:
+      remote.hasCurrent ||
+      history.some(
+        (s) => !['canceled', 'expired'].includes(s.status) && !s.deletedAt
+      ),
+  };
+}
+
 export async function createCheckout(params: {
   userId: string;
   userEmail?: string;
@@ -199,6 +225,7 @@ export async function createCheckout(params: {
         user_id: userId,
         product_id: paymentOrder.productId || '',
         order_no: orderNo,
+        trial_days: String(paymentOrder.plan?.trialPeriodDays || 0),
       },
       orderNo,
       successUrl: callbackSuccessUrl,
@@ -211,8 +238,8 @@ export async function createCheckout(params: {
   await db()
     .insert(order)
     .values({
-      id: getUuid(),
-      orderNo,
+      id: `checkout_${session.checkoutInfo.sessionId}`,
+      orderNo: session.metadata?.order_no || orderNo,
       userId,
       userEmail: userEmail || '',
       status: OrderStatus.CREATED,
@@ -231,7 +258,8 @@ export async function createCheckout(params: {
       checkoutResult: JSON.stringify(session.checkoutResult),
       checkoutUrl: session.checkoutInfo.checkoutUrl,
       description: paymentOrder.description || '',
-    });
+    })
+    .onConflictDoNothing();
 
   return session;
 }
@@ -247,7 +275,12 @@ export async function handlePaymentCallback(orderNo: string) {
     .limit(1);
 
   if (!existingOrder) return;
-  if (existingOrder.status === OrderStatus.PAID) return;
+  if (
+    [OrderStatus.PAID, OrderStatus.TRIALING].includes(
+      existingOrder.status as OrderStatus
+    )
+  )
+    return;
 
   // Query the payment provider for latest status
   const pm = await getPaymentManager();
@@ -334,7 +367,12 @@ async function handleCheckoutSuccess(session: any, provider: string) {
   if (!existingOrder) return;
 
   // Idempotency: skip if already paid
-  if (existingOrder.status === OrderStatus.PAID) return;
+  if (
+    [OrderStatus.PAID, OrderStatus.TRIALING].includes(
+      existingOrder.status as OrderStatus
+    )
+  )
+    return;
   if (
     existingOrder.status !== OrderStatus.CREATED &&
     existingOrder.status !== OrderStatus.PENDING
@@ -345,14 +383,17 @@ async function handleCheckoutSuccess(session: any, provider: string) {
   const subscriptionInfo = session.subscriptionInfo;
 
   if (session.paymentStatus === PaymentStatus.SUCCESS) {
+    const isTrial =
+      subscriptionInfo?.status === SubscriptionStatus.TRIALING ||
+      session.subscriptionResult?.status === 'trialing';
     // Prepare order update
     const orderUpdate: Record<string, any> = {
-      status: OrderStatus.PAID,
+      status: isTrial ? OrderStatus.TRIALING : OrderStatus.PAID,
       paymentResult: JSON.stringify(session.paymentResult),
-      paymentAmount: paymentInfo?.paymentAmount || null,
+      paymentAmount: paymentInfo?.paymentAmount ?? null,
       paymentCurrency: paymentInfo?.paymentCurrency || null,
       paymentEmail: paymentInfo?.paymentEmail || null,
-      paidAt: paymentInfo?.paidAt || new Date(),
+      paidAt: isTrial ? null : paymentInfo?.paidAt || new Date(),
       transactionId: paymentInfo?.transactionId || null,
       invoiceId: paymentInfo?.invoiceId || null,
       invoiceUrl: paymentInfo?.invoiceUrl || null,
@@ -406,7 +447,11 @@ async function handleCheckoutSuccess(session: any, provider: string) {
       }
 
       // 2. Grant credits if applicable
-      if (existingOrder.creditsAmount && existingOrder.creditsAmount > 0) {
+      if (
+        !isTrial &&
+        existingOrder.creditsAmount &&
+        existingOrder.creditsAmount > 0
+      ) {
         const credits = existingOrder.creditsAmount;
         const expiresAt = calculateCreditExpirationTime({
           creditsValidDays: existingOrder.creditsValidDays || 0,
@@ -524,6 +569,8 @@ export async function handleSubscriptionRenewal(
         .set({
           currentPeriodStart: subscriptionInfo.currentPeriodStart,
           currentPeriodEnd: subscriptionInfo.currentPeriodEnd,
+          status: subscriptionInfo.status,
+          subscriptionResult: JSON.stringify(session.subscriptionResult),
         })
         .where(eq(subscription.subscriptionNo, existingSub.subscriptionNo))
     );
@@ -612,14 +659,29 @@ async function handleSubscriptionUpdated(session: any, provider: string) {
   if (!existingSub) return;
 
   const info = session.subscriptionInfo;
+  // Stripe can report active as soon as a trial ends, before the first annual
+  // invoice is paid. Only invoice.payment_succeeded extends paid access.
+  const extendsPeriod =
+    existingSub.currentPeriodEnd &&
+    info.currentPeriodEnd > existingSub.currentPeriodEnd;
+  const awaitingPayment =
+    extendsPeriod &&
+    [SubscriptionStatus.ACTIVE, SubscriptionStatus.PENDING_CANCEL].includes(
+      info.status
+    );
   await updateBySubscriptionNo(existingSub.subscriptionNo, {
-    status: info.status,
-    currentPeriodStart: info.currentPeriodStart,
-    currentPeriodEnd: info.currentPeriodEnd,
+    status: awaitingPayment ? existingSub.status : info.status,
+    currentPeriodStart: awaitingPayment
+      ? existingSub.currentPeriodStart
+      : info.currentPeriodStart,
+    currentPeriodEnd: awaitingPayment
+      ? existingSub.currentPeriodEnd
+      : info.currentPeriodEnd,
     canceledAt: info.canceledAt || null,
     canceledEndAt: info.canceledEndAt || null,
     canceledReason: info.canceledReason || '',
     canceledReasonType: info.canceledReasonType || '',
+    subscriptionResult: JSON.stringify(session.subscriptionResult),
   });
 }
 

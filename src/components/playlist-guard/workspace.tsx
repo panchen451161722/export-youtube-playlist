@@ -135,7 +135,7 @@ export function GuardWorkspace({
           <p className="text-muted-foreground mt-1 max-w-xl text-xs leading-5">
             {entitlement.canStartTrial
               ? l.trial_note
-              : entitlement.plan === 'trial'
+              : !!entitlement.trialEndsAt
                 ? `${l.trial_until} · ${date(entitlement.trialEndsAt)}`
                 : entitlement.plan === 'free'
                   ? l.trial_expired
@@ -143,21 +143,12 @@ export function GuardWorkspace({
           </p>
         </div>
       </div>
-      {entitlement.canStartTrial ? (
-        <Button
-          disabled={busy}
-          onClick={() => action({ action: 'start_trial' })}
-        >
-          {l.start_trial}
-        </Button>
-      ) : (
-        <Link
-          href="/pricing"
-          className={buttonVariants({ variant: 'outline', size: 'sm' })}
-        >
-          {l.upgrade}
-        </Link>
-      )}
+      <Link
+        href={entitlement.limit ? '/settings/billing' : '/pricing'}
+        className={buttonVariants({ variant: 'outline', size: 'sm' })}
+      >
+        {entitlement.limit ? l.upgrade : l.start_trial}
+      </Link>
     </div>
   );
   const environmentNotice = !(cap?.youtube || cap?.privateSources)

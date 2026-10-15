@@ -159,25 +159,38 @@ test('complete snapshots retain missing metadata, remove restored records and bo
   assert.equal(JSON.stringify(state), previous);
 });
 
-test('trial is durable, one-time, and expires without deleting saved collections', async () => {
+test('legacy no-card trials grant no access; Stripe trial uses selected quota and expires without deleting snapshots', async () => {
+  const { guardWorkspace } = await import('@/config/db/schema');
+  await database.insert(guardWorkspace).values({
+    userId: 'alice',
+    trialStartedAt: new Date(now).toISOString(),
+    trialEndsAt: new Date(now + 7 * 86400000).toISOString(),
+  });
   assert.equal((await store.entitlement('alice')).limit, 0);
+  assert.equal((await store.entitlement('alice')).canStartTrial, false);
   await assert.rejects(
-    store.create('alice', input, 'source-before-trial'),
+    store.create('alice', input, 'before-stripe'),
     code('plan_required')
   );
-  const result = await Promise.allSettled([
-    store.startTrial('alice'),
-    store.startTrial('alice'),
-  ]);
+  await database.insert(subscription).values({
+    id: 'alice-trial',
+    subscriptionNo: 'alice-trial',
+    userId: 'alice',
+    status: 'trialing',
+    paymentProvider: 'stripe',
+    subscriptionId: 'sub_alice',
+    productId: 'guard_lite_yearly',
+    currentPeriodStart: new Date(now),
+    currentPeriodEnd: new Date(now + 7 * 86400000),
+  });
+  assert.equal((await store.entitlement('alice')).limit, 2);
   assert.equal(
-    result.filter((entry) => entry.status === 'fulfilled').length,
-    1
+    (await store.entitlement('alice')).trialEndsAt,
+    new Date(now + 7 * 86400000).toISOString()
   );
-  assert.equal((await store.entitlement('alice')).limit, 15);
   const collection = await store.create('alice', input, 'source-alice');
-  now += 8 * 86_400_000;
+  now += 8 * 86400000;
   assert.equal((await store.entitlement('alice')).plan, 'free');
-  await assert.rejects(store.startTrial('alice'), code('trial_unavailable'));
   await assert.rejects(
     store.sync('alice', collection.id, async () => ({
       complete: true,
@@ -186,7 +199,7 @@ test('trial is durable, one-time, and expires without deleting saved collections
     code('plan_required')
   );
   assert.equal((await store.detail('alice', collection.id)).id, collection.id);
-  now -= 8 * 86_400_000;
+  now -= 8 * 86400000;
 });
 
 test('unique slot reservations enforce paid quota under concurrent creation', async () => {
@@ -231,7 +244,17 @@ test('every collection read and mutation scopes ownership', async () => {
 });
 
 test('concurrent sync claims fetch once and failed or incomplete scans preserve snapshots', async () => {
-  await store.startTrial('bob');
+  await database.insert(subscription).values({
+    id: 'bob-trial',
+    subscriptionNo: 'bob-trial',
+    userId: 'bob',
+    status: 'trialing',
+    paymentProvider: 'stripe',
+    subscriptionId: 'sub_bob',
+    productId: 'guard_pro_yearly',
+    currentPeriodStart: new Date(now),
+    currentPeriodEnd: new Date(now + 7 * 86400000),
+  });
   const collection = await store.create('bob', input, 'source-bob');
   let reads = 0;
   let resolveScan!: (value: { complete: boolean; items: GuardItem[] }) => void;

@@ -16,6 +16,7 @@ type Order = {
   orderNo: string;
   status: string;
   amount: number;
+  paymentAmount?: number | null;
   currency: string;
   paymentProvider: string;
   paymentType?: string | null;
@@ -92,13 +93,22 @@ function PaymentsPage() {
       header: m['settings.payments.amount'](),
       cell: (o) => (
         <span className="font-medium">
-          {formatAmount(o.amount, o.currency)}
+          {formatAmount(
+            o.paymentAmount ?? (o.status === 'trialing' ? 0 : o.amount),
+            o.currency
+          )}
         </span>
       ),
     },
     {
       header: m['settings.payments.status'](),
-      cell: (o) => <Badge variant={statusVariant(o.status)}>{o.status}</Badge>,
+      cell: (o) => (
+        <Badge variant={statusVariant(o.status)}>
+          {o.status === 'trialing'
+            ? m['settings.payments.trialing']()
+            : o.status}
+        </Badge>
+      ),
     },
     {
       header: m['settings.payments.type'](),

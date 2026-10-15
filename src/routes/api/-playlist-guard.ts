@@ -75,7 +75,6 @@ const preferences = {
   emailDelivery: z.boolean().optional(),
 };
 export const guardActionSchema = z.discriminatedUnion('action', [
-  z.object({ action: z.literal('start_trial') }).strict(),
   z
     .object({
       action: z.literal('create'),

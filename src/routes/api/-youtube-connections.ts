@@ -1,6 +1,7 @@
 import { envConfigs } from '@/config';
 import { respErr } from '@/lib/resp';
 import { YoutubeAccountError } from '@/lib/youtube-connections/google';
+import { isYoutubeConnectionNotice } from '@/lib/youtube-connections/types';
 
 export const YOUTUBE_STATE_COOKIE = 'youtube_connection_state';
 export function callbackOrigin(request: Request) {
@@ -81,4 +82,13 @@ export function youtubeErrorResponse(error: unknown) {
       headers: { 'cache-control': 'no-store' },
     }
   );
+}
+
+/** Only static application codes may leave the callback; never upstream error text. */
+export function youtubeCallbackFailure(error: unknown) {
+  return error instanceof YoutubeAccountError &&
+    isYoutubeConnectionNotice(error.code) &&
+    !['connected', 'denied'].includes(error.code)
+    ? error.code
+    : 'failed';
 }

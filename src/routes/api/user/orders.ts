@@ -50,6 +50,7 @@ async function GET({ request }: { request: Request }) {
         orderNo: order.orderNo,
         status: order.status,
         amount: order.amount,
+        paymentAmount: order.paymentAmount,
         currency: order.currency,
         paymentProvider: order.paymentProvider,
         paymentType: order.paymentType,

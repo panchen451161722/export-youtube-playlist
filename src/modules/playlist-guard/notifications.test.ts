@@ -56,7 +56,17 @@ async function fixture(preferences: Partial<GuardCreateInput> = {}) {
   let now = Date.UTC(2026, 9, 13);
   const clock = () => now;
   const store = createGuardStore(database, clock);
-  await store.startTrial('owner');
+  await database.insert(subscription).values({
+    id: 'owner-sub',
+    subscriptionNo: 'owner-sub',
+    userId: 'owner',
+    status: 'active',
+    paymentProvider: 'stripe',
+    subscriptionId: 'sub_owner',
+    productId: 'guard_pro_yearly',
+    currentPeriodStart: new Date(now),
+    currentPeriodEnd: new Date(now + 365 * DAY),
+  });
   const collection = await store.create(
     'owner',
     {

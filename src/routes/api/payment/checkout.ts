@@ -4,7 +4,10 @@ import { getAuth } from '@/core/auth';
 import { getGuardCheckoutProvider, getGuardPlan } from '@/config/guard-plans';
 import { getPricingProduct } from '@/config/pricing';
 import { getAllConfigs } from '@/modules/config/service';
-import { createCheckout } from '@/modules/payment/service';
+import {
+  createCheckout,
+  getGuardCheckoutOptions,
+} from '@/modules/payment/service';
 import { createGuardStore } from '@/modules/playlist-guard/service';
 import { enforceMinIntervalRateLimit } from '@/lib/rate-limit';
 import { respData, respErr } from '@/lib/resp';
@@ -76,6 +79,21 @@ async function POST({ request }: { request: Request }) {
     if (!getGuardCheckoutProvider(configs)) {
       return respErr('Annual checkout is not configured yet.', { status: 503 });
     }
+    const options = await getGuardCheckoutOptions(
+      session.user.id,
+      session.user.email
+    );
+    if (options.hasSubscription)
+      return respErr('Manage your existing subscription from Billing.', {
+        status: 409,
+      });
+    // The browser displays eligibility, but never decides trial duration or price.
+    if (body.expect_trial !== options.trialEligible) {
+      return respErr(
+        'Subscription eligibility changed. Refresh pricing and try again.',
+        { status: 409 }
+      );
+    }
 
     // Build success/cancel URLs — only accept same-origin redirects.
     const baseUrl = configs.app_url || 'http://localhost:3000';
@@ -110,6 +128,9 @@ async function POST({ request }: { request: Request }) {
               name: product.plan.name,
               interval: product.plan.interval,
               intervalCount: product.plan.intervalCount,
+              trialPeriodDays: options.trialEligible
+                ? product.plan.trialPeriodDays
+                : undefined,
             }
           : undefined,
       },
@@ -125,8 +146,23 @@ async function POST({ request }: { request: Request }) {
   }
 }
 
+async function GET({ request }: { request: Request }) {
+  const session = await getAuth().api.getSession({ headers: request.headers });
+  if (!session?.user) return respErr('Unauthorized', { status: 401 });
+  try {
+    return respData(
+      await getGuardCheckoutOptions(session.user.id, session.user.email),
+      {
+        headers: { 'Cache-Control': 'no-store' },
+      }
+    );
+  } catch {
+    return respErr('Checkout is not available yet.', { status: 503 });
+  }
+}
+
 export const Route = createFileRoute('/api/payment/checkout')({
   server: {
-    handlers: { POST },
+    handlers: { GET, POST },
   },
 });

@@ -215,6 +215,16 @@ function BackupSetup() {
     connected_notice: m['youtube_accounts.connected_notice'](),
     denied_notice: m['youtube_accounts.denied_notice'](),
     failed_notice: m['youtube_accounts.failed_notice'](),
+    invalid_state_notice: m['youtube_accounts.invalid_state_notice'](),
+    channel_missing_notice: m['youtube_accounts.channel_missing_notice'](),
+    scope_missing_notice: m['youtube_accounts.scope_missing_notice'](),
+    offline_missing_notice: m['youtube_accounts.offline_missing_notice'](),
+    wrong_channel_notice: m['youtube_accounts.wrong_channel_notice'](),
+    oauth_failed_notice: m['youtube_accounts.oauth_failed_notice'](),
+    youtube_read_failed_notice:
+      m['youtube_accounts.youtube_read_failed_notice'](),
+    not_configured_notice: m['youtube_accounts.not_configured_notice'](),
+    session_missing_notice: m['youtube_accounts.session_missing_notice'](),
     item_added: m['youtube_accounts.item_added'](),
     item_missing: m['youtube_accounts.item_missing'](),
     item_restored: m['youtube_accounts.item_restored'](),
@@ -595,22 +605,6 @@ function BackupSetup() {
                         {m['backup.view_pricing']()}
                         <ArrowRight />
                       </Link>
-                    </div>
-                  ) : entitlement?.canStartTrial ? (
-                    <div className="border-border space-y-3 border-t pt-5">
-                      <p className="text-muted-foreground text-sm leading-6">
-                        {m['guard.trial_note']()}
-                      </p>
-                      <Button
-                        type="button"
-                        disabled={busy}
-                        className="w-full"
-                        onClick={() =>
-                          mutation.mutate({ action: 'start_trial' })
-                        }
-                      >
-                        {busy ? m['guard.busy']() : m['guard.start_trial']()}
-                      </Button>
                     </div>
                   ) : !entitlement?.limit ||
                     (overview.data?.collections.length ?? 0) >=

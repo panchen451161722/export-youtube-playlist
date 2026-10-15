@@ -63,9 +63,7 @@ async function POST({ request }: { request: Request }) {
     const store = createGuardStore();
     const userId = session.user.id;
     let result: unknown;
-    if (action.action === 'start_trial')
-      result = await store.startTrial(userId);
-    else if (action.action === 'delete')
+    if (action.action === 'delete')
       result = await store.remove(userId, action.id);
     else {
       const runtime = await guardRuntime();

@@ -183,3 +183,147 @@ test('webhook verifies the raw signature and rejects cross-environment events', 
     /signature/i
   );
 });
+
+test('trial Checkout requires a card, preserves annual price, reuses open sessions and rejects repeat trials', async () => {
+  const { PaymentType, PaymentInterval } = await import('./types');
+  const provider = new StripeProvider({
+    secretKey: 'sk_test_placeholder',
+    publishableKey: '',
+  });
+  const order = {
+    type: PaymentType.SUBSCRIPTION,
+    price: { amount: 2990, currency: 'usd' },
+    plan: {
+      name: 'Pro',
+      interval: PaymentInterval.YEAR,
+      intervalCount: 1,
+      trialPeriodDays: 7,
+    },
+    customer: { email: 'fixture@example.invalid' },
+    metadata: {
+      app: 'export-youtube-playlist',
+      user_id: 'fixture',
+      product_id: 'guard_pro_yearly',
+      trial_days: '7',
+    },
+  };
+  let history: any[] = [];
+  let open: any[] = [];
+  let created = 0;
+  Object.defineProperty(provider, 'client', {
+    value: {
+      customers: {
+        list: async () => ({
+          data: [{ id: 'cus_fixture', metadata: order.metadata }],
+        }),
+      },
+      subscriptions: { list: async () => ({ data: history }) },
+      checkout: {
+        sessions: {
+          list: async () => ({ data: open }),
+          create: async (p: any, options: any) => {
+            created++;
+            assert.equal(p.payment_method_collection, 'always');
+            assert.equal(p.subscription_data.trial_period_days, 7);
+            assert.equal(
+              p.subscription_data.trial_settings.end_behavior
+                .missing_payment_method,
+              'cancel'
+            );
+            assert.equal(p.line_items[0].price_data.unit_amount, 2990);
+            assert.equal(p.line_items[0].price_data.recurring.interval, 'year');
+            assert.equal(
+              options.idempotencyKey,
+              'guard-checkout-cus_fixture-first'
+            );
+            const result = {
+              id: 'cs_trial',
+              url: 'https://checkout.stripe.com/fixture',
+              status: 'open',
+              metadata: order.metadata,
+            };
+            open = [result];
+            return result;
+          },
+        },
+      },
+    },
+  });
+  const first = await provider.createPayment({ order });
+  const retry = await provider.createPayment({ order });
+  assert.equal(first.checkoutInfo.sessionId, retry.checkoutInfo.sessionId);
+  assert.equal(created, 1);
+  history = [{ status: 'trialing' }];
+  await assert.rejects(
+    provider.createPayment({ order }),
+    /existing subscription/
+  );
+  history = [{ status: 'canceled' }];
+  await assert.rejects(provider.createPayment({ order }), /already subscribed/);
+  assert.deepEqual(
+    await provider.getSubscriptionAccess('fixture@example.invalid', 'fixture'),
+    { hasHistory: true, hasCurrent: false }
+  );
+});
+
+test('a completed trial requires a confirmed payment method and uses trial_end as the access deadline', async () => {
+  const provider = new StripeProvider({
+    secretKey: 'sk_test_placeholder',
+    publishableKey: '',
+  });
+  const start = 1700000000;
+  let paymentMethod: string | null = null;
+  Object.defineProperty(provider, 'client', {
+    value: {
+      checkout: {
+        sessions: {
+          retrieve: async () => ({
+            id: 'cs_trial',
+            status: 'complete',
+            payment_status: 'no_payment_required',
+            subscription: 'sub_trial',
+            amount_total: 0,
+          }),
+        },
+      },
+      subscriptions: {
+        retrieve: async () => ({
+          id: 'sub_trial',
+          status: 'trialing',
+          default_payment_method: paymentMethod,
+          trial_start: start,
+          trial_end: start + 7 * 86400,
+          metadata: {},
+          items: {
+            data: [
+              {
+                price: {
+                  product: 'prod',
+                  id: 'price',
+                  unit_amount: 990,
+                  currency: 'usd',
+                },
+                plan: { interval: 'year', interval_count: 1 },
+                current_period_start: start,
+                current_period_end: start + 365 * 86400,
+              },
+            ],
+          },
+        }),
+      },
+    },
+  });
+  await assert.rejects(
+    provider.getPaymentSession({ sessionId: 'cs_trial' }),
+    /payment method/
+  );
+  paymentMethod = 'pm_fixture';
+  const trial = await provider.getPaymentSession({ sessionId: 'cs_trial' });
+  assert.equal(trial.subscriptionInfo?.status, 'trialing');
+  assert.equal(trial.subscriptionInfo?.trialPeriodDays, 7);
+  assert.equal(
+    trial.subscriptionInfo?.currentPeriodEnd.getTime(),
+    (start + 7 * 86400) * 1000
+  );
+  assert.equal(trial.paymentInfo?.paymentAmount, 0);
+});

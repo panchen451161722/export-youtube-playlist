@@ -1,6 +1,5 @@
 /** Shared limits and prices for playlist monitoring and server-side checkout. */
 export const GUARD_TRIAL_DAYS = 7;
-export const GUARD_TRIAL_COLLECTION_LIMIT = 15;
 export const GUARD_SCAN_LIMIT = 500;
 export const GUARD_SNAPSHOT_LIMIT = 5;
 

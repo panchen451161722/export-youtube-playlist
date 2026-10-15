@@ -105,7 +105,6 @@ export type GuardCreateInput = {
   emailDelivery: boolean;
 };
 export type GuardAction =
-  | { action: 'start_trial' }
   | ({ action: 'create' } & GuardCreateInput)
   | { action: 'sync'; id: string }
   | {

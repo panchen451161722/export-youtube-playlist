@@ -9,12 +9,17 @@
  */
 
 import { PaymentInterval, PaymentType } from '@/core/payment/types';
-import { GUARD_PLANS, guardProductId } from '@/config/guard-plans';
+import {
+  GUARD_PLANS,
+  GUARD_TRIAL_DAYS,
+  guardProductId,
+} from '@/config/guard-plans';
 
 export type PricingPlanInfo = {
   name: string;
   interval: PaymentInterval;
   intervalCount: number;
+  trialPeriodDays: number;
 };
 
 export type PricingProduct = {
@@ -50,6 +55,7 @@ export const pricingCatalog: Record<string, PricingProduct> =
             name: plan.name,
             interval: PaymentInterval.YEAR,
             intervalCount: 1,
+            trialPeriodDays: GUARD_TRIAL_DAYS,
           },
         } satisfies PricingProduct,
       ];

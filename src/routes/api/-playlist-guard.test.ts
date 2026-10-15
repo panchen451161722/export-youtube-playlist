@@ -35,9 +35,10 @@ const code = (expected: string) => (error: unknown) =>
   error instanceof GuardError && error.code === expected;
 
 test('JSON mutation rejects cross-origin, missing-origin, non-JSON and oversized streamed bodies', async () => {
-  const valid = JSON.stringify({ action: 'start_trial' });
+  const valid = JSON.stringify({ action: 'sync', id: 'a' });
   assert.deepEqual(await readGuardAction(request(valid)), {
-    action: 'start_trial',
+    action: 'sync',
+    id: 'a',
   });
   await assert.rejects(
     readGuardAction(request(valid, 'https://attacker.invalid')),
@@ -400,4 +401,11 @@ test('channel scans carry the actual YouTube title and use its uploads playlist'
   );
   assert.equal(result.sourceTitle, 'Actual channel title');
   assert.equal(result.complete, true);
+});
+
+test('removed no-card trial endpoint cannot grant access', async () => {
+  await assert.rejects(
+    readGuardAction(request(JSON.stringify({ action: 'start_trial' }))),
+    code('invalid_input')
+  );
 });

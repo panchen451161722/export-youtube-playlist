@@ -165,28 +165,16 @@ export function GuardPricing({
                     </li>
                   ))}
                 </ul>
-                <Link
-                  href="/settings/collections"
-                  className={cn(
-                    'focus-visible:ring-ring/50 mt-8 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-opacity outline-none hover:opacity-85 focus-visible:ring-3',
-                    highlighted
-                      ? 'bg-background text-foreground'
-                      : 'bg-primary text-primary-foreground'
-                  )}
-                >
-                  {content.trial}
-                  <ArrowRight className="size-4" aria-hidden="true" />
-                </Link>
                 {checkoutAvailable ? (
                   <button
                     type="button"
                     disabled={!!pendingPlan}
                     onClick={() => onBuy(plan.id)}
                     className={cn(
-                      'focus-visible:ring-ring/50 mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg text-sm font-medium outline-none hover:underline focus-visible:ring-3 disabled:cursor-wait disabled:opacity-60',
+                      'focus-visible:ring-ring/50 mt-8 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold outline-none hover:opacity-85 focus-visible:ring-3 disabled:cursor-wait disabled:opacity-60',
                       highlighted
-                        ? 'text-primary-foreground/80'
-                        : 'text-muted-foreground'
+                        ? 'bg-background text-foreground'
+                        : 'bg-primary text-primary-foreground'
                     )}
                   >
                     {pendingPlan === plan.id ? (
@@ -198,7 +186,7 @@ export function GuardPricing({
                         {content.buying}
                       </>
                     ) : (
-                      content.buy
+                      content.trial
                     )}
                   </button>
                 ) : (

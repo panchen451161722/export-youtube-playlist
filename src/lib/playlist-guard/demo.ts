@@ -167,7 +167,6 @@ export function applyGuardDemoAction(
   zh = false
 ): GuardCollectionDetail[] {
   const now = new Date().toISOString();
-  if (action.action === 'start_trial') return collections;
   if (action.action === 'create') {
     if (collections.length >= 15)
       throw new Error(

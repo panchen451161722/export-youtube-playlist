@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { useSession } from '@/core/auth/client';
@@ -7,12 +7,11 @@ import {
   GUARD_PLANS,
   GUARD_SCAN_LIMIT,
   GUARD_SNAPSHOT_LIMIT,
-  GUARD_TRIAL_COLLECTION_LIMIT,
   GUARD_TRIAL_DAYS,
   guardProductId,
   type GuardPlanId,
 } from '@/config/guard-plans';
-import { apiPost } from '@/lib/api-client';
+import { apiGet, apiPost } from '@/lib/api-client';
 import { m } from '@/paraglide/messages.js';
 import { usePublicConfig } from '@/hooks/use-public-config';
 import {
@@ -25,6 +24,17 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
   const { data: session } = useSession();
   const router = useRouter();
   const checkoutProvider = config.data?.guard_checkout_provider;
+  const eligibility = useQuery({
+    queryKey: ['checkout-eligibility', session?.user.id],
+    queryFn: () =>
+      apiGet<{ trialEligible: boolean; hasSubscription: boolean }>(
+        '/api/payment/checkout'
+      ),
+    enabled: !!session?.user && checkoutProvider === 'stripe',
+    staleTime: 0,
+  });
+  const trialEligible =
+    !session?.user || eligibility.data?.trialEligible === true;
   const checkoutAvailable = checkoutProvider === 'stripe';
   const checkout = useMutation({
     mutationFn: (planId: GuardPlanId) =>
@@ -32,6 +42,7 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
         product_id: guardProductId(planId),
         payment_provider: checkoutProvider,
         redirect: '/settings/collections',
+        expect_trial: trialEligible,
       }),
     onSuccess: (result) => {
       // Only a successful, explicit checkout request may leave this page.
@@ -41,7 +52,10 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
       }
       window.location.assign(url.href);
     },
-    onError: () => toast.error(m['guardPricing.checkout_error']()),
+    onError: () => {
+      toast.error(m['guardPricing.checkout_error']());
+      void eligibility.refetch();
+    },
   });
 
   const descriptions = {
@@ -61,10 +75,13 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
     title: m['guardPricing.title'](),
     description: m['guardPricing.description'](),
     annualBilling: m['guardPricing.annual_billing'](),
-    trial: m['guardPricing.trial']({ days: GUARD_TRIAL_DAYS }),
+    trial: eligibility.data?.hasSubscription
+      ? m['guardPricing.manage']()
+      : trialEligible
+        ? m['guardPricing.trial']({ days: GUARD_TRIAL_DAYS })
+        : m['guardPricing.buy'](),
     trialNote: m['guardPricing.trial_note']({
       days: GUARD_TRIAL_DAYS,
-      count: GUARD_TRIAL_COLLECTION_LIMIT,
     }),
     demo: m['guardPricing.demo'](),
     recommended: m['guardPricing.recommended'](),
@@ -90,7 +107,6 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
         question: m['guardPricing.faq_trial_q'](),
         answer: m['guardPricing.faq_trial_a']({
           days: GUARD_TRIAL_DAYS,
-          count: GUARD_TRIAL_COLLECTION_LIMIT,
         }),
       },
       {
@@ -161,11 +177,19 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
           router.push('/sign-in?callbackUrl=%2Fpricing');
           return;
         }
-        if (checkoutAvailable) checkout.mutate(planId);
+        if (eligibility.data?.hasSubscription) {
+          router.push('/settings/billing');
+          return;
+        }
+        if (checkoutAvailable && eligibility.data) checkout.mutate(planId);
       }}
       pendingPlan={checkout.isPending ? checkout.variables : undefined}
-      checkoutAvailable={checkoutAvailable}
-      checkoutLoading={config.isPending}
+      checkoutAvailable={
+        checkoutAvailable && (!session?.user || !!eligibility.data)
+      }
+      checkoutLoading={
+        config.isPending || (!!session?.user && eligibility.isPending)
+      }
       asPage={asPage}
     />
   );
