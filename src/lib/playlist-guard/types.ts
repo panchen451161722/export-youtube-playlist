@@ -1,13 +1,25 @@
 export const GUARD_FREQUENCIES = [
-  'hourly',
   'daily',
   'weekly',
   'biweekly',
   'monthly',
 ] as const;
 export type GuardFrequency = (typeof GUARD_FREQUENCIES)[number];
-export type GuardSource = 'playlist' | 'channel';
+export const GUARD_SOURCES = [
+  'playlist',
+  'private_playlist',
+  'liked_videos',
+  'liked_music',
+  'channel',
+  'subscriptions',
+] as const;
+export type GuardSource = (typeof GUARD_SOURCES)[number];
+export const needsYoutubeAccount = (source: GuardSource) =>
+  !['playlist', 'channel'].includes(source);
+export const needsSourceUrl = (source: GuardSource) =>
+  ['playlist', 'private_playlist', 'channel'].includes(source);
 export type GuardItem = {
+  kind?: 'video' | 'channel';
   id: string;
   title: string;
   channel: string;
@@ -25,17 +37,24 @@ export type GuardSnapshot = {
   itemCount: number;
   added: number;
   removed: number;
+  /** Older snapshots predate separate restored-item counts. */
+  restored?: number;
   items: GuardItem[];
 };
 export type GuardCollection = {
   id: string;
   name: string;
+  /** Latest channel title from a successful YouTube scan. */
+  sourceTitle?: string;
   source: GuardSource;
+  connectionId?: string;
   url: string;
   frequency: GuardFrequency;
   enabled: boolean;
   notifyMissing: boolean;
   notifyAdded: boolean;
+  /** Absent in older collections; treated as off until explicitly enabled. */
+  notifyRestored?: boolean;
   emailDelivery: boolean;
   createdAt: string;
   lastSyncedAt: string | null;
@@ -78,9 +97,11 @@ export type GuardCreateInput = {
   name: string;
   url: string;
   source: GuardSource;
+  connectionId?: string;
   frequency: GuardFrequency;
   notifyMissing: boolean;
   notifyAdded: boolean;
+  notifyRestored?: boolean;
   emailDelivery: boolean;
 };
 export type GuardAction =
@@ -95,6 +116,7 @@ export type GuardAction =
       frequency?: GuardFrequency;
       notifyMissing?: boolean;
       notifyAdded?: boolean;
+      notifyRestored?: boolean;
       emailDelivery?: boolean;
     }
   | { action: 'delete'; id: string };

@@ -3,6 +3,7 @@ import {
   createTourCollections,
   type TourCollection,
 } from './tour';
+import type { GuardSource } from './types';
 
 export type TourDraft = Pick<
   TourCollection,
@@ -13,7 +14,7 @@ export type TourDraft = Pick<
   | 'emailDelivery'
   | 'exportFrequency'
   | 'enabled'
-> & { name: string; url: string; source: '' | 'playlist' | 'channel' };
+> & { name: string; url: string; source: '' | GuardSource };
 export type TourScene = {
   collections: TourCollection[];
   selectedId: string | null;
@@ -59,13 +60,13 @@ export function blankTourDraft(): TourDraft {
     name: '',
     url: '',
     source: '',
-    frequency: 'weekly',
+    frequency: 'daily',
     enabled: true,
     notifyMissing: true,
     notifyAdded: true,
     notifyRestored: true,
     emailDelivery: false,
-    exportFrequency: 'weekly',
+    exportFrequency: 'daily',
   };
 }
 

@@ -12,13 +12,17 @@ export async function runGuardJobs(
     'scan' | 'send' | 'capabilities'
   >
 ) {
-  const due = runtime.capabilities.youtube ? await store.due(5) : [];
+  const due =
+    runtime.capabilities.youtube || runtime.capabilities.privateSources
+      ? await store.due(5)
+      : [];
   let completed = 0;
   let failed = 0;
   for (const collection of due) {
     try {
       await store.sync(collection.userId, collection.id, runtime.scan, {
         scheduled: true,
+        emailAvailable: runtime.capabilities.email,
       });
       completed++;
     } catch (error) {
@@ -28,6 +32,9 @@ export async function runGuardJobs(
     }
   }
   // Mail retries are independent from scans, including when YouTube is unavailable.
-  const mail = await store.deliverPending(runtime.send);
+  // Await mail setup without creating stale alerts or exhausting pending delivery retries.
+  const mail = runtime.capabilities.email
+    ? await store.deliverPending(runtime.send)
+    : { attempted: 0, sent: 0, failed: 0, cancelled: 0 };
   return { checked: due.length, completed, failed, mail };
 }

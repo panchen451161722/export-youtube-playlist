@@ -9,7 +9,9 @@ export type GuardNotificationPayload = {
   snapshot: GuardSnapshot;
   notifyMissing: boolean;
   notifyAdded: boolean;
+  notifyRestored?: boolean;
   emailDelivery: boolean;
+  kind?: 'video' | 'channel';
 };
 export function notificationPayload(
   collection: GuardCollectionDetail,
@@ -21,7 +23,8 @@ export function notificationPayload(
     !(
       collection.emailDelivery ||
       (collection.notifyMissing && snapshot.removed > 0) ||
-      (collection.notifyAdded && snapshot.added > 0)
+      (collection.notifyAdded && snapshot.added > 0) ||
+      (collection.notifyRestored && (snapshot.restored ?? 0) > 0)
     )
   )
     return null;
@@ -32,7 +35,9 @@ export function notificationPayload(
     snapshot,
     notifyMissing: collection.notifyMissing,
     notifyAdded: collection.notifyAdded,
+    notifyRestored: !!collection.notifyRestored,
     emailDelivery: collection.emailDelivery,
+    kind: collection.source === 'subscriptions' ? 'channel' : 'video',
   };
 }
 export function guardNotificationEmail(
@@ -43,6 +48,14 @@ export function guardNotificationEmail(
 ): EmailMessage {
   const zh = payload.locale === 'zh';
   const snapshot = payload.snapshot;
+  const itemLabel =
+    payload.kind === 'channel'
+      ? zh
+        ? '频道'
+        : 'channels'
+      : zh
+        ? '视频'
+        : 'videos';
   const link = `${app.url.replace(/\/$/, '')}${zh ? '/zh' : ''}/settings/collections`;
   const lines = [
     payload.name,
@@ -50,17 +63,28 @@ export function guardNotificationEmail(
       ? `自动检查已完成：${snapshot.createdAt}`
       : `Scheduled check completed: ${snapshot.createdAt}`,
     zh
-      ? `当前视频：${snapshot.itemCount}`
-      : `Current videos: ${snapshot.itemCount}`,
+      ? `当前${itemLabel}：${snapshot.itemCount}`
+      : `Current ${itemLabel}: ${snapshot.itemCount}`,
     ...(payload.notifyMissing
       ? [
           zh
-            ? `丢失视频：${snapshot.removed}`
-            : `Missing videos: ${snapshot.removed}`,
+            ? `丢失${itemLabel}：${snapshot.removed}`
+            : `Missing ${itemLabel}: ${snapshot.removed}`,
         ]
       : []),
     ...(payload.notifyAdded
-      ? [zh ? `新增视频：${snapshot.added}` : `New videos: ${snapshot.added}`]
+      ? [
+          zh
+            ? `新增${itemLabel}：${snapshot.added}`
+            : `New ${itemLabel}: ${snapshot.added}`,
+        ]
+      : []),
+    ...(payload.notifyRestored
+      ? [
+          zh
+            ? `恢复${itemLabel}：${snapshot.restored ?? 0}`
+            : `Restored ${itemLabel}: ${snapshot.restored ?? 0}`,
+        ]
       : []),
     '',
     `${zh ? '来源' : 'Source'}: ${payload.url}`,

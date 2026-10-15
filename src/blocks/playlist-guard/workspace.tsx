@@ -14,11 +14,47 @@ import type {
 } from '@/lib/playlist-guard/types';
 import { m } from '@/paraglide/messages.js';
 import { getLocale, localizeHref } from '@/paraglide/runtime.js';
+import { useYoutubeConnections } from '@/hooks/use-youtube-connections';
 import { GuardWorkspace } from '@/components/playlist-guard/workspace';
+import { YoutubeAccounts } from '@/components/playlist-guard/youtube-accounts';
 
 export function PlaylistGuardWorkspace() {
   const locale = getLocale();
   const labels = {
+    card_view: m['guard_card.view'](),
+    card_update: m['guard_card.update'](),
+    card_delete: m['guard_card.delete'](),
+    card_missing: m['guard_card.missing'](),
+    card_next_sync: m['guard_card.next_sync'](),
+    open_channel: m['youtube_accounts.open_channel'](),
+    private_playlist: m['youtube_accounts.private_playlist'](),
+    liked_videos: m['youtube_accounts.liked_videos'](),
+    liked_music: m['youtube_accounts.liked_music'](),
+    subscriptions: m['youtube_accounts.subscriptions'](),
+    accounts_title: m['youtube_accounts.accounts_title'](),
+    accounts_description: m['youtube_accounts.accounts_description'](),
+    connect_account: m['youtube_accounts.connect_account'](),
+    reconnect_account: m['youtube_accounts.reconnect_account'](),
+    disconnect_account: m['youtube_accounts.disconnect_account'](),
+    accounts_empty: m['youtube_accounts.accounts_empty'](),
+    accounts_error: m['youtube_accounts.accounts_error'](),
+    account_connected: m['youtube_accounts.account_connected'](),
+    account_reconnect: m['youtube_accounts.account_reconnect'](),
+    account_disconnected: m['youtube_accounts.account_disconnected'](),
+    accounts_note: m['youtube_accounts.accounts_note'](),
+    oauth_unavailable: m['youtube_accounts.oauth_unavailable'](),
+    choose_account: m['youtube_accounts.choose_account'](),
+    account_required: m['youtube_accounts.account_required'](),
+    music_note: m['youtube_accounts.music_note'](),
+    subscriptions_note: m['youtube_accounts.subscriptions_note'](),
+    private_source_note: m['youtube_accounts.private_source_note'](),
+    connected_notice: m['youtube_accounts.connected_notice'](),
+    denied_notice: m['youtube_accounts.denied_notice'](),
+    failed_notice: m['youtube_accounts.failed_notice'](),
+    item_added: m['youtube_accounts.item_added'](),
+    item_missing: m['youtube_accounts.item_missing'](),
+    item_restored: m['youtube_accounts.item_restored'](),
+
     verify_email: m['common.sign.resend_verification'](),
     verification_sent: m['guard_workspace.verification_sent'](),
     eyebrow: m['guard.eyebrow'](),
@@ -57,7 +93,6 @@ export function PlaylistGuardWorkspace() {
     pause: m['guard.pause'](),
     resume: m['guard.resume'](),
     busy: m['guard.busy'](),
-    hourly: m['guard.hourly'](),
     daily: m['guard.daily'](),
     weekly: m['guard.weekly'](),
     biweekly: m['guard.biweekly'](),
@@ -77,6 +112,7 @@ export function PlaylistGuardWorkspace() {
     private_note: m['guard.private_note'](),
     email_missing: m['guard.email_missing'](),
     email_added: m['guard.email_added'](),
+    email_restored: m['guard.email_restored'](),
     email_delivery: m['guard.email_delivery'](),
     email_unavailable: m['guard.email_unavailable'](),
     schedule_unavailable: m['guard.schedule_unavailable'](),
@@ -96,6 +132,7 @@ export function PlaylistGuardWorkspace() {
     history_note: m['guard.history_note'](),
     added: m['guard.added'](),
     removed: m['guard.removed'](),
+    restored: m['guard.restored'](),
     no_missing: m['guard.no_missing'](),
     no_snapshot: m['guard.no_snapshot'](),
     back: m['guard.back'](),
@@ -121,6 +158,7 @@ export function PlaylistGuardWorkspace() {
     plan_pro: m['guard.plan_pro'](),
     plan_ultra: m['guard.plan_ultra'](),
     sync_error: m['guard.sync_error'](),
+    sync_initial_error: m['guard.sync_initial_error'](),
     demo_title: m['guard.demo_title'](),
     demo_intro: m['guard.demo_intro'](),
     status: m['guard.status'](),
@@ -134,6 +172,7 @@ export function PlaylistGuardWorkspace() {
     default_order: m['guard_tour.default_order'](),
     edit_description: m['guard_workspace.edit_description'](),
     email_schedule_note: m['guard_workspace.email_schedule_note'](),
+    email_changes_note: m['backup.alert_note'](),
     email_verify_note: m['guard_workspace.email_verify_note'](),
     empty_collections: m['guard_tour.empty_collections'](),
     empty_collections_hint: m['guard_tour.empty_collections_hint'](),
@@ -150,7 +189,11 @@ export function PlaylistGuardWorkspace() {
     last_synced: m['guard_tour.last_synced'](),
     latest_version: m['guard_tour.latest_version'](),
     missing_videos: m['guard_tour.missing_videos'](),
-    monitor_title: m['guard_tour.monitor_title'](),
+    monitor_title: m['guardPricing.nav_collections'](),
+    list_description: m['backup.collections_description'](),
+    active_collections: m['backup.active_collections'](),
+    saved_videos: m['backup.saved_videos'](),
+    missing_videos_summary: m['backup.missing_videos'](),
     most_viewed: m['guard_tour.most_viewed'](),
     next: m['guard_tour.next'](),
     no_missing_description: m['guard_tour.no_missing_description'](),
@@ -188,6 +231,10 @@ export function PlaylistGuardWorkspace() {
   };
   const { data: session } = useSession();
   const userId = session?.user.id;
+  const youtube = useYoutubeConnections(
+    userId,
+    locale === 'zh' ? '/zh/settings/collections' : '/settings/collections'
+  );
   const router = useRouter();
   const { collection } = useSearch({ from: '/settings/collections' });
   const selectedId = collection ?? null;
@@ -276,6 +323,23 @@ export function PlaylistGuardWorkspace() {
   return (
     <GuardWorkspace
       key={userId}
+      accounts={youtube.query.data?.accounts}
+      accountsLoading={youtube.query.isPending}
+      accountsConfigured={youtube.query.data?.configured}
+      onConnect={(id) => youtube.connect.mutate(id)}
+      accountsPanel={
+        <YoutubeAccounts
+          data={youtube.query.data}
+          notice={youtube.notice}
+          loading={youtube.query.isPending}
+          error={youtube.query.isError}
+          busy={youtube.connect.isPending || youtube.disconnect.isPending}
+          onConnect={(id) => youtube.connect.mutate(id)}
+          onDisconnect={(id) => youtube.disconnect.mutate(id)}
+          onRetry={() => void youtube.query.refetch()}
+          labels={labels}
+        />
+      }
       labels={labels}
       locale={locale}
       overview={overviewQuery.data}
@@ -284,7 +348,11 @@ export function PlaylistGuardWorkspace() {
       refreshing={
         overviewQuery.isFetching || (!!selectedId && detailQuery.isFetching)
       }
-      busy={mutation.isPending || verification.isPending}
+      busy={
+        mutation.isPending ||
+        verification.isPending ||
+        youtube.connect.isPending
+      }
       onVerifyEmail={() => verification.mutate()}
       emailVerified={!!session?.user.emailVerified}
       selectedId={selectedId}

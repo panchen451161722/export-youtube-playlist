@@ -2,6 +2,7 @@ import {
   CheckIcon,
   EllipsisVerticalIcon,
   LanguagesIcon,
+  ListVideo,
   LogOutIcon,
   MonitorIcon,
   MoonIcon,
@@ -12,7 +13,7 @@ import {
 import { useTheme } from 'next-themes';
 
 import { signOut } from '@/core/auth/client';
-import { useRouter } from '@/core/i18n/navigation';
+import { Link, useRouter } from '@/core/i18n/navigation';
 import { localeNames } from '@/config/locale';
 import { m } from '@/paraglide/messages.js';
 import {
@@ -71,7 +72,10 @@ export function UserMenu({
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
-          <DropdownMenuTrigger className="ring-sidebar-ring w-full rounded-lg outline-none focus-visible:ring-2 [&>div]:w-full">
+          <DropdownMenuTrigger
+            aria-label={name}
+            className="ring-sidebar-ring w-full rounded-lg outline-none focus-visible:ring-2 [&>div]:w-full"
+          >
             <SidebarMenuButton
               size="lg"
               render={<div />}
@@ -117,6 +121,10 @@ export function UserMenu({
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
+            <DropdownMenuItem render={<Link href="/settings/collections" />}>
+              <ListVideo className="size-4" />
+              {m['guardPricing.nav_collections']()}
+            </DropdownMenuItem>
             {profileHref && (
               <DropdownMenuItem
                 onClick={() => {

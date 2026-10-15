@@ -11,11 +11,13 @@ import {
 import {
   PaymentStatus,
   PaymentType,
+  SubscriptionCycleType,
   type CheckoutSession,
   type PaymentEvent,
   type PaymentOrder,
 } from '@/core/payment/types';
 import { credit, order, subscription } from '@/config/db/schema';
+import { getGuardPlan, getGuardStripePriceId } from '@/config/guard-plans';
 import { getAllConfigs } from '@/modules/config/service';
 import { calculateCreditExpirationTime } from '@/modules/credits/service';
 import {
@@ -49,6 +51,8 @@ async function getPaymentManager(): Promise<PaymentManager> {
   // Rebuild manager if provider configs changed
   const hash = JSON.stringify([
     c('stripe_secret_key') || c('stripe_api_key'),
+    c('stripe_signing_secret') || c('stripe_webhook_secret'),
+    c('stripe_portal_configuration_id'),
     c('creem_enabled'),
     c('creem_api_key'),
     c('alipay_app_id'),
@@ -71,6 +75,7 @@ async function getPaymentManager(): Promise<PaymentManager> {
         publishableKey: c('stripe_publishable_key'),
         signingSecret:
           c('stripe_signing_secret') || c('stripe_webhook_secret') || undefined,
+        portalConfigurationId: c('stripe_portal_configuration_id'),
         allowPromotionCodes: true,
         allowedPaymentMethods: ['card', 'wechat_pay', 'alipay'],
       }),
@@ -167,6 +172,18 @@ export async function createCheckout(params: {
     }
   }
 
+  const stripePriceId =
+    resolvedProvider === 'stripe' && paymentOrder.productId
+      ? getGuardStripePriceId(configs, paymentOrder.productId)
+      : null;
+  if (
+    resolvedProvider === 'stripe' &&
+    getGuardPlan(paymentOrder.productId || '') &&
+    !stripePriceId
+  ) {
+    throw new Error('Annual Stripe price not configured');
+  }
+
   const finalSuccessUrl =
     paymentOrder.successUrl || `${appUrl}/settings/billing?success=1`;
   const callbackSuccessUrl = `${appUrl}/api/payment/callback?order_no=${orderNo}&redirect=${encodeURIComponent(finalSuccessUrl)}`;
@@ -175,6 +192,14 @@ export async function createCheckout(params: {
     order: {
       ...paymentOrder,
       productId: resolvedProductId,
+      priceId: stripePriceId || undefined,
+      metadata: {
+        ...paymentOrder.metadata,
+        app: 'export-youtube-playlist',
+        user_id: userId,
+        product_id: paymentOrder.productId || '',
+        order_no: orderNo,
+      },
       orderNo,
       successUrl: callbackSuccessUrl,
       cancelUrl:
@@ -194,6 +219,7 @@ export async function createCheckout(params: {
       amount: paymentOrder.price?.amount || 0,
       currency: paymentOrder.price?.currency || 'usd',
       productId: paymentOrder.productId || '',
+      paymentProductId: stripePriceId || resolvedProductId || '',
       productName: productName || null,
       planName: planName || null,
       creditsAmount: credits ?? null,
@@ -255,7 +281,18 @@ export async function handleWebhook(params: {
   const eventType = event.eventType;
 
   // Route event to appropriate handler
-  if (eventType === 'checkout.success' || eventType === 'payment.success') {
+  if (
+    eventType === 'payment.success' &&
+    session.paymentInfo?.subscriptionCycleType === SubscriptionCycleType.RENEWAL
+  ) {
+    await handleSubscriptionRenewal(session, params.provider);
+  } else if (eventType === 'payment.failed' && session.subscriptionId) {
+    await handleSubscriptionUpdated(session, params.provider);
+  } else if (
+    eventType === 'checkout.success' ||
+    eventType === 'payment.success' ||
+    eventType === 'payment.failed'
+  ) {
     await handleCheckoutSuccess(session, params.provider);
   } else if (eventType === 'subscribe.updated') {
     await handleSubscriptionUpdated(session, params.provider);
@@ -285,7 +322,13 @@ async function handleCheckoutSuccess(session: any, provider: string) {
   const [existingOrder] = await db()
     .select()
     .from(order)
-    .where(and(eq(order.paymentSessionId, sessionId), isNull(order.deletedAt)))
+    .where(
+      and(
+        eq(order.paymentSessionId, sessionId),
+        eq(order.paymentProvider, provider),
+        isNull(order.deletedAt)
+      )
+    )
     .limit(1);
 
   if (!existingOrder) return;
@@ -320,12 +363,13 @@ async function handleCheckoutSuccess(session: any, provider: string) {
     };
 
     // Atomically update order + create subscription + grant credits
-    await db().transaction(async (tx: any) => {
+    await atomicPaymentWrites((tx: any) => {
+      const writes: any[] = [];
       // 1. Create subscription if applicable
       if (subscriptionInfo && session.subscriptionId) {
-        const subNo = getSnowId();
+        const subNo = `SUB${existingOrder.orderNo}`;
         const newSub: any = {
-          id: getUuid(),
+          id: `sub_${existingOrder.id}`,
           subscriptionNo: subNo,
           userId: existingOrder.userId,
           userEmail:
@@ -351,7 +395,9 @@ async function handleCheckoutSuccess(session: any, provider: string) {
           paymentProductId: existingOrder.paymentProductId,
           paymentUserId: paymentInfo?.paymentUserId,
         };
-        await tx.insert(subscription).values(newSub);
+        writes.push(
+          tx.insert(subscription).values(newSub).onConflictDoNothing()
+        );
         orderUpdate.subscriptionNo = subNo;
         orderUpdate.subscriptionId = session.subscriptionId;
         orderUpdate.subscriptionResult = JSON.stringify(
@@ -367,31 +413,44 @@ async function handleCheckoutSuccess(session: any, provider: string) {
           currentPeriodEnd: subscriptionInfo?.currentPeriodEnd,
         });
 
-        await tx.insert(credit).values({
-          id: getUuid(),
-          userId: existingOrder.userId,
-          userEmail: existingOrder.userEmail || '',
-          orderNo: existingOrder.orderNo,
-          subscriptionNo: orderUpdate.subscriptionNo || '',
-          transactionNo: getSnowId(),
-          transactionType: 'grant',
-          transactionScene:
-            existingOrder.paymentType === 'subscription'
-              ? 'subscription'
-              : 'payment',
-          credits,
-          remainingCredits: credits,
-          description: 'Grant credit',
-          expiresAt,
-          status: 'active',
-        });
+        writes.push(
+          tx
+            .insert(credit)
+            .values({
+              id: `credit_${existingOrder.id}`,
+              userId: existingOrder.userId,
+              userEmail: existingOrder.userEmail || '',
+              orderNo: existingOrder.orderNo,
+              subscriptionNo: orderUpdate.subscriptionNo || '',
+              transactionNo: getSnowId(),
+              transactionType: 'grant',
+              transactionScene:
+                existingOrder.paymentType === 'subscription'
+                  ? 'subscription'
+                  : 'payment',
+              credits,
+              remainingCredits: credits,
+              description: 'Grant credit',
+              expiresAt,
+              status: 'active',
+            })
+            .onConflictDoNothing()
+        );
       }
 
       // 3. Update order
-      await tx
-        .update(order)
-        .set(orderUpdate)
-        .where(eq(order.id, existingOrder.id));
+      writes.push(
+        tx
+          .update(order)
+          .set(orderUpdate)
+          .where(
+            and(
+              eq(order.id, existingOrder.id),
+              eq(order.status, existingOrder.status)
+            )
+          )
+      );
+      return writes;
     });
   } else if (
     session.paymentStatus === PaymentStatus.FAILED ||
@@ -403,7 +462,12 @@ async function handleCheckoutSuccess(session: any, provider: string) {
         status: OrderStatus.FAILED,
         paymentResult: JSON.stringify(session.paymentResult),
       })
-      .where(eq(order.id, existingOrder.id));
+      .where(
+        and(
+          eq(order.id, existingOrder.id),
+          eq(order.status, existingOrder.status)
+        )
+      );
   }
 }
 
@@ -447,51 +511,61 @@ export async function handleSubscriptionRenewal(
     if (dup) return;
   }
 
-  const renewalOrderNo = getSnowId();
+  if (!paymentInfo?.transactionId)
+    throw new Error('Renewal transaction ID missing');
+  const renewalOrderNo = `RENEW_${provider}_${paymentInfo.transactionId}`;
 
-  await db().transaction(async (tx: any) => {
+  await atomicPaymentWrites((tx: any) => {
+    const writes: any[] = [];
     // 1. Update subscription period
-    await tx
-      .update(subscription)
-      .set({
-        currentPeriodStart: subscriptionInfo.currentPeriodStart,
-        currentPeriodEnd: subscriptionInfo.currentPeriodEnd,
-      })
-      .where(eq(subscription.subscriptionNo, existingSub.subscriptionNo));
+    writes.push(
+      tx
+        .update(subscription)
+        .set({
+          currentPeriodStart: subscriptionInfo.currentPeriodStart,
+          currentPeriodEnd: subscriptionInfo.currentPeriodEnd,
+        })
+        .where(eq(subscription.subscriptionNo, existingSub.subscriptionNo))
+    );
 
     // 2. Create renewal order
-    await tx.insert(order).values({
-      id: getUuid(),
-      orderNo: renewalOrderNo,
-      userId: existingSub.userId,
-      userEmail: existingSub.userEmail || '',
-      status: OrderStatus.PAID,
-      amount: existingSub.amount,
-      currency: existingSub.currency,
-      productId: existingSub.productId || '',
-      paymentType: 'renew',
-      paymentInterval: existingSub.interval || '',
-      paymentProvider: provider,
-      checkoutInfo: '',
-      description: 'Subscription Renewal',
-      productName: existingSub.productName || '',
-      planName: existingSub.planName || '',
-      creditsAmount: existingSub.creditsAmount,
-      creditsValidDays: existingSub.creditsValidDays,
-      paymentProductId: existingSub.paymentProductId || '',
-      paymentResult: JSON.stringify(session.paymentResult),
-      paymentAmount: paymentInfo?.paymentAmount,
-      paymentCurrency: paymentInfo?.paymentCurrency,
-      paymentEmail: paymentInfo?.paymentEmail,
-      paidAt: paymentInfo?.paidAt || new Date(),
-      invoiceId: paymentInfo?.invoiceId,
-      invoiceUrl: paymentInfo?.invoiceUrl,
-      subscriptionNo: existingSub.subscriptionNo,
-      subscriptionId: session.subscriptionId,
-      transactionId: paymentInfo?.transactionId,
-      paymentUserName: paymentInfo?.paymentUserName,
-      paymentUserId: paymentInfo?.paymentUserId,
-    });
+    writes.push(
+      tx
+        .insert(order)
+        .values({
+          id: renewalOrderNo,
+          orderNo: renewalOrderNo,
+          userId: existingSub.userId,
+          userEmail: existingSub.userEmail || '',
+          status: OrderStatus.PAID,
+          amount: existingSub.amount,
+          currency: existingSub.currency,
+          productId: existingSub.productId || '',
+          paymentType: 'renew',
+          paymentInterval: existingSub.interval || '',
+          paymentProvider: provider,
+          checkoutInfo: '',
+          description: 'Subscription Renewal',
+          productName: existingSub.productName || '',
+          planName: existingSub.planName || '',
+          creditsAmount: existingSub.creditsAmount,
+          creditsValidDays: existingSub.creditsValidDays,
+          paymentProductId: existingSub.paymentProductId || '',
+          paymentResult: JSON.stringify(session.paymentResult),
+          paymentAmount: paymentInfo?.paymentAmount,
+          paymentCurrency: paymentInfo?.paymentCurrency,
+          paymentEmail: paymentInfo?.paymentEmail,
+          paidAt: paymentInfo?.paidAt || new Date(),
+          invoiceId: paymentInfo?.invoiceId,
+          invoiceUrl: paymentInfo?.invoiceUrl,
+          subscriptionNo: existingSub.subscriptionNo,
+          subscriptionId: session.subscriptionId,
+          transactionId: paymentInfo?.transactionId,
+          paymentUserName: paymentInfo?.paymentUserName,
+          paymentUserId: paymentInfo?.paymentUserId,
+        })
+        .onConflictDoNothing()
+    );
 
     // 3. Grant credits for renewal
     if (existingSub.creditsAmount && existingSub.creditsAmount > 0) {
@@ -501,22 +575,28 @@ export async function handleSubscriptionRenewal(
         currentPeriodEnd: subscriptionInfo.currentPeriodEnd,
       });
 
-      await tx.insert(credit).values({
-        id: getUuid(),
-        userId: existingSub.userId,
-        userEmail: existingSub.userEmail || '',
-        orderNo: renewalOrderNo,
-        subscriptionNo: existingSub.subscriptionNo,
-        transactionNo: getSnowId(),
-        transactionType: 'grant',
-        transactionScene: 'renewal',
-        credits,
-        remainingCredits: credits,
-        description: 'Grant credit',
-        expiresAt,
-        status: 'active',
-      });
+      writes.push(
+        tx
+          .insert(credit)
+          .values({
+            id: `credit_${renewalOrderNo}`,
+            userId: existingSub.userId,
+            userEmail: existingSub.userEmail || '',
+            orderNo: renewalOrderNo,
+            subscriptionNo: existingSub.subscriptionNo,
+            transactionNo: getSnowId(),
+            transactionType: 'grant',
+            transactionScene: 'renewal',
+            credits,
+            remainingCredits: credits,
+            description: 'Grant credit',
+            expiresAt,
+            status: 'active',
+          })
+          .onConflictDoNothing()
+      );
     }
+    return writes;
   });
 }
 
@@ -605,6 +685,33 @@ export async function cancelUserSubscription(params: {
   return updated;
 }
 
+// --- Billing portal ---
+
+export async function createUserBillingPortal(
+  userId: string,
+  subscriptionNo: string
+) {
+  const sub = await findBySubscriptionNo(subscriptionNo);
+  if (
+    !sub ||
+    sub.userId !== userId ||
+    sub.paymentProvider !== 'stripe' ||
+    !sub.paymentUserId
+  ) {
+    throw new Error('Billing subscription not found');
+  }
+  const configs = await getAllConfigs();
+  if (!configs.stripe_portal_configuration_id)
+    throw new Error('Billing portal not configured');
+  const provider = (await getPaymentManager()).getProvider('stripe');
+  if (!provider?.getPaymentBilling)
+    throw new Error('Billing portal unavailable');
+  return provider.getPaymentBilling({
+    customerId: sub.paymentUserId,
+    returnUrl: `${configs.app_url}/settings/billing`,
+  });
+}
+
 // --- Query helpers ---
 
 export async function getUserOrders(userId: string) {
@@ -613,4 +720,16 @@ export async function getUserOrders(userId: string) {
     .from(order)
     .where(and(eq(order.userId, userId), isNull(order.deletedAt)))
     .orderBy(desc(order.createdAt));
+}
+
+/** D1 and libSQL batches are atomic and avoid overlapping interactive transactions. */
+async function atomicPaymentWrites(build: (tx: any) => any[]) {
+  const database = db();
+  if (typeof database.batch === 'function') {
+    await database.batch(build(database));
+  } else {
+    await database.transaction(async (tx: any) => {
+      for (const statement of build(tx)) await statement;
+    });
+  }
 }

@@ -3,7 +3,12 @@ import { useForm } from '@tanstack/react-form';
 import { z } from 'zod';
 
 import type { TourDraft } from '@/lib/playlist-guard/tour-sequence';
-import { GUARD_FREQUENCIES } from '@/lib/playlist-guard/types';
+import {
+  GUARD_FREQUENCIES,
+  GUARD_SOURCES,
+  needsSourceUrl,
+  needsYoutubeAccount,
+} from '@/lib/playlist-guard/types';
 import { TextField } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
 
@@ -21,7 +26,7 @@ export function TourCollectionForm({
   onSave: (value: TourDraft) => void;
 }) {
   const schema = z.object({
-    source: z.enum(['playlist', 'channel'], { error: l.select_source }),
+    source: z.enum(GUARD_SOURCES, { error: l.select_source }),
     url: z
       .url(l.valid_url)
       .max(2048)
@@ -73,13 +78,23 @@ export function TourCollectionForm({
               data-tour="source"
               className={selectClass}
               value={field.state.value}
-              onChange={(e) =>
-                field.handleChange(e.target.value as TourDraft['source'])
-              }
+              onChange={(e) => {
+                const source = e.target.value as TourDraft['source'];
+                field.handleChange(source);
+                if (source && !needsSourceUrl(source))
+                  form.setFieldValue(
+                    'url',
+                    'https://www.youtube.com/playlist?list=LL'
+                  );
+              }}
             >
               <option value="">{l.choose_source}</option>
               <option value="playlist">{l.public_playlist}</option>
+              <option value="private_playlist">{l.private_playlist}</option>
+              <option value="liked_videos">{l.liked_videos}</option>
+              <option value="liked_music">{l.liked_music}</option>
               <option value="channel">{l.public_channel}</option>
+              <option value="subscriptions">{l.subscriptions}</option>
             </select>
           </label>
         )}
@@ -88,19 +103,26 @@ export function TourCollectionForm({
         {(source) =>
           source && (
             <>
-              <form.Field name="url">
-                {(field) => (
-                  <div data-tour="url">
-                    <TextField
-                      field={field}
-                      type="url"
-                      label={l.url}
-                      placeholder="https://www.youtube.com/playlist?list=…"
-                      required
-                    />
-                  </div>
-                )}
-              </form.Field>
+              {needsYoutubeAccount(source) && (
+                <div className="bg-secondary rounded-lg p-3 text-sm">
+                  {l.demo_account_note}
+                </div>
+              )}
+              {needsSourceUrl(source) && (
+                <form.Field name="url">
+                  {(field) => (
+                    <div data-tour="url">
+                      <TextField
+                        field={field}
+                        type="url"
+                        label={l.url}
+                        placeholder="https://www.youtube.com/playlist?list=…"
+                        required
+                      />
+                    </div>
+                  )}
+                </form.Field>
+              )}
               {editing && (
                 <form.Field name="name">
                   {(field) => (

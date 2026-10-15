@@ -131,6 +131,20 @@ function BillingPage() {
   const rows = listQuery.data?.items ?? [];
   const total = listQuery.data?.total ?? 0;
 
+  const portalMutation = useMutation({
+    mutationFn: (subscriptionNo: string) =>
+      apiPost<{ billingUrl: string }>('/api/user/subscriptions/portal', {
+        subscriptionNo,
+      }),
+    onSuccess: ({ billingUrl }) => {
+      const url = new URL(billingUrl);
+      if (url.protocol === 'https:' && url.hostname === 'billing.stripe.com')
+        window.location.assign(url.href);
+      else toast.error(m['settings.billing.portal_error']());
+    },
+    onError: () => toast.error(m['settings.billing.portal_error']()),
+  });
+
   const cancelMutation = useMutation({
     mutationFn: (subscriptionNo: string) =>
       apiPost('/api/user/subscriptions/cancel', { subscriptionNo }),
@@ -237,6 +251,14 @@ function BillingPage() {
             }
           />
           <DropdownMenuContent align="end">
+            {r.paymentProvider === 'stripe' && (
+              <DropdownMenuItem
+                disabled={portalMutation.isPending}
+                onClick={() => portalMutation.mutate(r.subscriptionNo)}
+              >
+                {m['settings.billing.manage_payment']()}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={() => setViewing(r)}>
               <Eye className="size-4" />
               {m['settings.billing.view']()}
@@ -267,18 +289,27 @@ function BillingPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>{m['settings.billing.subscription']()}</CardTitle>
-            <Link
-              href="/pricing"
-              className={cn(
-                buttonVariants({ variant: 'outline', size: 'sm' }),
-                'gap-2'
-              )}
-            >
-              <Pencil className="size-4" />
-              {current
-                ? m['settings.billing.adjust']()
-                : m['settings.billing.subscribe']()}
-            </Link>
+            {current?.paymentProvider === 'stripe' ? (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={portalMutation.isPending}
+                onClick={() => portalMutation.mutate(current.subscriptionNo)}
+              >
+                {m['settings.billing.manage_payment']()}
+              </Button>
+            ) : (
+              <Link
+                href="/pricing"
+                className={cn(
+                  buttonVariants({ variant: 'outline', size: 'sm' }),
+                  'gap-2'
+                )}
+              >
+                <Pencil className="size-4" />
+                {m['settings.billing.subscribe']()}
+              </Link>
+            )}
           </div>
         </CardHeader>
         <CardContent>

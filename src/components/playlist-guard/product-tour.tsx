@@ -22,6 +22,7 @@ import {
   tourSceneAt,
   type TourScene,
 } from '@/lib/playlist-guard/tour-sequence';
+import type { GuardSource } from '@/lib/playlist-guard/types';
 import { cn } from '@/lib/utils';
 import { Button, buttonVariants } from '@/components/ui/button';
 
@@ -29,7 +30,13 @@ import { TourCollectionForm } from './tour-form';
 import { TourCollectionDetail, TourCollectionList } from './tour-views';
 
 type Labels = Record<string, string>;
-export function ProductTour({ labels: l }: { labels: Labels }) {
+export function ProductTour({
+  labels: l,
+  embedded = false,
+}: {
+  labels: Labels;
+  embedded?: boolean;
+}) {
   const [frame, setFrame] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [manualScene, setManualScene] = useState<TourScene | null>(null);
@@ -93,7 +100,7 @@ export function ProductTour({ labels: l }: { labels: Labels }) {
   }
   useEffect(() => {
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPlaying(!motion.matches);
+    setPlaying(!embedded && !motion.matches);
     const onMotion = () => {
       if (motion.matches) setPlaying(false);
     };
@@ -106,7 +113,7 @@ export function ProductTour({ labels: l }: { labels: Labels }) {
       motion.removeEventListener('change', onMotion);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, []);
+  }, [embedded]);
   useEffect(() => {
     if (!playing || manualScene) return;
     const timer = window.setTimeout(
@@ -253,12 +260,13 @@ export function ProductTour({ labels: l }: { labels: Labels }) {
   const closeModal = () => {
     if (!downloadBusy) updateScene({ modal: null, exporting: false });
   };
+  const Heading = embedded ? 'h2' : 'h1';
   return (
     <section className="mx-auto max-w-[1180px] px-4 py-10 sm:px-8 sm:py-12">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-[34px]">
+        <Heading className="text-3xl font-semibold tracking-tight sm:text-[34px]">
           {l.tour_title}
-        </h1>
+        </Heading>
         <p className="text-muted-foreground mt-3 text-sm sm:text-base">
           {l.tour_subtitle}
         </p>
@@ -456,9 +464,7 @@ export function ProductTour({ labels: l }: { labels: Labels }) {
                                 ? {
                                     ...c,
                                     ...values,
-                                    source: values.source as
-                                      | 'playlist'
-                                      | 'channel',
+                                    source: values.source as GuardSource,
                                   }
                                 : c
                             )
@@ -466,7 +472,7 @@ export function ProductTour({ labels: l }: { labels: Labels }) {
                               ...s.collections,
                               createTourCollection('new', {
                                 ...values,
-                                source: values.source as 'playlist' | 'channel',
+                                source: values.source as GuardSource,
                                 id: crypto.randomUUID(),
                                 name:
                                   values.name.trim() || l.new_collection_name,

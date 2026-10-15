@@ -5,77 +5,79 @@ import { PaymentInterval, PaymentType } from '@/core/payment/types';
 import {
   getGuardCheckoutProvider,
   getGuardPlan,
-  GUARD_TRIAL_COLLECTION_LIMIT,
-  GUARD_TRIAL_DAYS,
+  getGuardStripePriceId,
+  GUARD_PLANS,
   guardProductId,
 } from '@/config/guard-plans';
-import { getPricingProduct } from '@/config/pricing';
+import { getPricingProduct, listPricingProducts } from '@/config/pricing';
 
-test('guard checkout products preserve published USD prices and recurring intervals', () => {
-  const contracts = [
-    { id: 'lite', limit: 2, monthly: 99, yearly: 990 },
-    { id: 'pro', limit: 15, monthly: 299, yearly: 2990 },
-    { id: 'ultra', limit: 50, monthly: 699, yearly: 6990 },
-  ] as const;
-  for (const contract of contracts) {
-    for (const period of ['monthly', 'yearly'] as const) {
-      const id = guardProductId(contract.id, period);
-      const product = getPricingProduct(id);
-      assert.ok(product);
-      assert.equal(product.productId, id);
-      assert.equal(product.priceInCents, contract[period]);
-      assert.equal(product.currency, 'usd');
-      assert.equal(product.type, PaymentType.SUBSCRIPTION);
-      assert.equal(product.credits, 0);
-      assert.equal(product.plan?.intervalCount, 1);
-      assert.equal(
-        product.plan?.interval,
-        period === 'monthly' ? PaymentInterval.MONTH : PaymentInterval.YEAR
-      );
-      assert.equal(getGuardPlan(id)?.collectionLimit, contract.limit);
-    }
+test('only the three published annual plans can be purchased; legacy monthly access stays readable', () => {
+  assert.equal(listPricingProducts().length, 3);
+  for (const plan of GUARD_PLANS) {
+    const product = getPricingProduct(guardProductId(plan.id));
+    assert.ok(product);
+    assert.equal(product.priceInCents, plan.yearlyPriceInCents);
+    assert.equal(product.currency, 'usd');
+    assert.equal(product.type, PaymentType.SUBSCRIPTION);
+    assert.equal(product.credits, 0);
+    assert.equal(product.plan?.interval, PaymentInterval.YEAR);
+    assert.equal(product.plan?.intervalCount, 1);
+    assert.equal(getPricingProduct(`guard_${plan.id}_monthly`), null);
+    assert.equal(
+      getGuardPlan(`guard_${plan.id}_monthly`)?.collectionLimit,
+      plan.collectionLimit
+    );
   }
-  assert.equal(GUARD_TRIAL_DAYS, 7);
-  assert.equal(GUARD_TRIAL_COLLECTION_LIMIT, 15);
-  assert.equal(getPricingProduct('pro_monthly')?.priceInCents, 2900);
-});
-
-test('unknown products and unrelated subscriptions do not resolve a guard plan', () => {
-  for (const input of [
-    '',
+  for (const id of [
     'pro_monthly',
-    'guard_pro',
+    'starter_yearly',
+    'pro_lifetime',
+    '__proto__',
+    'constructor',
     'guard_pro_lifetime',
-    'guard_ultra_monthly_extra',
   ]) {
-    assert.equal(getGuardPlan(input), null);
+    assert.equal(getPricingProduct(id), null);
   }
-  assert.equal(getPricingProduct('guard_pro_lifetime'), null);
 });
 
-test('checkout capability requires Stripe credentials and never returns their values', () => {
-  assert.equal(getGuardCheckoutProvider({}), '');
-  assert.equal(getGuardCheckoutProvider({ stripe_enabled: 'true' }), '');
+test('checkout fails closed without enabled credentials, webhook verification, or every price mapping', () => {
+  const configs = {
+    stripe_enabled: 'true',
+    stripe_secret_key: 'test-placeholder',
+    stripe_signing_secret: 'signing-placeholder',
+    stripe_price_ids_mapping: JSON.stringify(
+      Object.fromEntries(
+        GUARD_PLANS.map((plan) => [guardProductId(plan.id), `price_${plan.id}`])
+      )
+    ),
+  };
+  assert.equal(getGuardCheckoutProvider(configs), 'stripe');
+  for (const key of Object.keys(configs)) {
+    assert.equal(getGuardCheckoutProvider({ ...configs, [key]: '' }), '');
+  }
   assert.equal(
-    getGuardCheckoutProvider({ stripe_secret_key: 'dummy-secret' }),
-    'stripe'
-  );
-  assert.equal(
-    getGuardCheckoutProvider({ stripe_api_key: 'dummy-api-key' }),
-    'stripe'
-  );
-  assert.equal(
-    getGuardCheckoutProvider({
-      creem_enabled: 'true',
-      creem_api_key: 'dummy-secret',
-    }),
+    getGuardCheckoutProvider({ ...configs, stripe_enabled: 'false' }),
     ''
   );
-  assert.equal(
-    getGuardCheckoutProvider({
-      default_payment_provider: 'creem',
-      stripe_secret_key: 'dummy-secret',
-    }),
-    'stripe'
-  );
+  for (const mapping of [
+    'null',
+    '[]',
+    '{',
+    '{"guard_lite_yearly":"prod_wrong"}',
+  ]) {
+    assert.equal(
+      getGuardStripePriceId(
+        { stripe_price_ids_mapping: mapping },
+        'guard_lite_yearly'
+      ),
+      null
+    );
+    assert.equal(
+      getGuardCheckoutProvider({
+        ...configs,
+        stripe_price_ids_mapping: mapping,
+      }),
+      ''
+    );
+  }
 });

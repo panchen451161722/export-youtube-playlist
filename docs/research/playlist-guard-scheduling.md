@@ -1,6 +1,6 @@
 # Scheduled checks and email notifications
 
-The app registers a Nitro task (`server/tasks/playlist-guard.ts`) every five minutes. Node runs the timer while the server is alive; the Cloudflare build generates a native Cron Trigger. Each collection follows its hourly, daily, weekly, fortnightly or monthly frequency. Hourly checks become due 3,600 seconds after the last successful scan, and the next five-minute scheduler tick picks them up. The task dispatches internally to `POST /api/playlist-guard-run`, authenticated with a separate environment-only secret. No external scheduler is required.
+The app registers a Nitro task (`server/tasks/playlist-guard.ts`) every five minutes. Node runs the timer while the server is alive; the Cloudflare build generates a native Cron Trigger. Each collection follows its daily, weekly, fortnightly or monthly frequency. Daily checks become due 86,400 seconds after the last successful scan, and the next five-minute scheduler tick picks them up. Hourly selection was retired on 2026-10-14; older hourly documents are normalized to daily without changing notification preferences. The task dispatches internally to `POST /api/playlist-guard-run`, authenticated with a separate environment-only secret. No external scheduler is required.
 
 ## Runtime configuration
 
@@ -69,3 +69,9 @@ This iteration is not deployed. The new outbox table was pushed only to the isol
 
 - After the user confirmed receipt, both simulation collections were removed using the authenticated application API. Soft deletion releases their collection slots, clears source reservations and scheduled times, and retains historical delivery receipts locally. The workspace now lists only the original collection, and no mail is pending.
 - The original collection's stored document was unchanged by cleanup: hourly checks, addition/removal alerts enabled, routine email backup disabled. Provider keys, local runtime secrets, database files and captured mail remain gitignored; local environment variants are also excluded from Docker build context.
+
+### Local development connection troubleshooting
+
+When the local network requires an HTTP(S) proxy to reach Google, start the development server with `pnpm dev:proxy --port 3002 --strictPort` (or the desired local port). Plain `pnpm dev` does not enable Node's environment-proxy support. A direct request can fail with `UND_ERR_CONNECT_TIMEOUT` even while Chrome can reach YouTube. Public scan failures now preserve the safe YouTube API/network error in the collection; an unsuccessful first scan is distinguished from a failed check of an existing backup.
+
+The signed-in Playlist Backup page loads the same account-scoped overview as Collections, shows saved collection cards, and supports manual checks. Creating a collection keeps the user on the Backup page and refreshes the list. Manual checks remain silent and preserve notification preferences.

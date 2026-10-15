@@ -27,7 +27,8 @@ test('tour search and sorting preserve sample order and isolate latest/missing d
   const byViews = sortedTourVideos(initial, 'latest', 'views');
   assert.ok(
     byViews.every(
-      (item, index) => index === 0 || byViews[index - 1].views >= item.views
+      (item, index) =>
+        index === 0 || (byViews[index - 1].views ?? -1) >= (item.views ?? -1)
     )
   );
   assert.equal(JSON.stringify(initial), original);

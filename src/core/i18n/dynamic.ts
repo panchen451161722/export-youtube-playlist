@@ -126,6 +126,10 @@ const dynamicMessages = {
     m['admin.settings.fields.select_payment_enabled'],
   'admin.settings.fields.default_payment_provider':
     m['admin.settings.fields.default_payment_provider'],
+  'admin.settings.fields.stripe_price_ids_mapping':
+    m['admin.settings.fields.stripe_price_ids_mapping'],
+  'admin.settings.fields.stripe_portal_configuration_id':
+    m['admin.settings.fields.stripe_portal_configuration_id'],
   'admin.settings.fields.stripe_enabled':
     m['admin.settings.fields.stripe_enabled'],
   'admin.settings.fields.stripe_secret_key':

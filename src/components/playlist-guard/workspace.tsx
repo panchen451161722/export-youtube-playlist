@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   ArrowLeft,
   CircleAlert,
@@ -15,6 +15,8 @@ import { Link } from '@/core/i18n/navigation';
 import {
   collectionDetailView,
   collectionView,
+  formatCollectionDate,
+  type CollectionDateStyle,
   type CollectionSort,
   type CollectionTab,
 } from '@/lib/playlist-guard/presentation';
@@ -25,6 +27,7 @@ import type {
   GuardItem,
   GuardOverview,
 } from '@/lib/playlist-guard/types';
+import type { YoutubeConnection } from '@/lib/youtube-connections/types';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Dialog,
@@ -40,6 +43,11 @@ import { CollectionExportDialog } from './export-dialog';
 
 export type GuardWorkspaceProps = {
   labels: GuardLabels;
+  accounts?: YoutubeConnection[];
+  accountsLoading?: boolean;
+  accountsConfigured?: boolean;
+  onConnect?: (id?: string) => void;
+  accountsPanel?: ReactNode;
   locale: string;
   overview?: GuardOverview;
   loading: boolean;
@@ -63,6 +71,11 @@ export type GuardWorkspaceProps = {
 };
 export function GuardWorkspace({
   labels: l,
+  accounts,
+  accountsLoading,
+  accountsConfigured,
+  onConnect,
+  accountsPanel,
   locale,
   overview,
   loading,
@@ -90,21 +103,14 @@ export function GuardWorkspace({
   const collections = overview?.collections ?? [];
   const entitlement = overview?.entitlement;
   const cap = overview?.capabilities;
-  const date = (value: string | null) =>
-    value
-      ? new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        }).format(new Date(value))
-      : l.not_yet;
+  const date = (value: string | null, style?: CollectionDateStyle) =>
+    formatCollectionDate(value, locale, l.not_yet, style);
   const canAdd =
-    !!cap?.youtube &&
+    !!(cap?.youtube || cap?.privateSources) &&
     !!entitlement?.limit &&
     collections.length < entitlement.limit;
-  const canSync = !!cap?.youtube && !!entitlement?.limit;
+  const canSync =
+    !!(cap?.youtube || cap?.privateSources) && !!entitlement?.limit;
   const emailAvailable = !!cap?.email && emailVerified;
   const emailNotice =
     cap?.email && !emailVerified ? l.email_verify_note : l.email_unavailable;
@@ -154,7 +160,7 @@ export function GuardWorkspace({
       )}
     </div>
   );
-  const environmentNotice = !cap?.youtube
+  const environmentNotice = !(cap?.youtube || cap?.privateSources)
     ? l.api_unavailable
     : !cap.scheduler
       ? l.schedule_unavailable
@@ -201,102 +207,138 @@ export function GuardWorkspace({
           )}
         </>
       ) : (
-        <CollectionList
-          labels={{
-            ...l,
-            empty_collections: l.empty_title,
-            empty_collections_hint: l.empty_text,
-          }}
-          headingLevel={1}
-          showSourceLinks
-          collections={filtered.map((c) =>
-            collectionView(c, date, !!cap?.scheduler, l.manual_only)
-          )}
-          totalCount={collections.length}
-          limit={entitlement?.limit ?? 0}
-          busy={busy}
-          canAdd={canAdd}
-          empty={collections.length === 0}
-          headerExtra={
-            <>
-              {plan}
-              {cap?.emailPreview && (
-                <p className="text-muted-foreground mt-4 text-xs">
-                  {l.email_preview}
-                </p>
-              )}
-              {environmentNotice && (
-                <p className="bg-secondary/60 mt-4 flex items-start gap-2 rounded-lg p-3 text-xs leading-5">
-                  <CircleAlert className="mt-0.5 size-4 shrink-0" />
-                  {environmentNotice}
-                </p>
-              )}
-              {!!entitlement?.limit &&
-                collections.length >= entitlement.limit && (
-                  <p className="text-muted-foreground mt-3 text-xs">
-                    {l.quota}
+        <>
+          {accountsPanel}
+          <CollectionList
+            labels={{
+              ...l,
+              empty_collections: l.empty_title,
+              empty_collections_hint: l.empty_text,
+            }}
+            headingLevel={1}
+            showSourceLinks
+            collections={filtered.map((c) =>
+              collectionView(c, date, !!cap?.scheduler, l.manual_only)
+            )}
+            totalCount={collections.length}
+            limit={entitlement?.limit ?? 0}
+            busy={busy}
+            canAdd={canAdd}
+            empty={collections.length === 0}
+            headerExtra={
+              <>
+                <dl className="mt-6 grid gap-4 sm:grid-cols-3">
+                  {[
+                    [
+                      l.active_collections,
+                      collections.filter((c) => c.enabled).length,
+                    ],
+                    [
+                      l.saved_videos,
+                      collections.reduce((total, c) => total + c.itemCount, 0),
+                    ],
+                    [
+                      l.missing_videos_summary,
+                      collections.reduce(
+                        (total, c) => total + c.missingCount,
+                        0
+                      ),
+                    ],
+                  ].map(([label, count]) => (
+                    <div
+                      key={label}
+                      className="bg-secondary/50 rounded-lg px-4 py-3"
+                    >
+                      <dt className="text-muted-foreground text-xs">{label}</dt>
+                      <dd className="mt-2 text-2xl font-semibold tabular-nums">
+                        {count}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                {plan}
+                {cap?.emailPreview && (
+                  <p className="text-muted-foreground mt-4 text-xs">
+                    {l.email_preview}
                   </p>
                 )}
-            </>
-          }
-          toolbar={
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap gap-1">
-                {['all', 'attention', 'paused'].map((value) => (
+                {environmentNotice && (
+                  <p className="bg-secondary/60 mt-4 flex items-start gap-2 rounded-lg p-3 text-xs leading-5">
+                    <CircleAlert className="mt-0.5 size-4 shrink-0" />
+                    {environmentNotice}
+                  </p>
+                )}
+                {!!entitlement?.limit &&
+                  collections.length >= entitlement.limit && (
+                    <p className="text-muted-foreground mt-3 text-xs">
+                      {l.quota}
+                    </p>
+                  )}
+              </>
+            }
+            toolbar={
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap gap-1">
+                  {['all', 'attention', 'paused'].map((value) => (
+                    <Button
+                      key={value}
+                      variant={filter === value ? 'secondary' : 'ghost'}
+                      size="sm"
+                      aria-pressed={filter === value}
+                      onClick={() => setFilter(value)}
+                    >
+                      {l[value]}
+                    </Button>
+                  ))}
+                </div>
+                <div className="flex min-w-0 flex-1 items-center gap-2 sm:max-w-sm">
+                  <label className="relative min-w-0 flex-1">
+                    <Search className="text-muted-foreground absolute top-3 left-3 size-4" />
+                    <input
+                      aria-label={l.search}
+                      placeholder={l.search}
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="border-input bg-card h-10 w-full rounded-lg border pr-3 pl-9 text-sm"
+                    />
+                  </label>
                   <Button
-                    key={value}
-                    variant={filter === value ? 'secondary' : 'ghost'}
-                    size="sm"
-                    aria-pressed={filter === value}
-                    onClick={() => setFilter(value)}
+                    size="icon"
+                    variant="outline"
+                    aria-label={l.refresh}
+                    disabled={refreshing || busy}
+                    onClick={onRetry}
                   >
-                    {l[value]}
+                    <RefreshCw className={refreshing ? 'animate-spin' : ''} />
                   </Button>
-                ))}
+                </div>
               </div>
-              <div className="flex min-w-0 flex-1 items-center gap-2 sm:max-w-sm">
-                <label className="relative min-w-0 flex-1">
-                  <Search className="text-muted-foreground absolute top-3 left-3 size-4" />
-                  <input
-                    aria-label={l.search}
-                    placeholder={l.search}
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="border-input bg-card h-10 w-full rounded-lg border pr-3 pl-9 text-sm"
-                  />
-                </label>
-                <Button
-                  size="icon"
-                  variant="outline"
-                  aria-label={l.refresh}
-                  disabled={refreshing || busy}
-                  onClick={onRetry}
-                >
-                  <RefreshCw className={refreshing ? 'animate-spin' : ''} />
-                </Button>
-              </div>
-            </div>
-          }
-          onAdd={() => setForm({})}
-          onView={onSelect}
-          onUpdate={(id) => {
-            const c = collections.find((c) => c.id === id);
-            if (c) setForm({ collection: c });
-          }}
-          onDelete={(id) => {
-            const c = collections.find((c) => c.id === id);
-            if (c) remove(c);
-          }}
-          onToggle={(id) => {
-            const c = collections.find((c) => c.id === id);
-            if (c) action({ action: 'update', id, enabled: !c.enabled });
-          }}
-        />
+            }
+            onAdd={() => setForm({})}
+            onView={onSelect}
+            onUpdate={(id) => {
+              const c = collections.find((c) => c.id === id);
+              if (c) setForm({ collection: c });
+            }}
+            onDelete={(id) => {
+              const c = collections.find((c) => c.id === id);
+              if (c) remove(c);
+            }}
+            onToggle={(id) => {
+              const c = collections.find((c) => c.id === id);
+              if (c) action({ action: 'update', id, enabled: !c.enabled });
+            }}
+          />
+        </>
       )}
       {form && (
         <CollectionFormDialog
           key={form.collection?.id ?? 'create'}
           collection={form.collection}
+          accounts={accounts}
+          accountsLoading={accountsLoading}
+          accountsConfigured={accountsConfigured}
+          onConnect={onConnect}
           onClose={() => setForm(null)}
           onSave={onAction}
           labels={l}
@@ -550,7 +592,9 @@ function WorkspaceDetail({
                 role="alert"
                 className="border-destructive/25 bg-destructive/5 rounded-lg border p-4 text-sm"
               >
-                <p className="font-medium">{l.sync_error}</p>
+                <p className="font-medium">
+                  {detail.runCount === 0 ? l.sync_initial_error : l.sync_error}
+                </p>
                 <p className="text-muted-foreground mt-1">{detail.lastError}</p>
               </div>
             )}
@@ -607,6 +651,12 @@ function WorkspaceDetail({
             {snapshot && (
               <span className="text-muted-foreground w-full text-xs">
                 +{snapshot.added} {l.added} · −{snapshot.removed} {l.removed}
+                {(snapshot.restored ?? 0) > 0 && (
+                  <>
+                    {' '}
+                    · {snapshot.restored} {l.restored}
+                  </>
+                )}
               </span>
             )}
           </div>

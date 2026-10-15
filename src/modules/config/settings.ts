@@ -428,6 +428,24 @@ export function getSettings(): Setting[] {
       tab: 'payment',
     },
 
+    {
+      name: 'stripe_price_ids_mapping',
+      title: 'Annual Price IDs Mapping',
+      type: 'textarea',
+      placeholder:
+        '{"guard_lite_yearly":"price_...","guard_pro_yearly":"price_...","guard_ultra_yearly":"price_..."}',
+      group: 'stripe',
+      tab: 'payment',
+    },
+    {
+      name: 'stripe_portal_configuration_id',
+      title: 'Billing Portal Configuration ID',
+      type: 'text',
+      placeholder: 'bpc_...',
+      group: 'stripe',
+      tab: 'payment',
+    },
+
     // ─── Payment / Creem ─────────────────────────────────────────────
     {
       name: 'creem_enabled',

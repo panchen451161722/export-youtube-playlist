@@ -84,6 +84,7 @@ export interface PaymentOrder {
   type?: PaymentType; // optional
   orderNo?: string; // order no
   productId?: string; // create product first
+  priceId?: string; // server-resolved Stripe Price, never accepted from client
   requestId?: string; // request id
   price?: PaymentPrice; // required if productId is not provided
   discount?: PaymentDiscount; // discount code

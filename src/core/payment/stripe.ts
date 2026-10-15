@@ -26,7 +26,7 @@ export interface StripeConfigs extends PaymentConfigs {
   secretKey: string;
   publishableKey: string;
   signingSecret?: string;
-  apiVersion?: string;
+  portalConfigurationId?: string;
   allowedPaymentMethods?: string[];
   allowPromotionCodes?: boolean;
 }
@@ -81,6 +81,7 @@ export class StripeProvider implements PaymentProvider {
 
         // build recurring data
         priceData.recurring = {
+          interval_count: order.plan.intervalCount || 1,
           interval: order.plan
             .interval as Stripe.Checkout.SessionCreateParams.LineItem.PriceData.Recurring.Interval,
         };
@@ -88,21 +89,52 @@ export class StripeProvider implements PaymentProvider {
         // create one-time payment
       }
 
+      let lineItem: Stripe.Checkout.SessionCreateParams.LineItem = {
+        price_data: priceData,
+        quantity: 1,
+      };
+      if (order.priceId) {
+        const registered = await this.client.prices.retrieve(order.priceId);
+        const live = /^(sk|rk)_live_/.test(this.configs.secretKey);
+        if (
+          !registered.active ||
+          registered.livemode !== live ||
+          registered.currency !== order.price.currency.toLowerCase() ||
+          registered.unit_amount !== order.price.amount ||
+          registered.recurring?.interval !== order.plan?.interval ||
+          registered.recurring?.interval_count !==
+            (order.plan?.intervalCount || 1)
+        ) {
+          throw new Error('Stripe price does not match the server catalog');
+        }
+        lineItem = { price: registered.id, quantity: 1 };
+      }
+
       // set or create customer
       let customerId = '';
       if (order.customer?.email) {
         const customers = await this.client.customers.list({
           email: order.customer.email,
-          limit: 1,
+          limit: 100,
         });
-
-        if (customers.data.length > 0) {
-          customerId = customers.data[0].id;
+        const existing =
+          order.metadata?.user_id &&
+          customers.data.find(
+            (customer) =>
+              customer.metadata.app === order.metadata?.app &&
+              customer.metadata.user_id === order.metadata?.user_id
+          );
+        if (existing) {
+          customerId = existing.id;
         } else {
           const customer = await this.client.customers.create({
             email: order.customer.email,
             name: order.customer.name,
-            metadata: order.customer.metadata,
+            metadata: {
+              ...order.customer.metadata,
+              app: order.metadata?.app || '',
+              user_id: order.metadata?.user_id || '',
+            },
           });
           customerId = customer.id;
         }
@@ -112,13 +144,13 @@ export class StripeProvider implements PaymentProvider {
       const sessionParams: Stripe.Checkout.SessionCreateParams = {
         mode:
           order.type === PaymentType.SUBSCRIPTION ? 'subscription' : 'payment',
-        line_items: [
-          {
-            price_data: priceData,
-            quantity: 1,
-          },
-        ],
+        line_items: [lineItem],
       };
+
+      if (order.type === PaymentType.SUBSCRIPTION) {
+        sessionParams.payment_method_types = ['card'];
+        sessionParams.subscription_data = { metadata: order.metadata };
+      }
 
       // pre-set promotion code
       if (order.discount && order.discount.code) {
@@ -244,12 +276,15 @@ export class StripeProvider implements PaymentProvider {
         throw new Error('Signing Secret not configured');
       }
 
-      const event = this.client.webhooks.constructEvent(
+      const event = await this.client.webhooks.constructEventAsync(
         rawBody,
         signature,
         this.configs.signingSecret
       );
 
+      if (event.livemode !== /^(sk|rk)_live_/.test(this.configs.secretKey)) {
+        throw new Error('Stripe event environment mismatch');
+      }
       let paymentSession: PaymentSession | undefined = undefined;
 
       const eventType = this.mapStripeEventType(event.type);
@@ -258,7 +293,21 @@ export class StripeProvider implements PaymentProvider {
         paymentSession = await this.buildPaymentSessionFromCheckoutSession(
           event.data.object as Stripe.Response<Stripe.Checkout.Session>
         );
-      } else if (eventType === PaymentEventType.PAYMENT_SUCCESS) {
+      } else if (
+        eventType === PaymentEventType.PAYMENT_FAILED &&
+        event.type.startsWith('checkout.session.')
+      ) {
+        paymentSession = await this.buildPaymentSessionFromCheckoutSession(
+          event.data.object as Stripe.Response<Stripe.Checkout.Session>
+        );
+        paymentSession.paymentStatus =
+          event.type === 'checkout.session.expired'
+            ? PaymentStatus.CANCELED
+            : PaymentStatus.FAILED;
+      } else if (
+        eventType === PaymentEventType.PAYMENT_SUCCESS ||
+        eventType === PaymentEventType.PAYMENT_FAILED
+      ) {
         paymentSession = await this.buildPaymentSessionFromInvoice(
           event.data.object as Stripe.Response<Stripe.Invoice>
         );
@@ -319,6 +368,7 @@ export class StripeProvider implements PaymentProvider {
       const billing = await this.client.billingPortal.sessions.create({
         customer: customerId,
         return_url: returnUrl,
+        configuration: this.configs.portalConfigurationId || undefined,
       });
 
       if (!billing.url) {
@@ -360,10 +410,13 @@ export class StripeProvider implements PaymentProvider {
 
   private mapStripeEventType(eventType: string): PaymentEventType {
     switch (eventType) {
+      case 'checkout.session.async_payment_succeeded':
       case 'checkout.session.completed':
         return PaymentEventType.CHECKOUT_SUCCESS;
       case 'invoice.payment_succeeded':
         return PaymentEventType.PAYMENT_SUCCESS;
+      case 'checkout.session.expired':
+      case 'checkout.session.async_payment_failed':
       case 'invoice.payment_failed':
         return PaymentEventType.PAYMENT_FAILED;
       case 'customer.subscription.updated':
@@ -489,7 +542,10 @@ export class StripeProvider implements PaymentProvider {
     const result: PaymentSession = {
       provider: this.name,
 
-      paymentStatus: PaymentStatus.SUCCESS,
+      paymentStatus:
+        invoice.status === 'paid'
+          ? PaymentStatus.SUCCESS
+          : PaymentStatus.FAILED,
       paymentInfo: {
         transactionId: invoice.id,
         discountCode: '',
@@ -601,6 +657,14 @@ export class StripeProvider implements PaymentProvider {
         subscription.cancellation_details?.comment || '';
       subscriptionInfo.canceledReasonType =
         subscription.cancellation_details?.feedback || '';
+    } else if (
+      ['past_due', 'unpaid', 'paused', 'incomplete'].includes(
+        subscription.status
+      )
+    ) {
+      subscriptionInfo.status = SubscriptionStatus.PAUSED;
+    } else if (subscription.status === 'incomplete_expired') {
+      subscriptionInfo.status = SubscriptionStatus.EXPIRED;
     } else {
       throw new Error(
         `Unknown Stripe subscription status: ${subscription.status}`

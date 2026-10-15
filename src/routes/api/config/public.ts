@@ -49,7 +49,7 @@ async function GET({ request }: { request: Request }) {
   const configs = await getAllConfigs();
   const result = filterPublicConfigs(configs, publicKeys);
   // Expose capability only; credentials stay on the server. Guard plans use
-  // Stripe's dynamic recurring-price checkout rather than provider product IDs.
+  // fixed Stripe annual prices; no credentials or price mappings are exposed.
   result.guard_checkout_provider = getGuardCheckoutProvider(configs);
   result.email_auth_enabled =
     configs.email_auth_enabled === 'true' ? 'true' : 'false';

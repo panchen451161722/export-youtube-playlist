@@ -1,10 +1,18 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import { getAuth } from '@/core/auth';
+import { getAllConfigs } from '@/modules/config/service';
 import { createGuardStore, GuardError } from '@/modules/playlist-guard/service';
+import {
+  ownedYoutubeConnection,
+  youtubeAccessToken,
+  youtubeConfig,
+} from '@/modules/youtube-connections/service';
+import { needsYoutubeAccount } from '@/lib/playlist-guard/types';
 import { respData, respErr } from '@/lib/resp';
 
 import {
+  assertGuardBackupEmailReady,
   guardErrorResponse,
   guardRuntime,
   normalizeGuardSource,
@@ -61,29 +69,29 @@ async function POST({ request }: { request: Request }) {
       result = await store.remove(userId, action.id);
     else {
       const runtime = await guardRuntime();
-      if (
-        ('emailDelivery' in action && action.emailDelivery) ||
-        ('notifyMissing' in action && action.notifyMissing) ||
-        ('notifyAdded' in action && action.notifyAdded)
-      ) {
-        if (!runtime.capabilities.email)
-          throw new GuardError(
-            'email_unconfigured',
-            'Email delivery is not configured yet.',
-            503
-          );
-        if (!session.user.emailVerified)
-          throw new GuardError(
-            'email_unverified',
-            'Verify your email address before enabling email delivery.',
-            403
-          );
-      }
+      assertGuardBackupEmailReady(
+        action,
+        runtime.capabilities.email,
+        session.user.emailVerified
+      );
       if (action.action === 'update') {
         const { action: _action, id, ...patch } = action;
         result = await store.update(userId, id, patch);
       } else if (action.action === 'create') {
-        if (!runtime.capabilities.youtube)
+        if (needsYoutubeAccount(action.source)) {
+          if (!action.connectionId)
+            throw new GuardError(
+              'account_required',
+              'Connect and select a YouTube account.',
+              400
+            );
+          await ownedYoutubeConnection(userId, action.connectionId);
+          await youtubeAccessToken(
+            userId,
+            action.connectionId,
+            youtubeConfig(await getAllConfigs())
+          );
+        } else if (!runtime.capabilities.youtube)
           throw new GuardError(
             'youtube_unconfigured',
             'YouTube monitoring is not configured yet.',

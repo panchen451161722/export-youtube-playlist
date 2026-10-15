@@ -1,8 +1,24 @@
 import { m } from '@/paraglide/messages.js';
 import { ProductTour } from '@/components/playlist-guard/product-tour';
 
-export function PlaylistGuardTour() {
+export function PlaylistGuardTour({
+  embedded = false,
+}: {
+  embedded?: boolean;
+}) {
   const labels = {
+    card_view: m['guard_card.view'](),
+    card_update: m['guard_card.update'](),
+    card_delete: m['guard_card.delete'](),
+    card_missing: m['guard_card.missing'](),
+    card_next_sync: m['guard_card.next_sync'](),
+    open_channel: m['youtube_accounts.open_channel'](),
+    private_playlist: m['youtube_accounts.private_playlist'](),
+    liked_videos: m['youtube_accounts.liked_videos'](),
+    liked_music: m['youtube_accounts.liked_music'](),
+    subscriptions: m['youtube_accounts.subscriptions'](),
+    demo_account_note: m['youtube_accounts.demo_account_note'](),
+
     tour_title: m['guard_tour.tour_title'](),
     tour_subtitle: m['guard_tour.tour_subtitle'](),
     auto_playing: m['guard_tour.auto_playing'](),
@@ -46,7 +62,6 @@ export function PlaylistGuardTour() {
     delete: m['guard_tour.delete'](),
     empty_collections: m['guard_tour.empty_collections'](),
     empty_collections_hint: m['guard_tour.empty_collections_hint'](),
-    hourly: m['guard_tour.hourly'](),
     daily: m['guard_tour.daily'](),
     weekly: m['guard_tour.weekly'](),
     biweekly: m['guard_tour.biweekly'](),
@@ -113,5 +128,5 @@ export function PlaylistGuardTour() {
     save_changes: m['guard_tour.save_changes'](),
     create: m['guard_tour.create'](),
   };
-  return <ProductTour labels={labels} />;
+  return <ProductTour labels={labels} embedded={embedded} />;
 }

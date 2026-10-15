@@ -1,7 +1,7 @@
 import type { GuardFrequency, GuardItem, GuardSource } from './types';
 
 export type TourVideo = GuardItem & {
-  views: number;
+  views?: number;
   /** A localized relative-time label key for the sample tour. */
   missingSince?: string;
 };
@@ -151,7 +151,7 @@ export function createTourCollection(
         ),
       ];
 
-  return {
+  const result: TourCollection = {
     id,
     name: isNew ? 'Top Tracks 2026' : 'Rock Classics 70s Legend',
     source: 'playlist',
@@ -191,6 +191,26 @@ export function createTourCollection(
     exportFrequency: 'weekly',
     ...overrides,
   };
+  if (result.source === 'subscriptions') {
+    const channels: TourVideo[] = [
+      '@YouTube',
+      '@YouTubeCreators',
+      '@YouTubeMusic',
+    ].map((handle, index) => ({
+      id: `demo-channel-${index}`,
+      kind: 'channel',
+      title: handle.slice(1),
+      channel: handle.slice(1),
+      url: `https://www.youtube.com/${handle}`,
+      thumbnail: '',
+      duration: '',
+      position: index + 1,
+    }));
+    result.url = 'https://www.youtube.com/feed/channels';
+    result.items = overrides.items ?? channels;
+    result.missing = overrides.missing ?? [];
+  }
+  return result;
 }
 
 export function createTourCollections(): TourCollection[] {
@@ -213,7 +233,8 @@ export function sortedTourVideos(
   );
   return videos.sort((a, b) => {
     if (sort === 'title') return a.title.localeCompare(b.title);
-    if (sort === 'views') return b.views - a.views || a.position - b.position;
+    if (sort === 'views')
+      return (b.views ?? -1) - (a.views ?? -1) || a.position - b.position;
     return a.position - b.position;
   });
 }

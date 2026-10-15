@@ -1,6 +1,4 @@
-'use client';
-
-import { LogOutIcon, SettingsIcon, ShieldIcon } from 'lucide-react';
+import { ListVideo, LogOutIcon, SettingsIcon, ShieldIcon } from 'lucide-react';
 
 import { signOut } from '@/core/auth/client';
 import { Link, useRouter } from '@/core/i18n/navigation';
@@ -37,7 +35,10 @@ export function SiteUserMenu({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="focus-visible:ring-ring rounded-full outline-none focus-visible:ring-2">
+      <DropdownMenuTrigger
+        aria-label={name}
+        className="focus-visible:ring-ring rounded-full outline-none focus-visible:ring-2"
+      >
         <Avatar className="size-9">
           <AvatarImage src={image || undefined} alt={name} />
           <AvatarFallback className="text-xs">
@@ -65,6 +66,10 @@ export function SiteUserMenu({
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
+        <DropdownMenuItem render={<Link href="/settings/collections" />}>
+          <ListVideo className="size-4" />
+          {m['guardPricing.nav_collections']()}
+        </DropdownMenuItem>
         <DropdownMenuItem render={<Link href="/settings/profile" />}>
           <SettingsIcon className="size-4" />
           {m['common.nav.settings']()}

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -11,7 +10,6 @@ import {
   GUARD_TRIAL_COLLECTION_LIMIT,
   GUARD_TRIAL_DAYS,
   guardProductId,
-  type GuardBillingPeriod,
   type GuardPlanId,
 } from '@/config/guard-plans';
 import { apiPost } from '@/lib/api-client';
@@ -23,7 +21,6 @@ import {
 } from '@/components/guard-pricing';
 
 export function Pricing({ asPage = false }: { asPage?: boolean }) {
-  const [period, setPeriod] = useState<GuardBillingPeriod>('monthly');
   const config = usePublicConfig();
   const { data: session } = useSession();
   const router = useRouter();
@@ -32,7 +29,7 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
   const checkout = useMutation({
     mutationFn: (planId: GuardPlanId) =>
       apiPost<{ checkout_url: string }>('/api/payment/checkout', {
-        product_id: guardProductId(planId, period),
+        product_id: guardProductId(planId),
         payment_provider: checkoutProvider,
         redirect: '/settings/collections',
       }),
@@ -63,10 +60,7 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
     eyebrow: m['guardPricing.eyebrow'](),
     title: m['guardPricing.title'](),
     description: m['guardPricing.description'](),
-    monthly: m['guardPricing.monthly'](),
-    yearly: m['guardPricing.yearly'](),
-    annualSaving: m['guardPricing.annual_saving'](),
-    billingLabel: m['guardPricing.billing_label'](),
+    annualBilling: m['guardPricing.annual_billing'](),
     trial: m['guardPricing.trial']({ days: GUARD_TRIAL_DAYS }),
     trialNote: m['guardPricing.trial_note']({
       days: GUARD_TRIAL_DAYS,
@@ -116,11 +110,8 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
       id: plan.id,
       name: plan.name,
       description: descriptions[plan.id],
-      price: `$${((period === 'monthly' ? plan.monthlyPriceInCents : plan.yearlyPriceInCents) / 100).toFixed(2)}`,
-      period:
-        period === 'monthly'
-          ? m['guardPricing.per_month']()
-          : m['guardPricing.per_year'](),
+      price: `$${(plan.yearlyPriceInCents / 100).toFixed(2)}`,
+      period: m['guardPricing.per_year'](),
       collectionLabel: m['guardPricing.collections']({
         count: plan.collectionLimit,
       }),
@@ -165,8 +156,6 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
   return (
     <GuardPricing
       content={content}
-      period={period}
-      onPeriodChange={setPeriod}
       onBuy={(planId) => {
         if (!session?.user) {
           router.push('/sign-in?callbackUrl=%2Fpricing');

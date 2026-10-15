@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 import { Link } from '@/core/i18n/navigation';
-import type { GuardBillingPeriod, GuardPlanId } from '@/config/guard-plans';
+import type { GuardPlanId } from '@/config/guard-plans';
 import { cn } from '@/lib/utils';
 import {
   Accordion,
@@ -20,10 +20,7 @@ export type GuardPricingContent = {
   eyebrow: string;
   title: string;
   description: string;
-  monthly: string;
-  yearly: string;
-  annualSaving: string;
-  billingLabel: string;
+  annualBilling: string;
   trial: string;
   trialNote: string;
   demo: string;
@@ -56,8 +53,6 @@ export type GuardPricingContent = {
 
 export function GuardPricing({
   content,
-  period,
-  onPeriodChange,
   onBuy,
   pendingPlan,
   checkoutAvailable,
@@ -65,8 +60,6 @@ export function GuardPricing({
   asPage,
 }: {
   content: GuardPricingContent;
-  period: GuardBillingPeriod;
-  onPeriodChange: (period: GuardBillingPeriod) => void;
   onBuy: (id: GuardPlanId) => void;
   pendingPlan?: GuardPlanId;
   checkoutAvailable: boolean;
@@ -95,33 +88,9 @@ export function GuardPricing({
             {content.demo}
             <ArrowRight className="size-4" aria-hidden="true" />
           </Link>
-          <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-            <div
-              role="group"
-              aria-label={content.billingLabel}
-              className="border-border bg-card inline-flex rounded-full border p-1"
-            >
-              {(['monthly', 'yearly'] as const).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  aria-pressed={period === value}
-                  onClick={() => onPeriodChange(value)}
-                  className={cn(
-                    'focus-visible:ring-ring/50 min-h-10 rounded-full px-5 text-sm font-medium transition-colors outline-none focus-visible:ring-3',
-                    period === value
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  {value === 'monthly' ? content.monthly : content.yearly}
-                </button>
-              ))}
-            </div>
-            <span className="bg-secondary text-secondary-foreground rounded-full px-3 py-1.5 text-xs font-semibold">
-              {content.annualSaving}
-            </span>
-          </div>
+          <p className="text-muted-foreground mt-9 text-sm font-medium">
+            {content.annualBilling}
+          </p>
         </div>
 
         <div className="mt-12 grid gap-5 lg:grid-cols-3">

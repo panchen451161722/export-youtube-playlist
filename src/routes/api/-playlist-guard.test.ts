@@ -2,12 +2,22 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { GuardError } from '@/modules/playlist-guard/service';
+import {
+  getPlaylistExport,
+  PlaylistServiceError,
+} from '@/modules/youtube-playlist/service';
+import {
+  getChannelToolData,
+  YouTubePublicError,
+} from '@/modules/youtube-public/service';
 import type { GuardCreateInput } from '@/lib/playlist-guard/types';
 
 import {
+  assertGuardBackupEmailReady,
   jobConfiguration,
   normalizeGuardSource,
   readGuardAction,
+  scanGuardPublicSource,
 } from './-playlist-guard';
 
 const url = 'https://example.invalid/api/playlist-guard';
@@ -143,11 +153,11 @@ test('collection update accepts a bounded name and keeps the source immutable', 
     );
 });
 
-test('collection preferences accept hourly change alerts and reject unsupported frequencies', async () => {
+test('collection preferences accept daily change alerts and reject unsupported frequencies', async () => {
   const action = {
     action: 'update',
     id: 'saved',
-    frequency: 'hourly',
+    frequency: 'daily',
     emailDelivery: false,
     notifyAdded: true,
     notifyMissing: true,
@@ -156,10 +166,238 @@ test('collection preferences accept hourly change alerts and reject unsupported 
     await readGuardAction(request(JSON.stringify(action))),
     action
   );
+  for (const frequency of ['hourly', 'minutely']) {
+    await assert.rejects(
+      readGuardAction(request(JSON.stringify({ ...action, frequency }))),
+      code('invalid_input')
+    );
+    await assert.rejects(
+      readGuardAction(
+        request(
+          JSON.stringify({
+            action: 'create',
+            name: 'test',
+            source: 'playlist',
+            url: 'https://youtube.com/playlist?list=PL1234567890',
+            frequency,
+            notifyAdded: true,
+            notifyMissing: true,
+            emailDelivery: false,
+          })
+        )
+      ),
+      code('invalid_input')
+    );
+  }
+});
+
+test('account sources normalize by connection and reject missing owners or unsafe private URLs', () => {
+  const base: GuardCreateInput = {
+    name: 'Private',
+    source: 'private_playlist',
+    url: 'https://youtube.com/playlist?list=PL1234567890',
+    connectionId: 'alice-channel',
+    frequency: 'daily',
+    notifyAdded: true,
+    notifyMissing: true,
+    emailDelivery: false,
+  };
+  assert.equal(
+    normalizeGuardSource(base).key,
+    'private_playlist:alice-channel:PL1234567890'
+  );
+  assert.notEqual(
+    normalizeGuardSource(base).key,
+    normalizeGuardSource({ ...base, connectionId: 'other-channel' }).key
+  );
+  assert.throws(
+    () => normalizeGuardSource({ ...base, connectionId: undefined }),
+    code('invalid_source')
+  );
+  assert.throws(
+    () =>
+      normalizeGuardSource({
+        ...base,
+        url: 'https://attacker.invalid/?list=PL1234567890',
+      }),
+    code('invalid_source')
+  );
+  for (const source of [
+    'liked_videos',
+    'liked_music',
+    'subscriptions',
+  ] as const) {
+    const result = normalizeGuardSource({ ...base, source, url: '' });
+    assert.equal(result.key, `${source}:alice-channel`);
+    assert.ok(result.input.url.startsWith('https://www.youtube.com/'));
+  }
+});
+
+test('change-alert preferences can be saved before mail setup, while routine backup delivery stays gated', () => {
+  const action = {
+    action: 'create' as const,
+    name: 'Alerts',
+    source: 'playlist' as const,
+    url: 'https://youtube.com/playlist?list=PL1234567890',
+    frequency: 'daily' as const,
+    notifyAdded: true,
+    notifyMissing: true,
+    emailDelivery: false,
+  };
+  assert.doesNotThrow(() => assertGuardBackupEmailReady(action, false, false));
+  assert.doesNotThrow(() =>
+    assertGuardBackupEmailReady(
+      { action: 'update', id: 'saved', notifyAdded: true, notifyMissing: true },
+      false,
+      false
+    )
+  );
+  assert.throws(
+    () =>
+      assertGuardBackupEmailReady(
+        { ...action, emailDelivery: true },
+        false,
+        true
+      ),
+    code('email_unconfigured')
+  );
+  assert.throws(
+    () =>
+      assertGuardBackupEmailReady(
+        { ...action, emailDelivery: true },
+        true,
+        false
+      ),
+    code('email_unverified')
+  );
+  assert.doesNotThrow(() =>
+    assertGuardBackupEmailReady({ ...action, emailDelivery: true }, true, true)
+  );
+});
+
+test('restored preference defaults on for new collections and supports explicit opt-out', async () => {
+  const action = {
+    action: 'create',
+    name: 'Restored',
+    source: 'playlist',
+    url: 'https://youtube.com/playlist?list=PL1234567890',
+    frequency: 'daily',
+    notifyAdded: true,
+    notifyMissing: true,
+    emailDelivery: false,
+  };
+  assert.equal(
+    (
+      (await readGuardAction(
+        request(JSON.stringify(action))
+      )) as GuardCreateInput
+    ).notifyRestored,
+    true
+  );
+  assert.equal(
+    (
+      (await readGuardAction(
+        request(JSON.stringify({ ...action, notifyRestored: false }))
+      )) as GuardCreateInput
+    ).notifyRestored,
+    false
+  );
+  for (const notifyRestored of [true, false]) {
+    const update = { action: 'update', id: 'saved', notifyRestored };
+    assert.deepEqual(
+      await readGuardAction(request(JSON.stringify(update))),
+      update
+    );
+  }
   await assert.rejects(
     readGuardAction(
-      request(JSON.stringify({ ...action, frequency: 'minutely' }))
+      request(JSON.stringify({ ...action, notifyRestored: 'true' }))
     ),
     code('invalid_input')
   );
+});
+
+test('channel tab URLs preserve the channel identity rather than the tab name', () => {
+  for (const tab of ['playlists', 'videos', 'shorts']) {
+    const result = normalizeGuardSource({
+      name: 'Channel',
+      source: 'channel',
+      url: `https://www.youtube.com/@chaijing2023/${tab}`,
+      frequency: 'daily',
+      notifyAdded: true,
+      notifyMissing: true,
+      emailDelivery: false,
+    });
+    assert.equal(result.input.url, 'https://www.youtube.com/@chaijing2023');
+    assert.equal(result.key, 'channel:handle:chaijing2023');
+  }
+});
+
+test('public scans preserve safe network and API errors so failed collections can explain the cause', async () => {
+  for (const error of [
+    new YouTubePublicError('network'),
+    new YouTubePublicError('quota'),
+    new YouTubePublicError('configuration'),
+  ]) {
+    await assert.rejects(
+      scanGuardPublicSource(
+        { source: 'channel', url: 'https://www.youtube.com/@example' },
+        'test-key',
+        {
+          getChannelToolData: async () => {
+            throw error;
+          },
+          getPlaylistExport,
+        }
+      ),
+      (caught: unknown) =>
+        caught instanceof GuardError &&
+        caught.code === `youtube_${error.code}` &&
+        caught.status === error.status &&
+        !caught.message.includes('test-key') &&
+        !caught.message.includes('_failed:')
+    );
+  }
+  await assert.rejects(
+    scanGuardPublicSource(
+      {
+        source: 'playlist',
+        url: 'https://www.youtube.com/playlist?list=PL1234567890',
+      },
+      'test-key',
+      {
+        getChannelToolData,
+        getPlaylistExport: async () => {
+          throw new PlaylistServiceError('private_or_not_found');
+        },
+      }
+    ),
+    code('youtube_private_or_not_found')
+  );
+});
+
+test('channel scans carry the actual YouTube title and use its uploads playlist', async () => {
+  const result = await scanGuardPublicSource(
+    { source: 'channel', url: 'https://www.youtube.com/@example' },
+    'test-key',
+    {
+      getChannelToolData: async ({ input }) => {
+        assert.equal(input, 'https://www.youtube.com/@example');
+        return {
+          title: 'Actual channel title',
+          uploadsPlaylistUrl:
+            'https://www.youtube.com/playlist?list=UU1234567890',
+        };
+      },
+      getPlaylistExport: async ({ playlistUrl }) => {
+        assert.equal(
+          playlistUrl,
+          'https://www.youtube.com/playlist?list=UU1234567890'
+        );
+        return { videos: [], truncated: false, scannedCount: 0, totalItems: 0 };
+      },
+    }
+  );
+  assert.equal(result.sourceTitle, 'Actual channel title');
+  assert.equal(result.complete, true);
 });

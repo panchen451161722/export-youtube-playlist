@@ -14,6 +14,7 @@ const STATIC_PATHS = [
   '/terms-of-service',
   '/blog',
   '/tools',
+  '/youtube-playlist-backup',
   '/tools/export-youtube-playlist-to-csv',
   '/tools/export-youtube-playlist-to-excel',
   '/tools/youtube-playlist-link-extractor',

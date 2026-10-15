@@ -175,11 +175,10 @@ export function Header() {
     },
     { href: '/pricing', label: m['landing.nav.pricing'](), disabled: false },
     {
-      href: '/settings/collections',
+      href: '/youtube-playlist-backup',
       label: m['guardPricing.nav_monitoring'](),
       disabled: false,
     },
-    { href: '/demo', label: m['guardPricing.nav_demo'](), disabled: false },
     { href: '/contact', label: m['landing.nav.contact'](), disabled: false },
     { href: '/about', label: m['landing.nav.about'](), disabled: false },
   ];

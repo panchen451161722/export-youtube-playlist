@@ -126,6 +126,7 @@ test('complete snapshots retain missing metadata, remove restored records and bo
     now
   );
   assert.equal(state.snapshots[0].added, 0);
+  assert.equal(state.snapshots[0].restored, 0);
   state = applyScan(
     state,
     { complete: true, items: [video('b'), video('c')] },
@@ -141,6 +142,8 @@ test('complete snapshots retain missing metadata, remove restored records and bo
     now + 2000
   );
   assert.equal(state.missing.length, 0);
+  assert.equal(state.snapshots[0].added, 0);
+  assert.equal(state.snapshots[0].restored, 1);
   for (let i = 0; i < 8; i++)
     state = applyScan(
       state,
@@ -368,4 +371,55 @@ test('an expired scan lease cannot overwrite a newer scan or resurrect a deleted
   releaseDeleted({ complete: true, items: [video('resurrect')] });
   assert.equal((await result)[0].status, 'rejected');
   await assert.rejects(store.detail('bob', collection.id), code('not_found'));
+});
+
+test('channel scans save the real title and replace generated names without overwriting custom names', () => {
+  const channel = {
+    ...empty,
+    source: 'channel' as const,
+    url: 'https://www.youtube.com/@example',
+    name: 'Public channel · playlists',
+  };
+  const scan = {
+    complete: true,
+    items: [video('a')],
+    sourceTitle: '柴静 Chai Jing',
+  };
+  const saved = applyScan(channel, scan, now);
+  assert.equal(saved.name, '柴静 Chai Jing');
+  assert.equal(saved.sourceTitle, '柴静 Chai Jing');
+  assert.equal(saved.itemCount, 1);
+  assert.equal(saved.notifyAdded, channel.notifyAdded);
+  assert.equal(saved.frequency, channel.frequency);
+  for (const name of [
+    'YouTube Channel · @example',
+    'YouTube 频道 · @example',
+    '公开频道 · videos',
+  ]) {
+    assert.equal(
+      applyScan({ ...channel, name }, scan, now).name,
+      scan.sourceTitle
+    );
+  }
+  for (const name of ['My research', 'Public channel · Family']) {
+    assert.equal(applyScan({ ...channel, name }, scan, now).name, name);
+  }
+  const renamed = { ...scan, sourceTitle: 'New channel title' };
+  assert.equal(applyScan(saved, renamed, now).name, renamed.sourceTitle);
+  const custom = applyScan(
+    { ...saved, name: 'My saved channel' },
+    renamed,
+    now
+  );
+  assert.equal(custom.name, 'My saved channel');
+  assert.equal(custom.sourceTitle, renamed.sourceTitle);
+  assert.equal(
+    applyScan(saved, { ...scan, sourceTitle: undefined }, now).name,
+    saved.name
+  );
+  assert.throws(
+    () => applyScan(saved, { ...renamed, complete: false }, now),
+    code('incomplete_scan')
+  );
+  assert.equal(saved.sourceTitle, '柴静 Chai Jing');
 });

@@ -35,6 +35,7 @@ import type {
   GuardMissingItem,
   GuardSnapshot,
 } from '@/lib/playlist-guard/types';
+import { YoutubeAccountError } from '@/lib/youtube-connections/google';
 
 const DAY = 86_400_000;
 const LEASE_MS = 180_000;
@@ -48,10 +49,52 @@ export class GuardError extends Error {
     super(message);
   }
 }
-export type GuardScan = { items: GuardItem[]; complete: boolean };
+export type GuardScan = {
+  items: GuardItem[];
+  complete: boolean;
+  sourceTitle?: string;
+};
+
+function scannedChannelName(
+  previous: GuardCollectionDetail,
+  sourceTitle: string
+) {
+  if (previous.sourceTitle)
+    return previous.name === previous.sourceTitle ? sourceTitle : previous.name;
+  // Upgrade names generated before channel metadata was saved, including old /playlists URLs.
+  let parts: string[] = [];
+  try {
+    parts = new URL(previous.url).pathname.split('/').filter(Boolean);
+  } catch {
+    /* Keep custom names. */
+  }
+  const identifiers = [
+    parts[0],
+    parts[1],
+    'playlists',
+    'videos',
+    'shorts',
+    'streams',
+    'featured',
+    'about',
+    'community',
+  ].filter(Boolean);
+  const generated = [
+    'Public channel',
+    'YouTube Channel',
+    'YouTube channel',
+    '公开频道',
+    'YouTube 频道',
+  ].some((prefix) =>
+    identifiers.some(
+      (identifier) =>
+        previous.name === `${prefix} · ${identifier}`.slice(0, 100)
+    )
+  );
+  return generated ? sourceTitle : previous.name;
+}
 export function nextRun(frequency: GuardFrequency, now: number): string {
   const interval = {
-    hourly: 3_600_000,
     daily: DAY,
     weekly: 7 * DAY,
     biweekly: 14 * DAY,
@@ -120,6 +163,10 @@ export function applyScan(
   const previousItems = previous.snapshots[0]?.items ?? [];
   const currentIds = new Set(items.map((item) => item.id));
   const oldIds = new Set(previousItems.map((item) => item.id));
+  const missingIds = new Set(previous.missing.map((item) => item.id));
+  const returnedOrNew = previous.runCount
+    ? items.filter((item) => !oldIds.has(item.id))
+    : [];
   const removed = previousItems.filter((item) => !currentIds.has(item.id));
   const missingById = new Map(
     previous.missing
@@ -136,14 +183,20 @@ export function applyScan(
     id: getUuid(),
     createdAt: timestamp,
     itemCount: items.length,
-    added: previous.runCount
-      ? items.filter((item) => !oldIds.has(item.id)).length
-      : 0,
+    added: returnedOrNew.filter((item) => !missingIds.has(item.id)).length,
     removed: removed.length,
+    restored: returnedOrNew.filter((item) => missingIds.has(item.id)).length,
     items,
   };
+  const sourceTitle =
+    previous.source === 'channel'
+      ? scan.sourceTitle?.trim().slice(0, 100)
+      : undefined;
   const result = {
     ...previous,
+    ...(sourceTitle
+      ? { sourceTitle, name: scannedChannelName(previous, sourceTitle) }
+      : {}),
     snapshots: [snapshot, ...previous.snapshots].slice(0, GUARD_SNAPSHOT_LIMIT),
     missing,
     itemCount: items.length,
@@ -183,7 +236,26 @@ function summaryOf(document: GuardCollectionDetail): string {
   return JSON.stringify(summary);
 }
 function documentOf(row: GuardCollectionRow): GuardCollectionDetail {
-  return JSON.parse(row.document) as GuardCollectionDetail;
+  return normalizeLegacySchedule(
+    JSON.parse(row.document) as GuardCollectionDetail
+  );
+}
+
+/** Older saved collections used hourly checks. Retire that cadence without changing other preferences. */
+function normalizeLegacySchedule<T extends GuardCollection>(collection: T): T {
+  if ((collection.frequency as string) !== 'hourly') return collection;
+  const daily = { ...collection, frequency: 'daily' as const };
+  if (
+    daily.enabled &&
+    daily.lastSyncedAt &&
+    daily.nextSyncAt &&
+    !daily.lastError
+  ) {
+    const earliest = Date.parse(daily.lastSyncedAt) + DAY;
+    if (earliest > Date.parse(daily.nextSyncAt))
+      daily.nextSyncAt = new Date(earliest).toISOString();
+  }
+  return daily;
 }
 
 /** Inject a database and clock for integration tests. No cross-module dependencies or network I/O. */
@@ -259,7 +331,9 @@ export function createGuardStore(
         )
       )
       .orderBy(asc(guardCollection.createdAt));
-    return rows.map((row) => JSON.parse(row.summary) as GuardCollection);
+    return rows.map((row) =>
+      normalizeLegacySchedule(JSON.parse(row.summary) as GuardCollection)
+    );
   }
 
   async function detail(userId: string, id: string) {
@@ -309,6 +383,7 @@ export function createGuardStore(
     const createdAt = new Date(clock()).toISOString();
     const document: GuardCollectionDetail = {
       ...input,
+      notifyRestored: input.notifyRestored ?? true,
       id,
       enabled: true,
       createdAt,
@@ -383,6 +458,7 @@ export function createGuardStore(
         | 'frequency'
         | 'notifyMissing'
         | 'notifyAdded'
+        | 'notifyRestored'
         | 'emailDelivery'
       >
     >
@@ -466,8 +542,11 @@ export function createGuardStore(
   async function sync(
     userId: string,
     id: string,
-    fetchScan: (collection: GuardCollectionDetail) => Promise<GuardScan>,
-    options: { scheduled?: boolean } = {}
+    fetchScan: (
+      collection: GuardCollectionDetail,
+      ownerId: string
+    ) => Promise<GuardScan>,
+    options: { scheduled?: boolean; emailAvailable?: boolean } = {}
   ) {
     const row = await rowFor(userId, id);
     await assertAccess(userId, row);
@@ -512,7 +591,7 @@ export function createGuardStore(
     if (claimed.leaseToken !== token)
       throw new GuardError('sync_busy', 'A sync is already running.', 409);
     try {
-      const scan = await fetchScan(document);
+      const scan = await fetchScan(document, userId);
       const result = applyScan(document, scan, clock());
       const lease = and(
         eq(guardCollection.id, id),
@@ -534,17 +613,18 @@ export function createGuardStore(
         email: string;
         emailVerified: boolean;
         locale: string;
-      }[] = options.scheduled
-        ? await database
-            .select({
-              email: user.email,
-              emailVerified: user.emailVerified,
-              locale: user.locale,
-            })
-            .from(user)
-            .where(eq(user.id, userId))
-            .limit(1)
-        : [];
+      }[] =
+        options.scheduled && options.emailAvailable !== false
+          ? await database
+              .select({
+                email: user.email,
+                emailVerified: user.emailVerified,
+                locale: user.locale,
+              })
+              .from(user)
+              .where(eq(user.id, userId))
+              .limit(1)
+          : [];
       const payload = recipient?.emailVerified
         ? notificationPayload(result, recipient.locale)
         : null;
@@ -593,9 +673,9 @@ export function createGuardStore(
     } catch (error) {
       // A failed scan never overwrites successful snapshots or marks videos missing.
       const message =
-        error instanceof GuardError
+        error instanceof GuardError || error instanceof YoutubeAccountError
           ? error.message
-          : 'YouTube could not complete this scan. Your previous snapshot is unchanged.';
+          : 'YouTube could not complete this check. Please try again.';
       const failed = {
         ...document,
         lastError: message,
@@ -617,14 +697,24 @@ export function createGuardStore(
             isNull(guardCollection.deletedAt)
           )
         );
-      if (error instanceof GuardError) throw error;
+      if (error instanceof GuardError || error instanceof YoutubeAccountError)
+        throw error;
       throw new GuardError('scan_failed', message, 502);
     }
   }
   async function due(limit = 5) {
     const timestamp = new Date(clock()).toISOString();
-    const rows: Pick<GuardCollectionRow, 'id' | 'userId'>[] = await database
-      .select({ id: guardCollection.id, userId: guardCollection.userId })
+    const rows: Pick<
+      GuardCollectionRow,
+      'id' | 'userId' | 'summary' | 'version' | 'nextSyncAt'
+    >[] = await database
+      .select({
+        id: guardCollection.id,
+        userId: guardCollection.userId,
+        summary: guardCollection.summary,
+        version: guardCollection.version,
+        nextSyncAt: guardCollection.nextSyncAt,
+      })
       .from(guardCollection)
       .where(
         and(
@@ -639,7 +729,37 @@ export function createGuardStore(
       )
       .orderBy(asc(guardCollection.nextSyncAt))
       .limit(Math.min(limit, 5));
-    return rows.map((row) => ({ id: row.id, userId: row.userId }));
+    const ready: { id: string; userId: string }[] = [];
+    for (const row of rows) {
+      const schedule = normalizeLegacySchedule(
+        JSON.parse(row.summary) as GuardCollection
+      );
+      if (schedule.nextSyncAt && schedule.nextSyncAt > timestamp) {
+        // Move the due index past an obsolete hourly deadline. A subsequent save persists the normalized document.
+        await database
+          .update(guardCollection)
+          .set({ nextSyncAt: schedule.nextSyncAt })
+          .where(
+            and(
+              eq(guardCollection.id, row.id),
+              eq(guardCollection.userId, row.userId),
+              eq(guardCollection.version, row.version),
+              isNull(guardCollection.deletedAt),
+              eq(guardCollection.enabled, true),
+              row.nextSyncAt
+                ? eq(guardCollection.nextSyncAt, row.nextSyncAt)
+                : isNull(guardCollection.nextSyncAt),
+              or(
+                isNull(guardCollection.leaseExpiresAt),
+                lt(guardCollection.leaseExpiresAt, timestamp)
+              )
+            )
+          );
+        continue;
+      }
+      ready.push({ id: row.id, userId: row.userId });
+    }
+    return ready;
   }
   async function verifiedEmail(userId: string): Promise<string | null> {
     const [row] = await database
@@ -753,7 +873,8 @@ export function createGuardStore(
           email === row.recipient &&
           (!payload.emailDelivery || current.emailDelivery) &&
           (!payload.notifyMissing || current.notifyMissing) &&
-          (!payload.notifyAdded || current.notifyAdded);
+          (!payload.notifyAdded || current.notifyAdded) &&
+          (!payload.notifyRestored || !!current.notifyRestored);
       } catch (error) {
         if (
           !(

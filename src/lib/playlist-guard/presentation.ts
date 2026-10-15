@@ -43,25 +43,43 @@ export function visiblePageNumbers(current: number, total: number): number[] {
     .filter((n) => n >= 1 && n <= total)
     .sort((a, b) => a - b);
 }
+export type CollectionDateStyle = 'full' | 'date' | 'short';
+export function formatCollectionDate(
+  value: string | null,
+  locale: string,
+  notYet: string,
+  style: CollectionDateStyle = 'full'
+) {
+  if (!value) return notYet;
+  return new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
+    month: 'short',
+    day: 'numeric',
+    ...(style !== 'short' ? { year: 'numeric' as const } : {}),
+    ...(style !== 'date'
+      ? { hour: 'numeric' as const, minute: '2-digit' as const }
+      : {}),
+  }).format(new Date(value));
+}
+
 export function collectionView(
   collection: GuardCollection,
-  formatDate: (value: string | null) => string,
+  formatDate: (value: string | null, style?: CollectionDateStyle) => string,
   scheduler: boolean,
   manualLabel: string
 ): CollectionSummaryView {
   return {
     ...collection,
-    createdLabel: formatDate(collection.createdAt),
-    lastSyncLabel: formatDate(collection.lastSyncedAt),
+    createdLabel: formatDate(collection.createdAt, 'date'),
+    lastSyncLabel: formatDate(collection.lastSyncedAt, 'short'),
     nextSyncLabel:
       scheduler && collection.enabled
-        ? formatDate(collection.nextSyncAt)
+        ? formatDate(collection.nextSyncAt, 'short')
         : manualLabel,
   };
 }
 export function collectionDetailView(
   collection: GuardCollectionDetail,
-  formatDate: (value: string | null) => string,
+  formatDate: (value: string | null, style?: CollectionDateStyle) => string,
   scheduler: boolean,
   manualLabel: string,
   snapshot?: GuardSnapshot

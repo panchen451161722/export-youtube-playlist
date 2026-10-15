@@ -45,3 +45,18 @@ test('demo operations stay local and preserve missing metadata/history', () => {
     2
   );
 });
+
+test('subscribed channels export as channel IDs and URLs', () => {
+  const item = {
+    ...createGuardDemo()[0].snapshots[0].items[0],
+    id: 'UCtest',
+    kind: 'channel' as const,
+    url: 'https://www.youtube.com/channel/UCtest',
+    duration: '',
+    views: undefined,
+  };
+  const csv = guardCsv([item]);
+  assert.ok(csv.includes('"Channel URL"'));
+  assert.ok(csv.includes('"Channel ID"'));
+  assert.ok(!csv.includes('"Video ID"'));
+});

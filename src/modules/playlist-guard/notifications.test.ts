@@ -238,9 +238,8 @@ test('unchanged alerts, unverified recipients, paused collections and incomplete
   }
 });
 
-test('hourly change-only checks stay quiet for unchanged videos and notify on additions or removals', async () => {
-  const HOUR = 3_600_000;
-  const f = await fixture({ frequency: 'hourly', emailDelivery: false });
+test('daily change-only checks stay quiet for unchanged videos and notify on additions or removals', async () => {
+  const f = await fixture({ frequency: 'daily', emailDelivery: false });
   try {
     let scans = 0;
     let items = [
@@ -274,7 +273,7 @@ test('hourly change-only checks stay quiet for unchanged videos and notify on ad
         return { success: true, provider: 'test', messageId: id };
       },
     };
-    f.advance(HOUR - 1);
+    f.advance(DAY - 1);
     assert.equal((await runGuardJobs(f.store, runtime)).checked, 0);
     f.advance(1);
     const unchanged = await runGuardJobs(f.store, runtime);
@@ -283,17 +282,17 @@ test('hourly change-only checks stay quiet for unchanged videos and notify on ad
     assert.equal(sent.length, 0);
     assert.equal((await f.database.select().from(guardDelivery)).length, 0);
     const saved = await f.store.detail('owner', f.collection.id);
-    assert.equal(Date.parse(saved.nextSyncAt!), f.clock() + HOUR);
+    assert.equal(Date.parse(saved.nextSyncAt!), f.clock() + DAY);
     assert.equal(saved.snapshots[0].added, 0);
     assert.equal(saved.snapshots[0].removed, 0);
 
-    f.advance(HOUR);
+    f.advance(DAY);
     items = [...items, video('c')];
     assert.equal((await runGuardJobs(f.store, runtime)).mail.sent, 1);
     assert.equal(sent[0].snapshot.added, 1);
     assert.equal(sent[0].snapshot.removed, 0);
 
-    f.advance(HOUR);
+    f.advance(DAY);
     assert.equal((await runGuardJobs(f.store, runtime)).mail.attempted, 0);
     assert.equal(
       sent.length,
@@ -301,7 +300,7 @@ test('hourly change-only checks stay quiet for unchanged videos and notify on ad
       'an unchanged scan must not repeat the last alert'
     );
 
-    f.advance(HOUR);
+    f.advance(DAY);
     items = items.filter((item) => item.id !== 'a');
     assert.equal((await runGuardJobs(f.store, runtime)).mail.sent, 1);
     assert.equal(sent[1].snapshot.added, 0);
@@ -426,6 +425,292 @@ test('an expired scan cannot enqueue a stale notification after a newer scan win
     const queue = await f.database.select().from(guardDelivery);
     assert.equal(queue.length, 1);
     assert.equal(queue[0].id, fresh.snapshots[0].id);
+  } finally {
+    f.client.close();
+  }
+});
+
+test('OAuth-only scheduler checks subscriptions as their owner, preserves failures and alerts only on changes', async () => {
+  const f = await fixture({
+    source: 'subscriptions',
+    connectionId: 'fixture-connection',
+    frequency: 'daily',
+    emailDelivery: false,
+  });
+  try {
+    const initial = await f.store.detail('owner', f.collection.id);
+    const sent: GuardNotificationPayload[] = [];
+    let fail = false;
+    let items = initial.snapshots[0].items.map((item) => ({
+      ...item,
+      kind: 'channel' as const,
+    }));
+    const runtime = {
+      capabilities: { ...capabilities, youtube: false, privateSources: true },
+      scan: async (collection: { connectionId?: string }, ownerId: string) => {
+        assert.equal(ownerId, 'owner');
+        assert.equal(collection.connectionId, 'fixture-connection');
+        if (fail) throw new Error('upstream fixture failure');
+        return { complete: true, items };
+      },
+      send: async (payload: GuardNotificationPayload) => {
+        sent.push(payload);
+        return { success: true, provider: 'fixture' };
+      },
+    };
+    f.advance(DAY);
+    assert.equal((await runGuardJobs(f.store, runtime)).completed, 1);
+    assert.equal(sent.length, 0);
+    items = [items[0], { ...items[1], id: 'new-channel' }];
+    f.advance(DAY);
+    assert.equal((await runGuardJobs(f.store, runtime)).mail.sent, 1);
+    assert.equal(sent[0].kind, 'channel');
+    const email = guardNotificationEmail(
+      sent[0],
+      'fixture@example.invalid',
+      { name: 'Test', url: 'https://example.invalid' },
+      'fixture'
+    );
+    assert.match(email.text || '', /新增频道：1/);
+    assert.match(email.text || '', /丢失频道：1/);
+    const saved = await f.store.detail('owner', f.collection.id);
+    fail = true;
+    f.advance(DAY);
+    assert.equal((await runGuardJobs(f.store, runtime)).failed, 1);
+    assert.deepEqual(
+      (await f.store.detail('owner', f.collection.id)).snapshots,
+      saved.snapshots
+    );
+    assert.equal(sent.length, 1);
+  } finally {
+    f.client.close();
+  }
+});
+
+test('legacy hourly collections become daily without changing notification preferences or scanning early', async () => {
+  const f = await fixture({
+    emailDelivery: false,
+    notifyAdded: true,
+    notifyMissing: true,
+  });
+  try {
+    const [row] = await f.database
+      .select()
+      .from(guardCollection)
+      .where(eq(guardCollection.id, f.collection.id));
+    const document = JSON.parse(row.document);
+    const summary = JSON.parse(row.summary);
+    const oldDeadline = new Date(f.clock() + 3_600_000).toISOString();
+    await f.database
+      .update(guardCollection)
+      .set({
+        document: JSON.stringify({
+          ...document,
+          frequency: 'hourly',
+          nextSyncAt: oldDeadline,
+        }),
+        summary: JSON.stringify({
+          ...summary,
+          frequency: 'hourly',
+          nextSyncAt: oldDeadline,
+        }),
+        nextSyncAt: oldDeadline,
+      })
+      .where(eq(guardCollection.id, f.collection.id));
+    const current = await f.store.detail('owner', f.collection.id);
+    assert.equal(current.frequency, 'daily');
+    assert.equal(current.nextSyncAt, new Date(f.clock() + DAY).toISOString());
+    assert.equal(current.notifyAdded, true);
+    assert.equal(current.notifyMissing, true);
+    assert.equal(current.emailDelivery, false);
+    assert.deepEqual(current.snapshots, document.snapshots);
+    assert.equal((await f.store.list('owner'))[0].frequency, 'daily');
+    f.advance(3_600_000);
+    assert.equal((await f.store.due()).length, 0);
+    const [deferred] = await f.database
+      .select()
+      .from(guardCollection)
+      .where(eq(guardCollection.id, f.collection.id));
+    assert.equal(deferred.nextSyncAt, current.nextSyncAt);
+    f.advance(DAY - 3_600_000);
+    assert.equal((await f.store.due()).length, 1);
+    await f.store.sync(
+      'owner',
+      f.collection.id,
+      async () => ({ complete: true, items: current.snapshots[0].items }),
+      { scheduled: true }
+    );
+    const [saved] = await f.database
+      .select()
+      .from(guardCollection)
+      .where(eq(guardCollection.id, f.collection.id));
+    assert.equal(JSON.parse(saved.document).frequency, 'daily');
+    assert.equal(saved.nextSyncAt, new Date(f.clock() + DAY).toISOString());
+    assert.equal((await f.database.select().from(guardDelivery)).length, 0);
+  } finally {
+    f.client.close();
+  }
+});
+
+test('mail setup can follow saved alert preferences without stale alerts or exhausted retries', async () => {
+  const f = await fixture({
+    emailDelivery: false,
+    notifyAdded: true,
+    notifyMissing: true,
+  });
+  try {
+    let items = [video('a'), video('b'), video('c')];
+    let calls = 0;
+    let fail = false;
+    const runtime = {
+      capabilities: { ...capabilities, email: false },
+      scan: async () => ({ complete: true, items }),
+      send: async () => {
+        calls++;
+        return fail
+          ? { success: false, provider: 'fixture', error: 'temporary' }
+          : { success: true, provider: 'fixture' };
+      },
+    };
+    f.advance(DAY);
+    const unconfigured = await runGuardJobs(f.store, runtime);
+    assert.equal(unconfigured.completed, 1);
+    assert.equal(unconfigured.mail.attempted, 0);
+    assert.equal(calls, 0);
+    assert.equal((await f.database.select().from(guardDelivery)).length, 0);
+    const preferences = await f.store.detail('owner', f.collection.id);
+    assert.equal(preferences.notifyAdded, true);
+    assert.equal(preferences.notifyMissing, true);
+    assert.equal(preferences.emailDelivery, false);
+    runtime.capabilities.email = true;
+    f.advance(DAY);
+    assert.equal((await runGuardJobs(f.store, runtime)).mail.attempted, 0);
+    assert.equal(calls, 0, 'enabling mail does not resend earlier changes');
+    items = [...items, video('d')];
+    fail = true;
+    f.advance(DAY);
+    assert.equal((await runGuardJobs(f.store, runtime)).mail.failed, 1);
+    const [pending] = await f.database.select().from(guardDelivery);
+    assert.equal(pending.attempts, 1);
+    runtime.capabilities.email = false;
+    f.advance(3_600_000);
+    assert.equal((await runGuardJobs(f.store, runtime)).mail.attempted, 0);
+    const [waiting] = await f.database.select().from(guardDelivery);
+    assert.equal(waiting.attempts, pending.attempts);
+    runtime.capabilities.email = true;
+    fail = false;
+    assert.equal((await runGuardJobs(f.store, runtime)).mail.sent, 1);
+    assert.equal(calls, 2);
+  } finally {
+    f.client.close();
+  }
+});
+
+test('restored-only alerts send once when a missing ID returns, without counting it as new', async () => {
+  const f = await fixture({
+    notifyAdded: false,
+    notifyMissing: false,
+    notifyRestored: true,
+    emailDelivery: false,
+  });
+  try {
+    let items = [video('b')];
+    const sent: GuardNotificationPayload[] = [];
+    const runtime = {
+      capabilities,
+      scan: async () => ({ complete: true, items }),
+      send: async (payload: GuardNotificationPayload) => {
+        sent.push(payload);
+        return { success: true, provider: 'fixture' };
+      },
+    };
+    f.advance(DAY);
+    assert.equal((await runGuardJobs(f.store, runtime)).mail.attempted, 0);
+    assert.equal(
+      (await f.store.detail('owner', f.collection.id)).missing.length,
+      1
+    );
+    items = [video('a'), video('b')];
+    f.advance(DAY);
+    assert.equal((await runGuardJobs(f.store, runtime)).mail.sent, 1);
+    assert.equal(sent[0].snapshot.restored, 1);
+    assert.equal(sent[0].snapshot.added, 0);
+    assert.equal(sent[0].snapshot.removed, 0);
+    assert.equal(
+      (await f.store.detail('owner', f.collection.id)).missing.length,
+      0
+    );
+    const app = { name: 'Test', url: 'https://example.invalid' };
+    assert.match(
+      guardNotificationEmail(sent[0], 'fixture@example.invalid', app, 'fixture')
+        .text || '',
+      /恢复视频：1/
+    );
+    assert.match(
+      guardNotificationEmail(
+        { ...sent[0], locale: 'en' },
+        'fixture@example.invalid',
+        app,
+        'fixture'
+      ).text || '',
+      /Restored videos: 1/
+    );
+    assert.equal(
+      guardNotificationEmail(sent[0], 'fixture@example.invalid', app, 'fixture')
+        .attachments,
+      undefined
+    );
+    f.advance(DAY);
+    assert.equal((await runGuardJobs(f.store, runtime)).mail.attempted, 0);
+    assert.equal(sent.length, 1);
+  } finally {
+    f.client.close();
+  }
+});
+
+test('disabled restored alerts do not become added alerts, and opting out cancels a queued restoration', async () => {
+  const f = await fixture({
+    notifyAdded: true,
+    notifyMissing: false,
+    notifyRestored: false,
+    emailDelivery: false,
+  });
+  try {
+    f.advance(61_000);
+    await f.store.sync('owner', f.collection.id, async () => ({
+      complete: true,
+      items: [video('b')],
+    }));
+    f.advance(DAY);
+    const runtime = {
+      capabilities,
+      scan: async () => ({ complete: true, items: [video('a'), video('b')] }),
+      send: async () => {
+        throw Error('must not send');
+      },
+    };
+    assert.equal((await runGuardJobs(f.store, runtime)).mail.attempted, 0);
+    assert.equal(
+      (await f.store.detail('owner', f.collection.id)).snapshots[0].restored,
+      1
+    );
+    assert.equal(
+      (await f.store.detail('owner', f.collection.id)).snapshots[0].added,
+      0
+    );
+    await f.store.update('owner', f.collection.id, { notifyRestored: true });
+    f.advance(61_000);
+    await f.store.sync('owner', f.collection.id, async () => ({
+      complete: true,
+      items: [video('b')],
+    }));
+    f.advance(DAY);
+    await f.store.sync('owner', f.collection.id, runtime.scan, {
+      scheduled: true,
+    });
+    assert.equal((await f.database.select().from(guardDelivery)).length, 1);
+    await f.store.update('owner', f.collection.id, { notifyRestored: false });
+    assert.equal((await f.store.deliverPending(runtime.send)).cancelled, 1);
   } finally {
     f.client.close();
   }

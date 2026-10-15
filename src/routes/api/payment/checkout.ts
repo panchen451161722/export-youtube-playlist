@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import { getAuth } from '@/core/auth';
-import { getGuardPlan } from '@/config/guard-plans';
+import { getGuardCheckoutProvider, getGuardPlan } from '@/config/guard-plans';
 import { getPricingProduct } from '@/config/pricing';
 import { getAllConfigs } from '@/modules/config/service';
 import { createCheckout } from '@/modules/payment/service';
@@ -72,16 +72,10 @@ async function POST({ request }: { request: Request }) {
       }
     }
 
-    // Optional per-provider "test amount" override (admin-configured).
-    // Only the charged amount is overridden — credits granted and order
-    // amount stored both come from the authoritative catalog.
     const configs = await getAllConfigs();
-    const providerKey = payment_provider || configs.default_payment_provider;
-    const testAmountRaw = providerKey
-      ? configs[`${providerKey}_test_amount`]
-      : undefined;
-    const testAmount = testAmountRaw ? parseInt(testAmountRaw) : 0;
-    const chargeAmount = testAmount > 0 ? testAmount : product.priceInCents;
+    if (!getGuardCheckoutProvider(configs)) {
+      return respErr('Annual checkout is not configured yet.', { status: 503 });
+    }
 
     // Build success/cancel URLs — only accept same-origin redirects.
     const baseUrl = configs.app_url || 'http://localhost:3000';
@@ -90,10 +84,7 @@ async function POST({ request }: { request: Request }) {
       '/settings/billing',
       baseUrl
     );
-    const finalRedirect = redirect
-      ? `${baseUrl}/auth-callback?redirect=${encodeURIComponent(`${baseUrl}${safeRedirectPath}`)}`
-      : `${baseUrl}/settings/billing`;
-    const successUrl = `${baseUrl}/api/payment/callback?redirect=${encodeURIComponent(finalRedirect)}`;
+    const successUrl = `${baseUrl}${safeRedirectPath}`;
     const cancelUrl = `${baseUrl}/pricing`;
 
     const checkout = await createCheckout({
@@ -105,7 +96,7 @@ async function POST({ request }: { request: Request }) {
       creditsValidDays: product.creditsValidDays,
       paymentOrder: {
         productId: product.productId,
-        price: { amount: chargeAmount, currency: product.currency },
+        price: { amount: product.priceInCents, currency: product.currency },
         type: product.type,
         description: product.description,
         successUrl,
@@ -127,8 +118,10 @@ async function POST({ request }: { request: Request }) {
 
     return respData({ checkout_url: checkout.checkoutInfo.checkoutUrl });
   } catch (error: any) {
-    console.error('checkout error:', error);
-    return respErr(error.message || 'Checkout failed');
+    console.error('checkout failed:', error?.type || error?.name || 'Error');
+    return respErr('Checkout failed. Please try again or contact support.', {
+      status: 502,
+    });
   }
 }
 

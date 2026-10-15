@@ -81,6 +81,11 @@ export function CollectionList({
             <Heading className="text-xl leading-tight font-semibold tracking-tight sm:text-2xl lg:text-3xl">
               {l.monitor_title}
             </Heading>
+            {l.list_description && (
+              <p className="text-muted-foreground max-w-xl text-sm leading-6">
+                {l.list_description}
+              </p>
+            )}
             <span className="bg-primary text-primary-foreground inline-flex rounded-md px-2.5 py-1 text-xs font-medium">
               {totalCount}/{limit} {l.collections_added}
             </span>
@@ -120,139 +125,185 @@ export function CollectionList({
           </Button>
         </section>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {collections.map((collection) => (
-            <article
-              key={collection.id}
-              data-tour={`card-${collection.id}`}
-              className={cn(
-                panel,
-                'flex h-full flex-col transition-shadow hover:shadow-md'
-              )}
-            >
-              <header className="border-border flex items-start justify-between gap-3 border-b p-5">
-                <div className="min-w-0">
-                  <h3
-                    className="truncate text-lg font-semibold"
-                    title={collection.name}
-                  >
-                    {collection.name}
-                  </h3>
-                  <p className="text-primary mt-1 text-[11px] font-semibold tracking-wide uppercase">
-                    {collection.source === 'channel'
-                      ? l.public_channel
-                      : l.public_playlist}
-                  </p>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => onToggle(collection.id)}
-                    aria-label={
-                      collection.enabled
-                        ? l.pause_collection
-                        : l.enable_collection
-                    }
-                    aria-pressed={collection.enabled}
-                    className={cn(
-                      'focus-visible:ring-ring mt-2 rounded-md px-2 py-0.5 text-[11px] font-semibold outline-none focus-visible:ring-2',
-                      collection.enabled
-                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                        : 'bg-muted text-muted-foreground'
-                    )}
-                  >
-                    {collection.enabled ? l.enabled : l.paused}
-                  </button>
-                </div>
-                {showSourceLinks && safeYoutubeHref(collection.url) ? (
-                  <a
-                    href={safeYoutubeHref(collection.url)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`${l.open_source}: ${collection.name}`}
-                    className={cn(
-                      buttonVariants({ variant: 'secondary', size: 'icon' }),
-                      'rounded-full'
-                    )}
-                  >
-                    <Link2 aria-hidden="true" />
-                  </a>
-                ) : (
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    aria-label={`${l.view}: ${collection.name}`}
-                    onClick={() => onView(collection.id)}
-                    className="rounded-full"
-                  >
-                    <Link2 aria-hidden="true" />
-                  </Button>
-                )}
-              </header>
-              <dl className="grid flex-1 grid-cols-2 gap-x-3 gap-y-6 px-5 py-7">
-                <Metric
-                  label={l.backup_frequency}
-                  value={l[collection.frequency]}
-                />
-                <Metric
-                  label={l.tracking_since}
-                  value={l[collection.createdLabel] ?? collection.createdLabel}
-                />
-                <Metric label={l.items} value={collection.itemCount} />
-                <Metric
-                  label={l.missing}
-                  value={collection.missingCount}
-                  warning={collection.missingCount > 0}
-                />
-                {collection.nextSyncLabel && (
-                  <>
-                    <Metric
-                      label={l.last_synced}
-                      value={collection.lastSyncLabel}
-                    />
-                    <Metric
-                      label={l.next_sync}
-                      value={
-                        collection.enabled ? collection.nextSyncLabel : l.paused
-                      }
-                    />
-                  </>
-                )}
-              </dl>
-              {collection.lastError && (
-                <p role="status" className="text-destructive px-5 pb-4 text-xs">
-                  {l.sync_error}: {collection.lastError}
-                </p>
-              )}
-              <footer className="border-border bg-muted/15 grid grid-cols-3 gap-2 border-t p-5">
-                <Button
-                  data-tour={`view-${collection.id}`}
-                  variant="outline"
-                  onClick={() => onView(collection.id)}
-                  className="h-9 px-2 text-xs"
-                >
-                  {l.view}
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => onUpdate(collection.id)}
-                  className="h-9 px-2 text-xs"
-                >
-                  {l.update}
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => onDelete(collection.id)}
-                  className="h-9 px-2 text-xs"
-                >
-                  {l.delete}
-                </Button>
-              </footer>
-            </article>
-          ))}
-        </div>
+        <CollectionCards
+          labels={l}
+          collections={collections}
+          busy={busy}
+          showSourceLinks={showSourceLinks}
+          onView={onView}
+          onUpdate={onUpdate}
+          onDelete={onDelete}
+          onToggle={onToggle}
+        />
       )}
+    </div>
+  );
+}
+
+/** Shared live/demo cards; pages choose the actions they expose. */
+export function CollectionCards({
+  labels: l,
+  collections,
+  busy = false,
+  showSourceLinks = false,
+  onView,
+  onUpdate,
+  onDelete,
+  onToggle,
+}: Pick<
+  CollectionListProps,
+  | 'labels'
+  | 'collections'
+  | 'busy'
+  | 'showSourceLinks'
+  | 'onView'
+  | 'onUpdate'
+  | 'onToggle'
+> & { onDelete?: (id: string) => void }) {
+  return (
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {collections.map((collection) => (
+        <article
+          key={collection.id}
+          data-tour={`card-${collection.id}`}
+          className={cn(
+            panel,
+            'flex h-full flex-col transition-shadow hover:shadow-md'
+          )}
+        >
+          <header className="border-border flex items-start justify-between gap-3 border-b px-6 py-6">
+            <div className="min-w-0">
+              <h3
+                className="line-clamp-2 text-lg leading-7 font-semibold break-words"
+                title={collection.name}
+              >
+                {collection.name}
+              </h3>
+              <p className="text-primary mt-1 text-sm font-medium uppercase">
+                {collection.source === 'channel'
+                  ? l.public_channel
+                  : collection.source === 'playlist'
+                    ? l.public_playlist
+                    : l[collection.source]}
+              </p>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => onToggle(collection.id)}
+                aria-label={
+                  collection.enabled ? l.pause_collection : l.enable_collection
+                }
+                aria-pressed={collection.enabled}
+                className={cn(
+                  'focus-visible:ring-ring mt-2 rounded-full px-2 py-0.5 text-xs font-medium shadow-xs outline-none focus-visible:ring-2',
+                  collection.enabled
+                    ? 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-emerald-950'
+                    : 'bg-muted text-muted-foreground'
+                )}
+              >
+                {collection.enabled ? l.enabled : l.paused}
+              </button>
+            </div>
+            {showSourceLinks && safeYoutubeHref(collection.url) ? (
+              <a
+                href={safeYoutubeHref(collection.url)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${l.open_source}: ${collection.name}`}
+                className={cn(
+                  buttonVariants({ variant: 'secondary', size: 'icon' }),
+                  'size-10 shrink-0 rounded-md'
+                )}
+              >
+                <Link2 aria-hidden="true" />
+              </a>
+            ) : (
+              <Button
+                variant="secondary"
+                size="icon"
+                aria-label={`${l.view}: ${collection.name}`}
+                onClick={() => onView(collection.id)}
+                className="size-10 shrink-0 rounded-md"
+              >
+                <Link2 aria-hidden="true" />
+              </Button>
+            )}
+          </header>
+          <dl className="grid flex-1 grid-cols-2 gap-x-4 gap-y-5 px-6 py-6">
+            <Metric
+              label={l.backup_frequency}
+              value={l[collection.frequency]}
+            />
+            <Metric
+              label={l.tracking_since}
+              value={l[collection.createdLabel] ?? collection.createdLabel}
+            />
+            <Metric label={l.items} value={collection.itemCount} />
+            <Metric
+              label={l.card_missing || l.missing}
+              value={collection.missingCount}
+              warning={collection.missingCount > 0}
+            />
+            {collection.nextSyncLabel && (
+              <>
+                <Metric
+                  label={l.last_synced}
+                  value={collection.lastSyncLabel}
+                />
+                <Metric
+                  label={l.card_next_sync || l.next_sync}
+                  value={
+                    collection.enabled ? collection.nextSyncLabel : l.paused
+                  }
+                />
+              </>
+            )}
+          </dl>
+          {collection.lastError && (
+            <p role="status" className="text-destructive px-6 pb-5 text-sm">
+              <span className="block font-medium">
+                {collection.runCount === 0
+                  ? l.sync_initial_error || l.sync_error
+                  : l.sync_error}
+              </span>
+              <span className="mt-1 block">{collection.lastError}</span>
+            </p>
+          )}
+          <footer
+            className={cn(
+              'border-border bg-muted/10 grid gap-2 border-t px-6 py-4',
+              onDelete ? 'grid-cols-3' : 'grid-cols-2'
+            )}
+          >
+            <Button
+              data-tour={`view-${collection.id}`}
+              variant="outline"
+              onClick={() => onView(collection.id)}
+              className="h-10 min-w-0 px-2 text-sm font-normal"
+            >
+              {l.card_view || l.view}
+            </Button>
+            <Button
+              variant="outline"
+              disabled={busy}
+              onClick={() => onUpdate(collection.id)}
+              className="h-10 min-w-0 px-2 text-sm font-normal"
+            >
+              {l.card_update || l.update}
+            </Button>
+            {onDelete && (
+              <Button
+                variant="outline"
+                disabled={busy}
+                onClick={() => onDelete(collection.id)}
+                className="h-10 min-w-0 px-2 text-sm font-normal"
+              >
+                {l.card_delete || l.delete}
+              </Button>
+            )}
+          </footer>
+        </article>
+      ))}
     </div>
   );
 }
@@ -268,10 +319,15 @@ function Metric({
 }) {
   return (
     <div className="min-w-0">
-      <dt className="text-muted-foreground mb-1.5 text-[10px] tracking-wider uppercase">
+      <dt className="text-muted-foreground mb-1 text-xs tracking-wide uppercase">
         {label}
       </dt>
-      <dd className={cn('text-sm font-medium', warning && 'text-destructive')}>
+      <dd
+        className={cn(
+          'text-sm leading-6 font-medium tabular-nums',
+          warning && 'text-destructive'
+        )}
+      >
         {value}
       </dd>
     </div>
@@ -595,6 +651,7 @@ function VideoRow({
     ? video.thumbnail
     : '';
   const href = safeYoutubeHref(video.url);
+  const openLabel = video.kind === 'channel' ? l.open_channel : l.open_video;
   const views =
     video.views === undefined
       ? null
@@ -655,10 +712,12 @@ function VideoRow({
             </div>
           ) : (
             <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-              <span className="inline-flex items-center gap-1.5">
-                <Clock3 className="size-3.5" aria-hidden="true" />
-                {video.duration}
-              </span>
+              {video.duration && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Clock3 className="size-3.5" aria-hidden="true" />
+                  {video.duration}
+                </span>
+              )}
               {views !== null && (
                 <span className="inline-flex items-center gap-1.5">
                   <Users className="size-3.5" aria-hidden="true" />
@@ -671,10 +730,10 @@ function VideoRow({
                   target="_blank"
                   rel="noreferrer"
                   className="focus-visible:ring-ring inline-flex items-center gap-1.5 rounded text-xs underline-offset-4 outline-none hover:underline focus-visible:ring-2"
-                  aria-label={`${l.open_video}: ${video.title}`}
+                  aria-label={`${openLabel}: ${video.title}`}
                 >
                   <ExternalLink className="size-3.5" aria-hidden="true" />
-                  {l.open_video}
+                  {openLabel}
                 </a>
               )}
             </div>

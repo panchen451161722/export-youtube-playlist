@@ -631,3 +631,30 @@ export const guardDelivery = table(
   ]
 );
 export type GuardDeliveryRow = typeof guardDelivery.$inferSelect;
+
+// YouTube read-only grants are separate from the site's sign-in accounts.
+export const youtubeConnection = table(
+  'youtube_connection',
+  {
+    id: varchar191('id').primaryKey(),
+    userId: varchar191('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    channelId: varchar191('channel_id').notNull(),
+    channelTitle: text('channel_title').notNull(),
+    thumbnail: text('thumbnail').notNull(),
+    credentials: text('credentials'),
+    clientId: text('client_id').notNull(),
+    status: varchar191('status').notNull(),
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull(),
+  },
+  (t) => [
+    uniqueIndex('uq_youtube_connection_owner_channel').on(
+      t.userId,
+      t.channelId
+    ),
+    index('idx_youtube_connection_owner').on(t.userId),
+  ]
+);
+export type YoutubeConnectionRow = typeof youtubeConnection.$inferSelect;

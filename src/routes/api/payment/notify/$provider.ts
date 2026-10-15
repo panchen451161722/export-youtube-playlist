@@ -31,7 +31,10 @@ export const Route = createFileRoute('/api/payment/notify/$provider')({
 
           return respOk();
         } catch (error: any) {
-          console.error('webhook error:', error);
+          console.error(
+            'webhook failed:',
+            error?.type || error?.name || 'Error'
+          );
 
           if (provider === 'alipay') {
             return new Response('fail', {
@@ -40,7 +43,13 @@ export const Route = createFileRoute('/api/payment/notify/$provider')({
             });
           }
 
-          return respErr(error.message || 'Webhook handling failed');
+          const invalidSignature =
+            error?.type === 'StripeSignatureVerificationError' ||
+            error?.message === 'Invalid webhook request' ||
+            error?.message === 'Stripe event environment mismatch';
+          return respErr('Webhook handling failed', {
+            status: invalidSignature ? 400 : 500,
+          });
         }
       },
     },

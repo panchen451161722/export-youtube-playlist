@@ -11,9 +11,11 @@ export function guardExportRows(items: GuardItem[]): (string | number)[][] {
       'Position',
       'Title',
       'Channel',
-      'Video URL',
+      items.some((item) => item.kind === 'channel')
+        ? 'Channel URL'
+        : 'Video URL',
       'Duration',
-      'Video ID',
+      items.some((item) => item.kind === 'channel') ? 'Channel ID' : 'Video ID',
       'Missing since',
       'Views',
     ],
