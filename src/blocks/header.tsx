@@ -6,6 +6,7 @@ import { Link } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
 import { isIndexablePath } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
+import { useSignInHref } from '@/hooks/use-auth-redirect';
 import { LocaleSelector } from '@/components/locale-selector';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { PUBLIC_TOOL_DEFINITIONS } from '@/components/tools/public-tool-definitions';
@@ -164,6 +165,7 @@ function ToolsMenu({
 
 export function Header() {
   const { user } = rootRouteApi.useLoaderData();
+  const signInHref = useSignInHref();
   const [open, setOpen] = useState(false);
 
   const navItems = [
@@ -247,7 +249,7 @@ export function Header() {
             </Suspense>
           ) : (
             <Link
-              href="/sign-in"
+              href={signInHref}
               className="inline-flex h-10 items-center rounded-xl border border-[#18213b]/10 bg-white/70 px-4 text-sm font-semibold text-[#35425b] transition-colors hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
             >
               {m['common.sign.sign_in_title']()}
@@ -288,7 +290,7 @@ export function Header() {
                 </Suspense>
               ) : (
                 <Link
-                  href="/sign-in"
+                  href={signInHref}
                   onClick={() => setOpen(false)}
                   className="inline-flex h-10 items-center rounded-xl border border-[#18213b]/10 bg-white/70 px-4 text-sm font-semibold text-[#35425b] dark:border-white/10 dark:bg-white/5 dark:text-white"
                 >

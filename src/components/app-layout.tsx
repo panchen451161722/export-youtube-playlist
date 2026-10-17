@@ -4,8 +4,9 @@ import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { useSession } from '@/core/auth/client';
-import { usePathname, useRouter } from '@/core/i18n/navigation';
+import { useRouter } from '@/core/i18n/navigation';
 import { apiGet } from '@/lib/api-client';
+import { useSignInHref } from '@/hooks/use-auth-redirect';
 import { useUserPermissions } from '@/hooks/use-user-permissions';
 import { AppSidebar, type NavItem } from '@/components/app-sidebar';
 import { Separator } from '@/components/ui/separator';
@@ -41,7 +42,7 @@ export function AppLayout({
 }) {
   const { data: session, isPending } = useSession();
   const router = useRouter();
-  const pathname = usePathname();
+  const signInHref = useSignInHref();
   // Guard against a double redirect: useLocation() flips to "/sign-in" the moment
   // we navigate (while this layout is still mounted), which would otherwise re-fire
   // the effect and overwrite callbackUrl with the sign-in path itself.
@@ -79,12 +80,8 @@ export function AppLayout({
     if (!session?.user) {
       if (redirectingRef.current) return;
       redirectingRef.current = true;
-      // Remember where the user was headed so sign-in can send them back.
-      // pathname is already locale-free; append the live query string.
-      const search =
-        typeof window !== 'undefined' ? window.location.search : '';
-      const callbackUrl = `${pathname}${search}`;
-      router.push(`/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+      // Preserve the protected page, including its query string and anchor.
+      router.push(signInHref);
       return;
     }
 
@@ -111,7 +108,7 @@ export function AppLayout({
     isPending,
     session,
     router,
-    pathname,
+    signInHref,
     requirePermission,
     unauthorizedRedirect,
     userInfoQuery.isPending,

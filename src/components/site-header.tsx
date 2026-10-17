@@ -8,6 +8,7 @@ import { Link } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
+import { useSignInHref } from '@/hooks/use-auth-redirect';
 import { LocaleSelector } from '@/components/locale-selector';
 import { SiteUserMenu } from '@/components/site-user-menu';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -24,6 +25,7 @@ export interface NavLink {
 const isExternalHref = (href: string) => /^https?:\/\//.test(href);
 
 export function SiteHeader({ navLinks }: { navLinks?: NavLink[] }) {
+  const signInHref = useSignInHref();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { data: session } = useSession();
   const user = session?.user;
@@ -75,7 +77,7 @@ export function SiteHeader({ navLinks }: { navLinks?: NavLink[] }) {
               image={user.image}
             />
           ) : (
-            <Link href="/sign-in" className={cn(buttonVariants(), 'gap-1.5')}>
+            <Link href={signInHref} className={cn(buttonVariants(), 'gap-1.5')}>
               {m['common.nav.get_started']()}
               <ArrowRight className="size-4" />
             </Link>
@@ -134,7 +136,7 @@ export function SiteHeader({ navLinks }: { navLinks?: NavLink[] }) {
               />
             ) : (
               <Link
-                href="/sign-in"
+                href={signInHref}
                 className={cn(buttonVariants(), 'gap-1.5')}
                 onClick={() => setMobileOpen(false)}
               >

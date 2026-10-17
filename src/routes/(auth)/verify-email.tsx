@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useLocation } from '@tanstack/react-router';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { authClient, useSession } from '@/core/auth/client';
 import { Link, useRouter } from '@/core/i18n/navigation';
 import { envConfigs } from '@/config';
+import { getSafeCallbackUrl } from '@/lib/auth-redirect';
 import { privatePageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { deLocalizeHref, localizeHref } from '@/paraglide/runtime.js';
@@ -20,22 +21,6 @@ import {
 } from '@/components/ui/card';
 
 const RESEND_COOLDOWN_SECONDS = 60;
-
-function safeDecodeCallbackUrl(raw?: string | null) {
-  if (!raw) return '/';
-  try {
-    const decoded = decodeURIComponent(raw);
-    if (decoded.startsWith('/')) return decoded;
-    return '/';
-  } catch {
-    return '/';
-  }
-}
-
-function stripLocalePrefix(path: string) {
-  if (!path?.startsWith('/')) return '/';
-  return deLocalizeHref(path);
-}
 
 function getCooldownKey(email?: string | null) {
   return `verify-email:lastSentAt:${String(email || '').toLowerCase()}`;
@@ -63,7 +48,10 @@ function VerifyEmailPage() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
   const [email, setEmail] = useState<string | null>(null);
-  const [callbackUrl, setCallbackUrl] = useState<string | null>(null);
+  const callbackUrl = useLocation({
+    select: (location) =>
+      new URLSearchParams(location.searchStr).get('callbackUrl'),
+  });
   const [paramsReady, setParamsReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
@@ -72,11 +60,9 @@ function VerifyEmailPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const e = params.get('email');
-    const cb = params.get('callbackUrl');
     const sent = params.get('sent');
 
     setEmail(e);
-    setCallbackUrl(cb);
     setParamsReady(true);
 
     if (sent === '1') {
@@ -102,8 +88,9 @@ function VerifyEmailPage() {
   }, [paramsReady, email, callbackUrl, router]);
 
   const nextUrl = useMemo(() => {
-    const decoded = safeDecodeCallbackUrl(callbackUrl);
-    return stripLocalePrefix(decoded);
+    // URLSearchParams already decoded the callback; decoding again corrupts
+    // encoded query values (for example a playlist URL containing '&').
+    return deLocalizeHref(getSafeCallbackUrl(callbackUrl) || '/');
   }, [callbackUrl]);
 
   const signInPath = useMemo(() => {

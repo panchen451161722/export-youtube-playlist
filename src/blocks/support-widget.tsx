@@ -7,6 +7,7 @@ import { Link } from '@/core/i18n/navigation';
 import { apiPost } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
+import { useSignInHref } from '@/hooks/use-auth-redirect';
 import { ImageUploader } from '@/components/image-uploader';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
@@ -28,6 +29,7 @@ import { Textarea } from '@/components/ui/textarea';
  * Requires login — unauthenticated users get a sign-in prompt instead.
  */
 export function SupportWidget() {
+  const signInHref = useSignInHref();
   const { data: session, isPending } = useSession();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
@@ -87,7 +89,7 @@ export function SupportWidget() {
               <p className="text-muted-foreground text-sm">
                 {m['common.support.sign_in_notice']()}
               </p>
-              <Link href="/sign-in" className={cn(buttonVariants())}>
+              <Link href={signInHref} className={cn(buttonVariants())}>
                 {m['common.support.sign_in']()}
               </Link>
             </div>

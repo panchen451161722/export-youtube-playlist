@@ -10,6 +10,7 @@ import { trackClarityEvent } from '@/lib/clarity';
 import { privatePageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { localizeHref } from '@/paraglide/runtime.js';
+import { useAuthRedirect } from '@/hooks/use-auth-redirect';
 import { usePublicConfig } from '@/hooks/use-public-config';
 import { TextField } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
@@ -35,48 +36,16 @@ function SignInPage() {
   const navigatingRef = useRef(false);
   const [error, setError] = useState('');
 
-  // redirect: client protocol, goes through auth-callback
-  // callbackUrl: web page URL, goes directly after login
-  const [redirectParam, setRedirectParam] = useState<string | null>(null);
-  const [callbackUrl, setCallbackUrl] = useState<string | null>(null);
+  const { afterLoginUrl, switchQuery } = useAuthRedirect();
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setRedirectParam(params.get('redirect'));
-    setCallbackUrl(params.get('callbackUrl'));
-  }, []);
-
-  // Already signed in (visited /sign-in directly, or a stale callbackUrl looped
-  // back here) → go home. The auth pages never gate themselves, so this can't loop.
+  // Resolve the destination before checking the session, including on a refresh.
   useEffect(() => {
     if (sessionPending || navigatingRef.current) return;
     if (session?.user) {
       navigatingRef.current = true;
-      router.push('/');
+      window.location.replace(localizeHref(afterLoginUrl));
     }
-  }, [sessionPending, session?.user, router]);
-
-  // Allow only same-site relative paths, and never an auth page (would loop).
-  const safeCallbackUrl =
-    callbackUrl &&
-    callbackUrl.startsWith('/') &&
-    !callbackUrl.startsWith('//') &&
-    !/^\/(sign-in|sign-up|verify-email)(\/|\?|$)/.test(callbackUrl)
-      ? callbackUrl
-      : null;
-
-  const afterLoginUrl = redirectParam
-    ? `/auth-callback?redirect=${encodeURIComponent(redirectParam)}`
-    : safeCallbackUrl || '/settings/profile';
-
-  // Carry callbackUrl/redirect across to sign-up so the destination survives the switch.
-  const switchQuery = (() => {
-    const p = new URLSearchParams();
-    if (safeCallbackUrl) p.set('callbackUrl', safeCallbackUrl);
-    if (redirectParam) p.set('redirect', redirectParam);
-    const s = p.toString();
-    return s ? `?${s}` : '';
-  })();
+  }, [sessionPending, session?.user, afterLoginUrl]);
 
   const configQuery = usePublicConfig();
   const configs = configQuery.data ?? {};
@@ -134,7 +103,7 @@ function SignInPage() {
 
   async function handleSocial(provider: 'google' | 'github') {
     trackClarityEvent('login_started', { method: provider });
-    await signIn.social({ provider, callbackURL: afterLoginUrl });
+    await signIn.social({ provider, callbackURL: localizeHref(afterLoginUrl) });
   }
 
   return (
