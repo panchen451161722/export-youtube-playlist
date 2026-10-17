@@ -1,9 +1,13 @@
 import { envConfigs } from '@/config';
+import {
+  FREE_PLAYLIST_EXPORT_LIMIT,
+  SUBSCRIBER_PLAYLIST_EXPORT_LIMIT,
+} from '@/config/playlist-export';
 
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3/';
 const REQUEST_TIMEOUT_MS = 15_000;
-const MAX_PLAYLIST_ITEMS = 500;
 const PAGE_SIZE = 50;
+const VIDEO_REQUEST_CONCURRENCY = 5;
 
 const ALLOWED_YOUTUBE_HOSTS = new Set([
   'youtube.com',
@@ -367,36 +371,54 @@ async function requestYouTubeApi<T>(params: {
   }
   url.searchParams.set('key', params.apiKey);
 
-  let response: Response;
-  try {
-    // Cloudflare Workers accepts a Request or URL string as fetch input, while
-    // Node also accepts a URL object. Use the string form for both runtimes.
-    response = await params.fetchImpl.call(globalThis, url.toString(), {
-      method: 'GET',
-      headers: { accept: 'application/json' },
-      signal: params.signal,
-    });
-  } catch (error) {
-    if (params.signal.aborted || (error as Error)?.name === 'AbortError') {
-      throw new PlaylistServiceError('timeout');
-    }
-    const cause =
-      error instanceof Error
-        ? (error as Error & { cause?: { name?: string; code?: string } }).cause
-        : undefined;
-    // Keep production diagnostics secret-safe: never log the request URL,
-    // upstream message, or API key because the key is in the query string.
-    console.error('youtube upstream fetch failed', {
-      errorName: error instanceof Error ? error.name : typeof error,
-      causeName: cause?.name || '',
-      causeCode: cause?.code || '',
-    });
-    throw new PlaylistServiceError('network');
-  }
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  if (params.signal.aborted) abort();
+  else params.signal.addEventListener('abort', abort, { once: true });
+  const timeout = setTimeout(abort, REQUEST_TIMEOUT_MS);
 
-  const body = (await response.json().catch(() => ({}))) as T;
-  if (!response.ok) throw mapApiFailure(response.status, body);
-  return body;
+  try {
+    let response: Response;
+    try {
+      // Cloudflare Workers accepts a Request or URL string as fetch input, while
+      // Node also accepts a URL object. Use the string form for both runtimes.
+      response = await params.fetchImpl.call(globalThis, url.toString(), {
+        method: 'GET',
+        headers: { accept: 'application/json' },
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (
+        controller.signal.aborted ||
+        (error as Error)?.name === 'AbortError'
+      ) {
+        throw new PlaylistServiceError('timeout');
+      }
+      const cause =
+        error instanceof Error
+          ? (error as Error & { cause?: { name?: string; code?: string } })
+              .cause
+          : undefined;
+      // Keep production diagnostics secret-safe: never log the request URL,
+      // upstream message, or API key because the key is in the query string.
+      console.error('youtube upstream fetch failed', {
+        errorName: error instanceof Error ? error.name : typeof error,
+        causeName: cause?.name || '',
+        causeCode: cause?.code || '',
+      });
+      throw new PlaylistServiceError('network');
+    }
+
+    const body = (await response.json().catch(() => {
+      if (controller.signal.aborted) throw new PlaylistServiceError('timeout');
+      return {};
+    })) as T;
+    if (!response.ok) throw mapApiFailure(response.status, body);
+    return body;
+  } finally {
+    clearTimeout(timeout);
+    params.signal.removeEventListener('abort', abort);
+  }
 }
 
 function normalizeVideo(
@@ -442,21 +464,40 @@ function normalizeVideo(
 }
 
 /**
- * Load public playlist metadata and up to 500 exportable videos.
+ * Load public playlist metadata and scan up to the caller's allowed item limit.
+ * Unavailable videos count toward the scanned limit and are reported as skipped.
  * Playlist data is returned to the caller and is never persisted.
  */
 export async function getPlaylistExport(params: {
   playlistUrl: string;
   apiKey?: string;
   fetchImpl?: typeof fetch;
+  maxItems?: number;
 }): Promise<PlaylistExport> {
   const playlistId = parseYouTubePlaylistUrl(params.playlistUrl);
   const apiKey = (params.apiKey ?? envConfigs.youtube_api_key).trim();
   if (!apiKey) throw new PlaylistServiceError('configuration');
 
   const fetchImpl = params.fetchImpl ?? fetch;
+  const maxItems =
+    params.maxItems !== undefined &&
+    Number.isFinite(params.maxItems) &&
+    params.maxItems > 0
+      ? Math.max(
+          1,
+          Math.min(
+            SUBSCRIBER_PLAYLIST_EXPORT_LIMIT,
+            Math.floor(params.maxItems)
+          )
+        )
+      : FREE_PLAYLIST_EXPORT_LIMIT;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  // Larger exports need more pagination time, while each upstream request still
+  // has its own short timeout. The overall budget remains bounded by the cap.
+  const timeout = setTimeout(
+    () => controller.abort(),
+    REQUEST_TIMEOUT_MS * Math.ceil(maxItems / FREE_PLAYLIST_EXPORT_LIMIT)
+  );
 
   try {
     const playlistResponse = await requestYouTubeApi<PlaylistListResponse>({
@@ -477,12 +518,13 @@ export async function getPlaylistExport(params: {
     const seenPageTokens = new Set<string>();
     let nextPageToken = '';
     let pageTotal = 0;
+    let hasMoreItems = false;
 
     do {
       const search: Record<string, string> = {
         part: 'snippet,contentDetails',
         playlistId,
-        maxResults: String(PAGE_SIZE),
+        maxResults: String(Math.min(PAGE_SIZE, maxItems - rawItems.length)),
       };
       if (nextPageToken) search.pageToken = nextPageToken;
 
@@ -494,44 +536,57 @@ export async function getPlaylistExport(params: {
         fetchImpl,
       });
       pageTotal = Math.max(pageTotal, page.pageInfo?.totalResults ?? 0);
-      rawItems.push(
-        ...(page.items ?? []).slice(0, MAX_PLAYLIST_ITEMS - rawItems.length)
-      );
+      const pageItems = page.items ?? [];
+      const remaining = maxItems - rawItems.length;
+      rawItems.push(...pageItems.slice(0, remaining));
 
       const token = page.nextPageToken ?? '';
-      if (!token || seenPageTokens.has(token)) break;
+      hasMoreItems = Boolean(token) || pageItems.length > remaining;
+      if (!token || seenPageTokens.has(token) || pageItems.length === 0) break;
       seenPageTokens.add(token);
       nextPageToken = token;
-    } while (rawItems.length < MAX_PLAYLIST_ITEMS);
+    } while (rawItems.length < maxItems);
 
-    const videoIds = rawItems
-      .map(
-        (item) =>
-          item.contentDetails?.videoId ||
-          item.snippet?.resourceId?.videoId ||
-          ''
-      )
-      .filter(Boolean);
+    const videoIds = [
+      ...new Set(
+        rawItems
+          .map(
+            (item) =>
+              item.contentDetails?.videoId ||
+              item.snippet?.resourceId?.videoId ||
+              ''
+          )
+          .filter(Boolean)
+      ),
+    ];
     const batches: string[][] = [];
     for (let index = 0; index < videoIds.length; index += PAGE_SIZE) {
       batches.push(videoIds.slice(index, index + PAGE_SIZE));
     }
 
-    const videoResponses = await Promise.all(
-      batches.map((ids) =>
-        requestYouTubeApi<VideosListResponse>({
-          resource: 'videos',
-          search: {
-            part: 'snippet,contentDetails,statistics',
-            id: ids.join(','),
-            maxResults: String(PAGE_SIZE),
-          },
-          apiKey,
-          signal: controller.signal,
-          fetchImpl,
-        })
-      )
-    );
+    const videoResponses: VideosListResponse[] = [];
+    for (
+      let index = 0;
+      index < batches.length;
+      index += VIDEO_REQUEST_CONCURRENCY
+    ) {
+      const responses = await Promise.all(
+        batches.slice(index, index + VIDEO_REQUEST_CONCURRENCY).map((ids) =>
+          requestYouTubeApi<VideosListResponse>({
+            resource: 'videos',
+            search: {
+              part: 'snippet,contentDetails,statistics',
+              id: ids.join(','),
+              maxResults: String(PAGE_SIZE),
+            },
+            apiKey,
+            signal: controller.signal,
+            fetchImpl,
+          })
+        )
+      );
+      videoResponses.push(...responses);
+    }
     const videosById = new Map<string, RawVideo>();
     for (const video of videoResponses.flatMap(
       (response) => response.items ?? []
@@ -563,8 +618,8 @@ export async function getPlaylistExport(params: {
       totalItems: totalCount,
       scannedCount: rawItems.length,
       skippedCount: rawItems.length - items.length,
-      truncated: totalCount > rawItems.length,
-      limit: MAX_PLAYLIST_ITEMS,
+      truncated: hasMoreItems || totalCount > rawItems.length,
+      limit: maxItems,
     };
   } finally {
     clearTimeout(timeout);

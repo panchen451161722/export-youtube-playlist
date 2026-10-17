@@ -1,8 +1,11 @@
+import { FREE_PLAYLIST_EXPORT_LIMIT } from '@/config/playlist-export';
 import { m } from '@/paraglide/messages.js';
+import { usePlaylistExportAccess } from '@/hooks/use-playlist-export-access';
 import { PlaylistExtractionTool } from '@/components/tools/playlist-extraction-tool';
 import { ToolPageShell } from '@/components/tools/tool-page-shell';
 
 export function PlaylistLinkExtractor() {
+  const access = usePlaylistExportAccess();
   return (
     <ToolPageShell
       breadcrumbLabel={m['tools.common.breadcrumb_label']()}
@@ -20,7 +23,7 @@ export function PlaylistLinkExtractor() {
           labels={{
             inputLabel: m['tools.common.input_label'](),
             inputPlaceholder: m['tools.common.input_placeholder'](),
-            inputHelper: `${m['tools.common.input_helper']()} ${m['tools.common.limit']()} · ${m['tools.common.privacy']()}`,
+            inputHelper: `${m['tools.common.input_helper']()} ${m['tools.common.limit']({ limit: access.data?.limit ?? FREE_PLAYLIST_EXPORT_LIMIT })} · ${m['tools.common.privacy']()}`,
             submit: m['tools.common.submit'](),
             loading: m['tools.common.loading'](),
             formatLegend: m['tools.link.format_label'](),
@@ -33,7 +36,7 @@ export function PlaylistLinkExtractor() {
               count: '{count}',
               playlist: '{playlist}',
             }),
-            truncated: m['tools.common.truncated'](),
+            truncated: (limit) => m['tools.common.truncated']({ limit }),
             empty: m['tools.common.empty'](),
             copyAll: m['tools.common.copy'](),
             copySuccess: m['tools.common.copied'](),

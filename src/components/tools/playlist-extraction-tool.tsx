@@ -36,7 +36,7 @@ export interface PlaylistExtractionToolLabels {
   numberedTitles: string;
   resultsHeading: string;
   resultSummary: string;
-  truncated: string;
+  truncated: (limit: number) => string;
   empty: string;
   copyAll: string;
   copySuccess: string;
@@ -466,7 +466,7 @@ export function PlaylistExtractionTool({
                   role="status"
                   className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-100"
                 >
-                  {labels.truncated}
+                  {labels.truncated(mutation.data.limit)}
                 </div>
               ) : null}
 

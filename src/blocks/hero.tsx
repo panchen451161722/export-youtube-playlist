@@ -15,6 +15,7 @@ import {
 import { toast } from 'sonner';
 
 import { Link } from '@/core/i18n/navigation';
+import { FREE_PLAYLIST_EXPORT_LIMIT } from '@/config/playlist-export';
 import { apiPost } from '@/lib/api-client';
 import {
   clarityErrorType,
@@ -29,6 +30,7 @@ import {
   type YouTubeExportFormat,
 } from '@/lib/youtube-export';
 import { m } from '@/paraglide/messages.js';
+import { usePlaylistExportAccess } from '@/hooks/use-playlist-export-access';
 import { ExportFormatPicker } from '@/components/export-format-picker';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -63,6 +65,7 @@ type PlaylistResult = {
   totalItems: number;
   returnedItems: number;
   truncated: boolean;
+  limit: number;
   videos: PlaylistVideo[];
 };
 
@@ -144,6 +147,7 @@ export function Hero({
   breadcrumbs = [],
   copy,
 }: HeroProps = {}) {
+  const access = usePlaylistExportAccess();
   const [url, setUrl] = useState('');
   const [clientError, setClientError] = useState('');
   const [formats, setFormats] = useState<YouTubeExportFormat[]>(() => [
@@ -299,6 +303,11 @@ export function Hero({
           <p id="playlist-helper" className="text-muted-foreground text-xs">
             {m['landing.exporter.helper']()}
           </p>
+          <p className="text-muted-foreground mt-1 text-xs">
+            {m['landing.exporter.limit']({
+              limit: access.data?.limit ?? FREE_PLAYLIST_EXPORT_LIMIT,
+            })}
+          </p>
         </div>
 
         <fieldset className="mt-6">
@@ -394,6 +403,15 @@ export function Hero({
         >
           <AlertCircle className="mt-0.5 size-4 shrink-0" />
           <span>{error}</span>
+        </div>
+      ) : null}
+
+      {mutation.data?.truncated ? (
+        <div
+          role="status"
+          className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-3.5 text-sm text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-100"
+        >
+          {m['landing.exporter.truncated']({ limit: mutation.data.limit })}
         </div>
       ) : null}
 

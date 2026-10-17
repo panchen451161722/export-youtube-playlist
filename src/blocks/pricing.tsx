@@ -11,6 +11,7 @@ import {
   guardProductId,
   type GuardPlanId,
 } from '@/config/guard-plans';
+import { SUBSCRIBER_PLAYLIST_EXPORT_LIMIT } from '@/config/playlist-export';
 import { apiGet, apiPost } from '@/lib/api-client';
 import { m } from '@/paraglide/messages.js';
 import { usePublicConfig } from '@/hooks/use-public-config';
@@ -68,6 +69,9 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
     m['guardPricing.feature_snapshots']({ count: GUARD_SNAPSHOT_LIMIT }),
     m['guardPricing.feature_changes'](),
     m['guardPricing.feature_exports'](),
+    m['guardPricing.feature_playlist_exports']({
+      limit: SUBSCRIBER_PLAYLIST_EXPORT_LIMIT,
+    }),
   ];
   const same = (value: string) => GUARD_PLANS.map(() => value);
   const content: GuardPricingContent = {
@@ -141,6 +145,10 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
       {
         feature: m['guardPricing.compare_items'](),
         values: same(String(GUARD_SCAN_LIMIT)),
+      },
+      {
+        feature: m['guardPricing.compare_playlist_exports'](),
+        values: same(String(SUBSCRIBER_PLAYLIST_EXPORT_LIMIT)),
       },
       {
         feature: m['guardPricing.compare_sources'](),

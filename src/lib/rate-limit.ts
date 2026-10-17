@@ -4,6 +4,8 @@ type MinIntervalOptions = {
   intervalMs: number;
   keyPrefix?: string;
   extraKey?: string;
+  /** A server-derived identity that replaces request IP and Cookie keying. */
+  identityKey?: string;
 };
 
 type Store = Map<string, number>;
@@ -31,10 +33,13 @@ function getStore(): Store {
 
 function buildKey(request: Request, opts: MinIntervalOptions): string {
   const url = new URL(request.url);
+  const prefix = opts.keyPrefix || 'min-interval';
+  if (opts.identityKey !== undefined) {
+    return `${prefix}|${request.method}|${url.pathname}|identity:${md5(opts.identityKey)}`;
+  }
   const ip = getClientIpFromRequest(request);
   const cookie = request.headers.get('cookie') || '';
   const cookieHash = cookie ? md5(cookie) : 'no-cookie';
-  const prefix = opts.keyPrefix || 'min-interval';
   const extra = opts.extraKey ? `|${opts.extraKey}` : '';
   return `${prefix}|${request.method}|${url.pathname}|${ip}|${cookieHash}${extra}`;
 }

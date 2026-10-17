@@ -27,7 +27,7 @@ Two details matter for accuracy:
 - **Only available videos are counted.** If a video was deleted or made private, the API does not return its metadata, so it cannot contribute to the total. The analyzer reports how many available videos were analyzed.
 - **Missing durations are excluded, not guessed.** Under the total duration card, the analyzer shows a note such as "Based on 47 of 48 videos", so you can see when one or more entries had no usable duration.
 
-The analyzer handles up to 500 available videos per playlist. For larger playlists it shows a notice and analyzes the first 500.
+The analyzer checks up to 500 playlist entries for free, or 5,000 for signed-in users with a current Lite, Pro or Ultra subscription. Unavailable videos are skipped. For larger playlists, a notice identifies partial results.
 
 ## The playback speed formula
 
@@ -100,9 +100,9 @@ The analyzer reads the playlist as it is at that moment. Ongoing series, weekly 
 
 Shorts in a playlist count as videos but add very little time. A playlist with 100 items might be mostly 30-second clips and only total an hour. Check the average duration and the shortest video: if the average is very low, the video count is a poor proxy for effort.
 
-### Duplicates and the 500-video limit
+### Duplicates and playlist limits
 
-If the same video was added to a playlist twice, it appears twice in the list and is counted twice. And for playlists larger than 500 videos, the analyzer only covers the first 500, so the true total is higher.
+If the same video was added to a playlist twice, it appears twice in the list and is counted twice. For playlists exceeding your limit of 500 entries for free or 5,000 with a current subscription, the analyzer covers only entries within that limit, so the true total may be higher.
 
 ## Doing the calculation yourself in a spreadsheet
 

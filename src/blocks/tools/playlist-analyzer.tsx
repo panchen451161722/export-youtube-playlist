@@ -1,10 +1,13 @@
+import { FREE_PLAYLIST_EXPORT_LIMIT } from '@/config/playlist-export';
 import { m } from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
+import { usePlaylistExportAccess } from '@/hooks/use-playlist-export-access';
 import { ToolGuideSection } from '@/blocks/tools/tool-guide';
 import { PlaylistAnalyzerTool } from '@/components/tools/playlist-analyzer-tool';
 import { ToolPageShell } from '@/components/tools/tool-page-shell';
 
 export function PlaylistAnalyzer() {
+  const access = usePlaylistExportAccess();
   return (
     <ToolPageShell
       breadcrumbLabel={m['tools.common.breadcrumb_label']()}
@@ -24,7 +27,7 @@ export function PlaylistAnalyzer() {
             formDescription: m['tools.analyzer.form_description'](),
             urlLabel: m['tools.common.input_label'](),
             urlPlaceholder: m['tools.common.input_placeholder'](),
-            urlHelper: `${m['tools.common.input_helper']()} ${m['tools.common.limit']()} · ${m['tools.common.privacy']()}`,
+            urlHelper: `${m['tools.common.input_helper']()} ${m['tools.common.limit']({ limit: access.data?.limit ?? FREE_PLAYLIST_EXPORT_LIMIT })} · ${m['tools.common.privacy']()}`,
             submit: m['tools.analyzer.submit'](),
             loading: m['tools.analyzer.loading'](),
             invalidUrl: m['tools.common.error_invalid'](),
