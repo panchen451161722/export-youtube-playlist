@@ -12,6 +12,8 @@ import {
   guardWorkspace,
   subscription,
   user,
+  verification,
+  youtubeConnection,
 } from '@/config/db/schema';
 import {
   guardNotificationEmail,
@@ -36,10 +38,12 @@ async function fixture(preferences: Partial<GuardCreateInput> = {}) {
   const database = drizzle(client);
   for (const table of [
     user,
+    verification,
     subscription,
     guardWorkspace,
     guardCollection,
     guardDelivery,
+    youtubeConnection,
   ]) {
     const config = getTableConfig(table);
     await client.execute(
@@ -56,6 +60,22 @@ async function fixture(preferences: Partial<GuardCreateInput> = {}) {
   let now = Date.UTC(2026, 9, 13);
   const clock = () => now;
   const store = createGuardStore(database, clock);
+  if (preferences.connectionId) {
+    await database.insert(youtubeConnection).values({
+      id: preferences.connectionId,
+      userId: 'owner',
+      channelId: 'test-channel',
+      channelTitle: 'Test channel',
+      thumbnail: '',
+      credentials: 'encrypted-test-fixture',
+      clientId: 'test-client',
+      status: 'connected',
+      createdAt: new Date(now).toISOString(),
+      updatedAt: new Date(now).toISOString(),
+      verifiedAt: new Date(now).toISOString(),
+      nextValidationAt: new Date(now + DAY).toISOString(),
+    });
+  }
   await database.insert(subscription).values({
     id: 'owner-sub',
     subscriptionNo: 'owner-sub',

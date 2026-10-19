@@ -8,6 +8,10 @@ import { CloudflareEmailProvider } from '@/core/email/cloudflare';
 import { PreviewEmailProvider, previewMailUrl } from '@/core/email/preview';
 import { ResendProvider } from '@/core/email/resend';
 import { VerifyEmail } from '@/core/email/templates/verify-email';
+import {
+  drainYoutubeRevocations,
+  removeUserYoutubeData,
+} from '@/core/youtube-lifecycle/service';
 import { AUTH_SECRET_PLACEHOLDER, envConfigs } from '@/config';
 import * as schema from '@/config/db/schema';
 import { getAllConfigs } from '@/modules/config/service';
@@ -242,6 +246,13 @@ export function getAuth(configs?: Record<string, string>) {
     user: {
       deleteUser: {
         enabled: true,
+        beforeDelete: async (user) => {
+          // The durable revoke queue has no user FK and survives account
+          // deletion. Local data removal must not depend on Google uptime.
+          const { queuedIds } = await removeUserYoutubeData(user.id);
+          if (queuedIds.length)
+            await drainYoutubeRevocations({ ids: queuedIds });
+        },
       },
       additionalFields: {
         utmSource: {

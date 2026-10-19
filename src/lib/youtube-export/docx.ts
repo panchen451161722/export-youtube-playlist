@@ -1,5 +1,7 @@
 import { strToU8, zipSync } from 'fflate';
 
+import { envConfigs } from '@/config';
+
 import { exportCell } from './records';
 import {
   YOUTUBE_EXPORT_COLUMNS,
@@ -112,9 +114,9 @@ export function createDocxBytes(
   <w:style w:type="table" w:styleId="TableGrid"><w:name w:val="Table Grid"/><w:tblPr><w:tblBorders><w:top w:val="single" w:sz="4" w:color="B8C0CC"/><w:left w:val="single" w:sz="4" w:color="B8C0CC"/><w:bottom w:val="single" w:sz="4" w:color="B8C0CC"/><w:right w:val="single" w:sz="4" w:color="B8C0CC"/><w:insideH w:val="single" w:sz="4" w:color="D5DAE2"/><w:insideV w:val="single" w:sz="4" w:color="D5DAE2"/></w:tblBorders></w:tblPr></w:style>
 </w:styles>`;
   const core = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${xml(context.title)}</dc:title><dc:creator>Export YouTube Playlist</dc:creator></cp:coreProperties>`;
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>${xml(context.title)}</dc:title><dc:creator>${xml(envConfigs.app_name)}</dc:creator></cp:coreProperties>`;
   const app = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Export YouTube Playlist</Application></Properties>`;
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>${xml(envConfigs.app_name)}</Application></Properties>`;
 
   return zipSync(
     {

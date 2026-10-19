@@ -8,6 +8,7 @@ import {
   guardDelivery,
   subscription,
   user,
+  verification,
   type Subscription,
 } from '@/config/db/schema';
 import type {
@@ -69,6 +70,7 @@ before(async () => {
   const { guardWorkspace } = await import('@/config/db/schema');
   for (const table of [
     user,
+    verification,
     subscription,
     guardWorkspace,
     guardCollection,

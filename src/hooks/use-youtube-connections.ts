@@ -42,7 +42,15 @@ export function useYoutubeConnections(
   const disconnect = useMutation({
     mutationFn: (id: string) =>
       apiPost('/api/youtube-connections', { action: 'disconnect', id }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    onSuccess: async () => {
+      const collectionsKey = ['playlist-guard', userId];
+      await queryClient.cancelQueries({ queryKey: collectionsKey });
+      // Reset overview and detail caches so deleted private backups cannot remain visible.
+      await Promise.all([
+        queryClient.resetQueries({ queryKey: collectionsKey }),
+        queryClient.invalidateQueries({ queryKey }),
+      ]);
+    },
     onError: (e: Error) => toast.error(e.message),
   });
   return { query, connect, disconnect, notice };

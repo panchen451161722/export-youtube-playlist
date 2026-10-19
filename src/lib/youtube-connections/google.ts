@@ -80,6 +80,27 @@ export async function googleTokens(
     );
   return data;
 }
+
+/** A revoked/unknown token is already in the desired state; other failures must retry. */
+export async function revokeGoogleToken(
+  token: string,
+  fetcher: typeof fetch = fetch
+): Promise<void> {
+  const response = await fetcher('https://oauth2.googleapis.com/revoke', {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ token }),
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (response.ok) return;
+  const result = await response.json().catch(() => null);
+  if (response.status === 400 && result?.error === 'invalid_token') return;
+  throw new YoutubeAccountError(
+    'revocation_pending',
+    'Google authorization revocation will be retried.',
+    502
+  );
+}
 export async function youtubeGet<T>(
   path: string,
   params: Record<string, string>,

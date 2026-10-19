@@ -2,20 +2,32 @@ import { serverFetch } from 'nitro/app';
 import { defineTask } from 'nitro/task';
 
 import { jobConfiguration } from '../../src/lib/playlist-guard/job-config';
+import { runYoutubeMaintenance } from '../utils/youtube-maintenance';
 
 export default defineTask({
   meta: {
     name: 'playlist-guard',
-    description: 'Check due collections and deliver queued notifications',
+    description:
+      'Clean YouTube data, verify grants, and run enabled collection monitoring',
   },
   async run({ context }) {
+    const maintenance = await runYoutubeMaintenance();
+    console.info('youtube_privacy_maintenance', JSON.stringify(maintenance));
     const bindings = (
       context as typeof context & {
         cloudflare?: { env?: Record<string, unknown> };
       }
     ).cloudflare?.env;
     const config = jobConfiguration(bindings);
-    if (!config.enabled) return { result: { disabled: true } };
+    if (!config.enabled) {
+      if (maintenance.failed.length)
+        throw new Error(
+          `YouTube maintenance failed: ${maintenance.failed.join(', ')}`
+        );
+      return {
+        result: { monitoringDisabled: true, maintenance: maintenance.results },
+      };
+    }
     // Local dispatch into the authenticated runner; no public self-fetch or exposed token.
     const response = await serverFetch('/api/playlist-guard-run', {
       method: 'POST',
@@ -25,6 +37,10 @@ export default defineTask({
       throw new Error(`Playlist monitoring runner failed (${response.status})`);
     const result = await response.json();
     console.info('playlist_guard_scheduled_run', JSON.stringify(result.data));
-    return { result: result.data };
+    if (maintenance.failed.length)
+      throw new Error(
+        `YouTube maintenance failed: ${maintenance.failed.join(', ')}`
+      );
+    return { result: { ...result.data, maintenance: maintenance.results } };
   },
 });

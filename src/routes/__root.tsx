@@ -6,6 +6,7 @@ import {
   createRootRoute,
   HeadContent,
   Outlet,
+  redirect,
   Scripts,
   type ErrorComponentProps,
 } from '@tanstack/react-router';
@@ -13,6 +14,11 @@ import { createServerFn } from '@tanstack/react-start';
 import { ThemeProvider } from 'next-themes';
 
 import { envConfigs } from '@/config';
+import {
+  crossesPrivacyBoundary,
+  isPrivateDocumentPath,
+  mayLoadThirdPartyScripts,
+} from '@/lib/private-document';
 import { getQueryClient } from '@/lib/query-client';
 import { getLocale } from '@/paraglide/runtime.js';
 import { Clarity } from '@/components/analytics/clarity';
@@ -26,69 +32,95 @@ import '@/styles/globals.css';
 
 // Analytics IDs live in the DB config (1h-cached service). Fetched via a
 // server function so drizzle/db code never reaches the client bundle.
-const getRootData = createServerFn().handler(async () => {
-  const [{ getAllConfigs }, { getRequestHeaders }] = await Promise.all([
-    import('@/modules/config/service'),
-    import('@tanstack/react-start/server'),
-  ]);
-  const configs = await getAllConfigs();
-  const requestHeaders = getRequestHeaders();
-  const isLocalRequest = /^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(
-    requestHeaders.get('host') || ''
-  );
-  const hasSessionCookie = (requestHeaders.get('cookie') || '').includes(
-    'better-auth.session_token='
-  );
-  let user: {
-    name: string;
-    email: string;
-    image?: string | null;
-  } | null = null;
+const getRootData = createServerFn()
+  .inputValidator((input: { privatePage: boolean }) => ({
+    privatePage: input?.privatePage !== false,
+  }))
+  .handler(async ({ data }) => {
+    const [{ getAllConfigs }, { getRequestHeaders }] = await Promise.all([
+      import('@/modules/config/service'),
+      import('@tanstack/react-start/server'),
+    ]);
+    const configs = await getAllConfigs();
+    const requestHeaders = getRequestHeaders();
+    const isLocalRequest = /^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(
+      requestHeaders.get('host') || ''
+    );
+    const hasSessionCookie = (requestHeaders.get('cookie') || '').includes(
+      'better-auth.session_token='
+    );
+    const thirdPartyAllowed = mayLoadThirdPartyScripts(
+      data.privatePage,
+      requestHeaders.get('cookie') || '',
+      isLocalRequest
+    );
+    let user: {
+      name: string;
+      email: string;
+      image?: string | null;
+    } | null = null;
 
-  if (hasSessionCookie) {
-    try {
-      const { getAuth } = await import('@/core/auth');
-      const session = await getAuth(configs).api.getSession({
-        headers: requestHeaders,
-      });
-      if (session?.user) {
-        user = {
-          name: session.user.name,
-          email: session.user.email,
-          image: session.user.image,
-        };
+    if (hasSessionCookie) {
+      try {
+        const { getAuth } = await import('@/core/auth');
+        const session = await getAuth(configs).api.getSession({
+          headers: requestHeaders,
+        });
+        if (session?.user) {
+          user = {
+            name: session.user.name,
+            email: session.user.email,
+            image: session.user.image,
+          };
+        }
+      } catch {
+        // A public page must remain available if session lookup fails.
       }
-    } catch {
-      // A public page must remain available if session lookup fails.
     }
-  }
 
-  return {
-    user,
-    gaId: configs.google_analytics_id?.trim() || '',
-    plausibleDomain: configs.plausible_domain?.trim() || '',
-    plausibleSrc: configs.plausible_src?.trim() || '',
-    clarityProjectId: isLocalRequest
-      ? ''
-      : configs.clarity_project_id?.trim() || '',
-    crispWebsiteId:
-      configs.crisp_enabled === 'true'
-        ? configs.crisp_website_id?.trim() || ''
-        : '',
-    tawkPropertyId:
-      configs.tawk_enabled === 'true'
-        ? configs.tawk_property_id?.trim() || ''
-        : '',
-    tawkWidgetId:
-      configs.tawk_enabled === 'true'
-        ? configs.tawk_widget_id?.trim() || ''
-        : '',
-  };
-});
+    return {
+      user,
+      thirdPartyAllowed,
+      gaId: configs.google_analytics_id?.trim() || '',
+      plausibleDomain: configs.plausible_domain?.trim() || '',
+      plausibleSrc: configs.plausible_src?.trim() || '',
+      clarityProjectId: isLocalRequest
+        ? ''
+        : configs.clarity_project_id?.trim() || '',
+      crispWebsiteId:
+        configs.crisp_enabled === 'true'
+          ? configs.crisp_website_id?.trim() || ''
+          : '',
+      tawkPropertyId:
+        configs.tawk_enabled === 'true'
+          ? configs.tawk_property_id?.trim() || ''
+          : '',
+      tawkWidgetId:
+        configs.tawk_enabled === 'true'
+          ? configs.tawk_widget_id?.trim() || ''
+          : '',
+    };
+  });
+
+// A script already executed on a public page survives React unmounting. A full
+// document navigation at this boundary prevents that script seeing private DOM.
+const initialDocumentPath =
+  typeof window === 'undefined' ? null : window.location.pathname;
 
 export const Route = createRootRoute({
-  loader: () => getRootData(),
-  head: () => {
+  beforeLoad: ({ location }) => {
+    if (
+      initialDocumentPath !== null &&
+      crossesPrivacyBoundary(initialDocumentPath, location.pathname)
+    ) {
+      throw redirect({ href: location.href, reloadDocument: true });
+    }
+  },
+  loader: ({ location }) =>
+    getRootData({
+      data: { privatePage: isPrivateDocumentPath(location.pathname) },
+    }),
+  head: ({ loaderData }) => {
     return {
       meta: [
         { charSet: 'utf-8' },
@@ -113,13 +145,15 @@ export const Route = createRootRoute({
           sizes: '180x180',
         },
       ],
-      scripts: [
-        {
-          async: true,
-          src: 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5428651211440842',
-          crossOrigin: 'anonymous',
-        },
-      ],
+      scripts: loaderData?.thirdPartyAllowed
+        ? [
+            {
+              async: true,
+              src: 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5428651211440842',
+              crossOrigin: 'anonymous',
+            },
+          ]
+        : [],
     };
   },
   component: RootComponent,
@@ -141,23 +175,26 @@ function RootComponent() {
       >
         <Outlet />
         <Toaster position="top-center" richColors />
-        {rootData?.gaId ? (
+        {rootData?.thirdPartyAllowed && rootData.gaId ? (
           <GoogleAnalytics measurementId={rootData.gaId} />
         ) : null}
-        {rootData?.plausibleDomain || rootData?.plausibleSrc ? (
+        {rootData?.thirdPartyAllowed &&
+        (rootData.plausibleDomain || rootData.plausibleSrc) ? (
           <Plausible
             domain={rootData.plausibleDomain}
             src={rootData.plausibleSrc || undefined}
           />
         ) : null}
-        {rootData?.clarityProjectId ? (
+        {rootData?.thirdPartyAllowed && rootData.clarityProjectId ? (
           <Clarity projectId={rootData.clarityProjectId} />
         ) : null}
-        <CustomerService
-          crispWebsiteId={rootData?.crispWebsiteId || undefined}
-          tawkPropertyId={rootData?.tawkPropertyId || undefined}
-          tawkWidgetId={rootData?.tawkWidgetId || undefined}
-        />
+        {rootData?.thirdPartyAllowed && (
+          <CustomerService
+            crispWebsiteId={rootData?.crispWebsiteId || undefined}
+            tawkPropertyId={rootData?.tawkPropertyId || undefined}
+            tawkWidgetId={rootData?.tawkWidgetId || undefined}
+          />
+        )}
       </ThemeProvider>
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>

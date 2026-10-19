@@ -1,7 +1,19 @@
+import { useState } from 'react';
 import { Link2, Youtube } from 'lucide-react';
 
-import type { YoutubeConnectionsOverview } from '@/lib/youtube-connections/types';
+import type {
+  YoutubeConnection,
+  YoutubeConnectionsOverview,
+} from '@/lib/youtube-connections/types';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export function YoutubeAccounts({
   data,
@@ -20,10 +32,24 @@ export function YoutubeAccounts({
   error: boolean;
   busy: boolean;
   onConnect: (id?: string) => void;
-  onDisconnect: (id: string) => void;
+  onDisconnect: (id: string) => Promise<unknown>;
   onRetry: () => void;
   labels: Record<string, string>;
 }) {
+  const [disconnecting, setDisconnecting] = useState<YoutubeConnection | null>(
+    null
+  );
+
+  async function confirmDisconnect() {
+    if (!disconnecting || busy) return;
+    try {
+      await onDisconnect(disconnecting.id);
+      setDisconnecting(null);
+    } catch {
+      // The mutation displays the error; keep the confirmation open for retry.
+    }
+  }
+
   return (
     <section
       id="youtube-accounts"
@@ -116,7 +142,7 @@ export function YoutubeAccounts({
                           variant="ghost"
                           type="button"
                           disabled={busy}
-                          onClick={() => onDisconnect(account.id)}
+                          onClick={() => setDisconnecting(account)}
                         >
                           {l.disconnect_account}
                         </Button>
@@ -132,6 +158,48 @@ export function YoutubeAccounts({
           </>
         )}
       </div>
+      <Dialog
+        open={!!disconnecting}
+        onOpenChange={(open) => {
+          if (!open && !busy) setDisconnecting(null);
+        }}
+      >
+        <DialogContent showCloseButton={!busy}>
+          <DialogHeader>
+            <DialogTitle>{l.disconnect_title}</DialogTitle>
+            <DialogDescription>{l.disconnect_description}</DialogDescription>
+          </DialogHeader>
+          {disconnecting && (
+            <div className="bg-secondary rounded-lg p-3">
+              <p className="font-medium">{disconnecting.channelTitle}</p>
+              <p className="text-muted-foreground mt-1 text-xs break-all">
+                {disconnecting.channelId}
+              </p>
+            </div>
+          )}
+          <p className="text-muted-foreground text-sm leading-6">
+            {l.disconnect_grant_note}
+          </p>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={busy}
+              onClick={() => setDisconnecting(null)}
+            >
+              {l.cancel}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={busy}
+              onClick={() => void confirmDisconnect()}
+            >
+              {busy ? l.busy : l.disconnect_confirm}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

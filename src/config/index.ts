@@ -16,7 +16,7 @@ const publicEnv = (key: string) => metaEnv[key] ?? procEnv[key];
 export const envConfigs: Record<string, string> = {
   // App (public)
   app_url: publicEnv('VITE_APP_URL') ?? 'http://localhost:3000',
-  app_name: publicEnv('VITE_APP_NAME') ?? 'Export YouTube Playlist',
+  app_name: publicEnv('VITE_APP_NAME') ?? 'Playlist Expoter',
   app_description: publicEnv('VITE_APP_DESCRIPTION') ?? 'Ship your SaaS faster',
   app_logo: publicEnv('VITE_APP_LOGO') ?? '/logo.svg',
   clarity_project_id: publicEnv('VITE_CLARITY_PROJECT_ID') ?? 'xuh8j6w18z',

@@ -36,6 +36,10 @@ export function PlaylistGuardWorkspace() {
     connect_account: m['youtube_accounts.connect_account'](),
     reconnect_account: m['youtube_accounts.reconnect_account'](),
     disconnect_account: m['youtube_accounts.disconnect_account'](),
+    disconnect_title: m['youtube_accounts.disconnect_title'](),
+    disconnect_description: m['youtube_accounts.disconnect_description'](),
+    disconnect_grant_note: m['youtube_accounts.disconnect_grant_note'](),
+    disconnect_confirm: m['youtube_accounts.disconnect_confirm'](),
     accounts_empty: m['youtube_accounts.accounts_empty'](),
     accounts_error: m['youtube_accounts.accounts_error'](),
     account_connected: m['youtube_accounts.account_connected'](),
@@ -85,6 +89,9 @@ export function PlaylistGuardWorkspace() {
     start_trial: m['guard.start_trial'](),
     upgrade: m['guard.upgrade'](),
     trial_until: m['guard.trial_until'](),
+    review_access: m['guard.review_access'](),
+    review_until: m['guard.review_until'](),
+    review_note: m['guard.review_note'](),
     search: m['guard.search'](),
     all: m['guard.all'](),
     attention: m['guard.attention'](),
@@ -345,7 +352,10 @@ export function PlaylistGuardWorkspace() {
           error={youtube.query.isError}
           busy={youtube.connect.isPending || youtube.disconnect.isPending}
           onConnect={(id) => youtube.connect.mutate(id)}
-          onDisconnect={(id) => youtube.disconnect.mutate(id)}
+          onDisconnect={async (id) => {
+            await youtube.disconnect.mutateAsync(id);
+            select(null, true);
+          }}
           onRetry={() => void youtube.query.refetch()}
           labels={labels}
         />

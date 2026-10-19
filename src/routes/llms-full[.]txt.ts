@@ -18,7 +18,7 @@ function englishMessage(key: string): string {
 const STATIC_PAGES: { path: string; title: string; description: string }[] = [
   {
     path: '',
-    title: 'Export YouTube Playlist',
+    title: envConfigs.app_name,
     description:
       'Preview a public YouTube playlist, export its metadata to CSV or XLSX, or copy all video links.',
   },

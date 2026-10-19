@@ -200,6 +200,10 @@ function BackupSetup() {
     connect_account: m['youtube_accounts.connect_account'](),
     reconnect_account: m['youtube_accounts.reconnect_account'](),
     disconnect_account: m['youtube_accounts.disconnect_account'](),
+    disconnect_title: m['youtube_accounts.disconnect_title'](),
+    disconnect_description: m['youtube_accounts.disconnect_description'](),
+    disconnect_grant_note: m['youtube_accounts.disconnect_grant_note'](),
+    disconnect_confirm: m['youtube_accounts.disconnect_confirm'](),
     accounts_empty: m['youtube_accounts.accounts_empty'](),
     accounts_error: m['youtube_accounts.accounts_error'](),
     account_connected: m['youtube_accounts.account_connected'](),
@@ -401,6 +405,17 @@ function BackupSetup() {
                 : m['guard_workspace.refresh']()}
             </Button>
           </div>
+          {entitlement?.review && (
+            <p
+              role="status"
+              className="text-muted-foreground text-sm leading-6"
+            >
+              {m['guard.review_access']()} · {entitlement.review.limit} ·{' '}
+              {m['guard.review_until']()} {date(entitlement.review.expiresAt)}
+              <br />
+              {m['guard.review_note']()}
+            </p>
+          )}
           {overview.isPending ? (
             <p role="status" className="text-muted-foreground py-8 text-sm">
               {m['guard.loading']()}

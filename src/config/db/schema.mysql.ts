@@ -648,6 +648,9 @@ export const youtubeConnection = table(
     status: varchar191('status').notNull(),
     createdAt: text('created_at').notNull(),
     updatedAt: text('updated_at').notNull(),
+    verifiedAt: varchar191('verified_at'),
+    nextValidationAt: varchar191('next_validation_at'),
+    validationToken: varchar191('validation_token'),
   },
   (t) => [
     uniqueIndex('uq_youtube_connection_owner_channel').on(
@@ -655,6 +658,30 @@ export const youtubeConnection = table(
       t.channelId
     ),
     index('idx_youtube_connection_owner').on(t.userId),
+    index('idx_youtube_connection_validation').on(
+      t.nextValidationAt,
+      t.verifiedAt
+    ),
   ]
 );
 export type YoutubeConnectionRow = typeof youtubeConnection.$inferSelect;
+
+// Encrypted revocation work survives account deletion; no foreign key by design.
+export const youtubeRevocation = table(
+  'youtube_revocation',
+  {
+    id: varchar191('id').primaryKey(),
+    userId: varchar191('user_id'),
+    connectionId: varchar191('connection_id').notNull(),
+    credentials: text('credentials').notNull(),
+    attempts: int('attempts').notNull().default(0),
+    nextAttemptAt: varchar191('next_attempt_at').notNull(),
+    leaseToken: varchar191('lease_token'),
+    leaseExpiresAt: varchar191('lease_expires_at'),
+    createdAt: varchar191('created_at').notNull(),
+  },
+  (t) => [
+    index('idx_youtube_revocation_due').on(t.nextAttemptAt, t.leaseExpiresAt),
+  ]
+);
+export type YoutubeRevocationRow = typeof youtubeRevocation.$inferSelect;

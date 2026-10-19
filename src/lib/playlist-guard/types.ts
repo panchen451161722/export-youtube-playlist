@@ -30,7 +30,11 @@ export type GuardItem = {
   /** Absent in older snapshots or when YouTube does not report statistics. */
   views?: number;
 };
-export type GuardMissingItem = GuardItem & { missingSince: string };
+export type GuardMissingItem = GuardItem & {
+  missingSince: string;
+  /** When this metadata was last returned by YouTube, not when absence was detected. */
+  lastSeenAt?: string;
+};
 export type GuardSnapshot = {
   id: string;
   createdAt: string;
@@ -46,6 +50,8 @@ export type GuardCollection = {
   name: string;
   /** Latest channel title from a successful YouTube scan. */
   sourceTitle?: string;
+  /** Successful retrieval time of sourceTitle; token refresh does not renew it. */
+  sourceTitleFetchedAt?: string;
   source: GuardSource;
   connectionId?: string;
   url: string;
@@ -81,6 +87,8 @@ export type GuardEntitlement = {
   limit: number;
   trialEndsAt: string | null;
   canStartTrial: boolean;
+  /** Temporary free review quota, separate from the actual subscription plan. */
+  review?: { limit: number; expiresAt: string };
 };
 export type GuardOverview = {
   collections: GuardCollection[];

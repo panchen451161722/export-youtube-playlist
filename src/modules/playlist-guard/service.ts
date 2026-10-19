@@ -1,13 +1,37 @@
-import { and, asc, desc, eq, isNull, lt, lte, or, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  exists,
+  gt,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  lte,
+  ne,
+  notExists,
+  or,
+  sql,
+} from 'drizzle-orm';
 
 import { db } from '@/core/db';
 import type { EmailSendResult } from '@/core/email';
+import {
+  activeReviewGrants,
+  reviewAccessConfiguration,
+  withReviewAccess,
+} from '@/core/playlist-guard/review-access';
+import { YOUTUBE_USER_DELETION } from '@/core/youtube-lifecycle/service';
 import {
   guardCollection,
   guardDelivery,
   guardWorkspace,
   subscription,
   user,
+  verification,
+  youtubeConnection,
   type GuardCollectionRow,
   type GuardDeliveryRow,
   type GuardWorkspaceRow,
@@ -23,15 +47,21 @@ import {
   notificationPayload,
   type GuardNotificationPayload,
 } from '@/lib/playlist-guard/notifications';
-import type {
-  GuardCollection,
-  GuardCollectionDetail,
-  GuardCreateInput,
-  GuardEntitlement,
-  GuardFrequency,
-  GuardItem,
-  GuardMissingItem,
-  GuardSnapshot,
+import {
+  GUARD_METADATA_RETENTION_MS,
+  isFreshGuardMetadata,
+  pruneGuardMetadata,
+} from '@/lib/playlist-guard/retention';
+import {
+  needsYoutubeAccount,
+  type GuardCollection,
+  type GuardCollectionDetail,
+  type GuardCreateInput,
+  type GuardEntitlement,
+  type GuardFrequency,
+  type GuardItem,
+  type GuardMissingItem,
+  type GuardSnapshot,
 } from '@/lib/playlist-guard/types';
 import { YoutubeAccountError } from '@/lib/youtube-connections/google';
 
@@ -51,6 +81,32 @@ export type GuardScan = {
   items: GuardItem[];
   complete: boolean;
   sourceTitle?: string;
+};
+type RetainedNotificationPayload = GuardNotificationPayload & {
+  /** Earliest retrieval represented anywhere in this copied payload, including its name. */
+  metadataCollectedAt: string;
+};
+function retainedPayload(
+  value: string,
+  now: number
+): RetainedNotificationPayload | undefined {
+  try {
+    const payload = JSON.parse(value) as RetainedNotificationPayload;
+    if (
+      isFreshGuardMetadata(payload.snapshot?.createdAt, now) &&
+      isFreshGuardMetadata(payload.metadataCollectedAt, now)
+    )
+      return payload;
+  } catch {
+    /* Unproven legacy or corrupt queued data must not be retained or sent. */
+  }
+  return undefined;
+}
+
+export type GuardCleanupCursor = {
+  /** null means this stream is finished; omit the entire cursor to start a sweep. */
+  collectionId: string | null;
+  deliveryId: string | null;
 };
 
 function scannedChannelName(
@@ -156,6 +212,7 @@ export function applyScan(
       'This source exceeds the 500-item limit or returned incomplete data. The previous snapshot was preserved.',
       422
     );
+  previous = pruneGuardMetadata(previous, now);
   const items = [
     ...new Map(scan.items.map((item) => [item.id, item])).values(),
   ];
@@ -163,7 +220,7 @@ export function applyScan(
   const currentIds = new Set(items.map((item) => item.id));
   const oldIds = new Set(previousItems.map((item) => item.id));
   const missingIds = new Set(previous.missing.map((item) => item.id));
-  const returnedOrNew = previous.runCount
+  const returnedOrNew = previous.snapshots.length
     ? items.filter((item) => !oldIds.has(item.id))
     : [];
   const removed = previousItems.filter((item) => !currentIds.has(item.id));
@@ -174,7 +231,11 @@ export function applyScan(
   );
   const timestamp = new Date(now).toISOString();
   for (const item of removed)
-    missingById.set(item.id, { ...item, missingSince: timestamp });
+    missingById.set(item.id, {
+      ...item,
+      missingSince: timestamp,
+      lastSeenAt: previous.snapshots[0].createdAt,
+    });
   const missing: GuardMissingItem[] = [...missingById.values()]
     .sort((a, b) => b.missingSince.localeCompare(a.missingSince))
     .slice(0, GUARD_SCAN_LIMIT);
@@ -194,7 +255,11 @@ export function applyScan(
   const result = {
     ...previous,
     ...(sourceTitle
-      ? { sourceTitle, name: scannedChannelName(previous, sourceTitle) }
+      ? {
+          sourceTitle,
+          sourceTitleFetchedAt: timestamp,
+          name: scannedChannelName(previous, sourceTitle),
+        }
       : {}),
     snapshots: [snapshot, ...previous.snapshots].slice(0, GUARD_SNAPSHOT_LIMIT),
     missing,
@@ -260,8 +325,113 @@ function normalizeLegacySchedule<T extends GuardCollection>(collection: T): T {
 /** Inject a database and clock for integration tests. No cross-module dependencies or network I/O. */
 export function createGuardStore(
   database: ReturnType<typeof db> = db(),
-  clock: () => number = Date.now
+  clock: () => number = Date.now,
+  reviewConfiguration: () => unknown = reviewAccessConfiguration
 ) {
+  const retainedDocument = (row: GuardCollectionRow) =>
+    pruneGuardMetadata(documentOf(row), clock());
+
+  function activeOwnerPredicate(userId: string) {
+    return and(
+      exists(
+        database.select({ id: user.id }).from(user).where(eq(user.id, userId))
+      ),
+      notExists(
+        database
+          .select({ id: verification.id })
+          .from(verification)
+          .where(
+            and(
+              eq(verification.identifier, YOUTUBE_USER_DELETION),
+              eq(verification.value, userId),
+              gt(verification.expiresAt, new Date(clock()))
+            )
+          )
+      )
+    );
+  }
+
+  function connectionPredicate(
+    userId: string,
+    collection: Pick<GuardCollection, 'source' | 'connectionId'>
+  ) {
+    if (!needsYoutubeAccount(collection.source))
+      return activeOwnerPredicate(userId);
+    if (!collection.connectionId) return sql`1 = 0`;
+    return and(
+      activeOwnerPredicate(userId),
+      exists(
+        database
+          .select({ id: youtubeConnection.id })
+          .from(youtubeConnection)
+          .where(
+            and(
+              eq(youtubeConnection.id, collection.connectionId),
+              eq(youtubeConnection.userId, userId),
+              eq(youtubeConnection.status, 'connected'),
+              isNotNull(youtubeConnection.credentials),
+              ne(youtubeConnection.credentials, ''),
+              gt(
+                youtubeConnection.verifiedAt,
+                new Date(clock() - GUARD_METADATA_RETENTION_MS).toISOString()
+              ),
+              lte(youtubeConnection.verifiedAt, new Date(clock()).toISOString())
+            )
+          )
+      )
+    );
+  }
+
+  async function assertConnected(
+    userId: string,
+    collection: Pick<GuardCollection, 'source' | 'connectionId'>
+  ) {
+    const [owner] = await database
+      .select({ id: user.id })
+      .from(user)
+      .where(and(eq(user.id, userId), connectionPredicate(userId, collection)))
+      .limit(1);
+    if (!owner)
+      throw new GuardError(
+        'connection_unavailable',
+        needsYoutubeAccount(collection.source)
+          ? 'Reconnect your YouTube account before accessing this collection.'
+          : 'This account is unavailable or being deleted.',
+        403
+      );
+  }
+
+  async function deleteRows(userId: string, id: string, version?: number) {
+    const predicate = and(
+      eq(guardCollection.id, id),
+      eq(guardCollection.userId, userId),
+      version === undefined ? undefined : eq(guardCollection.version, version)
+    );
+    const deliveries = (connection: typeof database) =>
+      connection
+        .delete(guardDelivery)
+        .where(
+          and(
+            eq(guardDelivery.userId, userId),
+            eq(guardDelivery.collectionId, id),
+            exists(
+              connection
+                .select({ id: guardCollection.id })
+                .from(guardCollection)
+                .where(predicate)
+            )
+          )
+        );
+    const collection = (connection: typeof database) =>
+      connection.delete(guardCollection).where(predicate);
+    if (typeof database.batch === 'function')
+      await database.batch([deliveries(database), collection(database)]);
+    else
+      await database.transaction(async (tx: typeof database) => {
+        await deliveries(tx);
+        await collection(tx);
+      });
+  }
   async function rowFor(
     userId: string,
     id: string
@@ -281,7 +451,7 @@ export function createGuardStore(
     return row;
   }
   async function entitlement(userId: string) {
-    const [workspaces, subscriptions] = await Promise.all([
+    const [workspaces, subscriptions, owners] = await Promise.all([
       database
         .select()
         .from(guardWorkspace)
@@ -291,12 +461,83 @@ export function createGuardStore(
         .select()
         .from(subscription)
         .where(eq(subscription.userId, userId)),
+      database
+        .select({ email: user.email, emailVerified: user.emailVerified })
+        .from(user)
+        .where(eq(user.id, userId))
+        .limit(1),
     ]);
-    return entitlementFor(subscriptions, workspaces[0], clock());
+    const now = clock();
+    return withReviewAccess(
+      entitlementFor(subscriptions, workspaces[0], now),
+      owners[0],
+      reviewConfiguration(),
+      now
+    );
+  }
+
+  // Recheck quota in the write itself: a stale verified-email lookup must not
+  // authorize a reviewer after their address or verification state changes.
+  function quotaPredicate(userId: string, slot: number | null) {
+    if (slot === null || slot < 0) return sql`1 = 0`;
+    const now = clock();
+    const products = GUARD_PLANS.filter(
+      (plan) => plan.collectionLimit > slot
+    ).flatMap((plan) => [
+      `guard_${plan.id}_monthly`,
+      `guard_${plan.id}_yearly`,
+    ]);
+    const paid = products.length
+      ? exists(
+          database
+            .select({ id: subscription.id })
+            .from(subscription)
+            .where(
+              and(
+                eq(subscription.userId, userId),
+                isNull(subscription.deletedAt),
+                inArray(subscription.status, [
+                  'active',
+                  'pending_cancel',
+                  'trialing',
+                ]),
+                isNotNull(subscription.subscriptionId),
+                ne(subscription.subscriptionId, ''),
+                isNotNull(subscription.paymentProvider),
+                ne(subscription.paymentProvider, ''),
+                gt(subscription.currentPeriodEnd, new Date(now)),
+                or(
+                  isNull(subscription.currentPeriodStart),
+                  lte(subscription.currentPeriodStart, new Date(now))
+                ),
+                inArray(subscription.productId, products)
+              )
+            )
+        )
+      : sql`1 = 0`;
+    const emails = activeReviewGrants(reviewConfiguration(), now)
+      .filter((grant) => grant.limit > slot)
+      .map((grant) => grant.email);
+    const review = emails.length
+      ? exists(
+          database
+            .select({ id: user.id })
+            .from(user)
+            .where(
+              and(
+                eq(user.id, userId),
+                eq(user.emailVerified, true),
+                inArray(sql`lower(trim(${user.email}))`, emails)
+              )
+            )
+        )
+      : sql`1 = 0`;
+    return or(paid, review);
   }
   async function list(userId: string): Promise<GuardCollection[]> {
-    const rows: { summary: string }[] = await database
-      .select({ summary: guardCollection.summary })
+    // Keep bulky documents out of the list query; at most one is held while pruning.
+    const rows: { id: string }[] = await database
+      .select({ id: guardCollection.id })
       .from(guardCollection)
       .where(
         and(
@@ -305,13 +546,27 @@ export function createGuardStore(
         )
       )
       .orderBy(asc(guardCollection.createdAt));
-    return rows.map((row) =>
-      normalizeLegacySchedule(JSON.parse(row.summary) as GuardCollection)
-    );
+    const collections: GuardCollection[] = [];
+    for (const row of rows) {
+      try {
+        const document = retainedDocument(await rowFor(userId, row.id));
+        await assertConnected(userId, document);
+        collections.push(JSON.parse(summaryOf(document)) as GuardCollection);
+      } catch (error) {
+        if (
+          error instanceof GuardError &&
+          ['connection_unavailable', 'not_found'].includes(error.code)
+        )
+          continue;
+        throw error;
+      }
+    }
+    return collections;
   }
 
   async function detail(userId: string, id: string) {
-    const document = documentOf(await rowFor(userId, id));
+    const document = retainedDocument(await rowFor(userId, id));
+    await assertConnected(userId, document);
     const [delivery]: GuardDeliveryRow[] = await database
       .select()
       .from(guardDelivery)
@@ -346,6 +601,7 @@ export function createGuardStore(
     input: GuardCreateInput,
     sourceKey: string
   ) {
+    await assertConnected(userId, input);
     const access = await entitlement(userId);
     if (!access.limit)
       throw new GuardError(
@@ -373,7 +629,7 @@ export function createGuardStore(
     // Unique (user, slot) is the quota reservation. Concurrent requests cannot overbook it.
     for (let slot = 0; slot < access.limit; slot++) {
       try {
-        await database.insert(guardCollection).values({
+        const values = {
           id,
           userId,
           slot,
@@ -383,7 +639,38 @@ export function createGuardStore(
           createdAt,
           nextSyncAt: createdAt,
           enabled: true,
-        });
+        };
+        // Ownership, deletion marker and grant checks share one SQL statement.
+        // User deletion or revocation cannot race a new orphan insertion.
+        await database.insert(guardCollection).select(
+          database
+            .select({
+              id: sql`${id}`,
+              userId: sql`${userId}`,
+              slot: sql`${slot}`,
+              sourceKey: sql`${sourceKey}`,
+              document: sql`${values.document}`,
+              summary: sql`${values.summary}`,
+              version: sql`0`,
+              enabled: sql`true`,
+              nextSyncAt: sql`${createdAt}`,
+              leaseToken: sql`NULL`,
+              leaseExpiresAt: sql`NULL`,
+              lastAttemptAt: sql`NULL`,
+              createdAt: sql`${createdAt}`,
+              deletedAt: sql`NULL`,
+            })
+            .from(user)
+            .where(
+              and(
+                eq(user.id, userId),
+                connectionPredicate(userId, input),
+                quotaPredicate(userId, slot)
+              )
+            )
+        );
+        // A zero-row insert means the grant was removed after the precheck.
+        await rowFor(userId, id);
         return document;
       } catch (error) {
         if (!isConflict(error)) throw error;
@@ -440,6 +727,8 @@ export function createGuardStore(
     for (let attempt = 0; attempt < 4; attempt++) {
       const row = await rowFor(userId, id);
       if (patch.enabled === true) await assertAccess(userId, row);
+      const document = { ...retainedDocument(row), ...patch };
+      await assertConnected(userId, document);
       if (
         row.leaseToken &&
         row.leaseExpiresAt &&
@@ -450,7 +739,6 @@ export function createGuardStore(
           'A sync is running. Try again shortly.',
           409
         );
-      const document = { ...documentOf(row), ...patch };
       document.nextSyncAt = document.enabled
         ? nextRun(document.frequency, clock())
         : null;
@@ -472,6 +760,10 @@ export function createGuardStore(
             eq(guardCollection.id, id),
             eq(guardCollection.userId, userId),
             eq(guardCollection.version, row.version),
+            connectionPredicate(userId, document),
+            patch.enabled === true
+              ? quotaPredicate(userId, row.slot)
+              : undefined,
             isNull(guardCollection.deletedAt),
             or(
               isNull(guardCollection.leaseExpiresAt),
@@ -483,7 +775,7 @@ export function createGuardStore(
           )
         );
       const fresh = await rowFor(userId, id);
-      if (fresh.leaseToken === token) return documentOf(fresh);
+      if (fresh.leaseToken === token) return retainedDocument(fresh);
     }
     throw new GuardError(
       'conflict',
@@ -493,24 +785,7 @@ export function createGuardStore(
   }
   async function remove(userId: string, id: string) {
     await rowFor(userId, id);
-    await database
-      .update(guardCollection)
-      .set({
-        deletedAt: new Date(clock()).toISOString(),
-        enabled: false,
-        slot: null,
-        sourceKey: null,
-        nextSyncAt: null,
-        leaseToken: null,
-        leaseExpiresAt: null,
-      })
-      .where(
-        and(
-          eq(guardCollection.id, id),
-          eq(guardCollection.userId, userId),
-          isNull(guardCollection.deletedAt)
-        )
-      );
+    await deleteRows(userId, id);
     return { id };
   }
   async function sync(
@@ -526,7 +801,8 @@ export function createGuardStore(
     await assertAccess(userId, row);
     const now = clock();
     const timestamp = new Date(now).toISOString();
-    const document = documentOf(row);
+    const document = retainedDocument(row);
+    await assertConnected(userId, document);
     if (!document.enabled)
       throw new GuardError(
         'paused',
@@ -554,6 +830,8 @@ export function createGuardStore(
           eq(guardCollection.userId, userId),
           eq(guardCollection.version, row.version),
           eq(guardCollection.enabled, true),
+          connectionPredicate(userId, document),
+          quotaPredicate(userId, row.slot),
           isNull(guardCollection.deletedAt),
           or(
             isNull(guardCollection.leaseExpiresAt),
@@ -566,13 +844,21 @@ export function createGuardStore(
       throw new GuardError('sync_busy', 'A sync is already running.', 409);
     try {
       const scan = await fetchScan(document, userId);
+      await assertAccess(userId, claimed);
+      await assertConnected(userId, document);
       const result = applyScan(document, scan, clock());
-      const lease = and(
-        eq(guardCollection.id, id),
-        eq(guardCollection.userId, userId),
-        eq(guardCollection.leaseToken, token),
-        isNull(guardCollection.deletedAt)
-      );
+      // Build at each write, after any recipient lookup, so an expiring review
+      // grant cannot leave a previously captured allowlist in a later commit.
+      const lease = () =>
+        and(
+          eq(guardCollection.id, id),
+          eq(guardCollection.userId, userId),
+          eq(guardCollection.leaseToken, token),
+          eq(guardCollection.version, claimed.version),
+          connectionPredicate(userId, document),
+          quotaPredicate(userId, claimed.slot),
+          isNull(guardCollection.deletedAt)
+        );
       const save = (connection: typeof database) =>
         connection
           .update(guardCollection)
@@ -580,9 +866,10 @@ export function createGuardStore(
             document: JSON.stringify(result),
             summary: summaryOf(result),
             nextSyncAt: result.nextSyncAt,
+            version: claimed.version + 1,
             leaseExpiresAt: new Date(clock()).toISOString(),
           })
-          .where(lease);
+          .where(lease());
       const [recipient]: {
         email: string;
         emailVerified: boolean;
@@ -599,8 +886,20 @@ export function createGuardStore(
               .where(eq(user.id, userId))
               .limit(1)
           : [];
-      const payload = recipient?.emailVerified
+      const notification = recipient?.emailVerified
         ? notificationPayload(result, recipient.locale)
+        : null;
+      const payload: RetainedNotificationPayload | null = notification
+        ? {
+            ...notification,
+            metadataCollectedAt:
+              result.name === result.sourceTitle && result.sourceTitleFetchedAt
+                ? [
+                    notification.snapshot.createdAt,
+                    result.sourceTitleFetchedAt,
+                  ].sort()[0]
+                : notification.snapshot.createdAt,
+          }
         : null;
       if (payload && recipient) {
         // INSERT ... SELECT shares the scan's lease predicate. A stale worker can
@@ -625,7 +924,7 @@ export function createGuardStore(
                 providerMessageId: sql`NULL`,
               })
               .from(guardCollection)
-              .where(lease)
+              .where(lease())
           );
         // D1/libSQL provide atomic batch; PostgreSQL/MySQL use transactions.
         if (typeof database.batch === 'function')
@@ -637,13 +936,15 @@ export function createGuardStore(
           });
       } else await save(database);
       const saved = await rowFor(userId, id);
-      if (saved.leaseToken !== token)
+      await assertAccess(userId, saved);
+      await assertConnected(userId, result);
+      if (saved.leaseToken !== token || saved.version !== claimed.version + 1)
         throw new GuardError(
           'sync_expired',
           'Another sync replaced this scan. Please refresh.',
           409
         );
-      return documentOf(saved);
+      return retainedDocument(saved);
     } catch (error) {
       // A failed scan never overwrites successful snapshots or marks videos missing.
       const message =
@@ -651,7 +952,7 @@ export function createGuardStore(
           ? error.message
           : 'YouTube could not complete this check. Please try again.';
       const failed = {
-        ...document,
+        ...pruneGuardMetadata(document, clock()),
         lastError: message,
         nextSyncAt: new Date(clock() + 15 * 60_000).toISOString(),
       };
@@ -668,6 +969,9 @@ export function createGuardStore(
             eq(guardCollection.id, id),
             eq(guardCollection.userId, userId),
             eq(guardCollection.leaseToken, token),
+            eq(guardCollection.version, claimed.version),
+            connectionPredicate(userId, document),
+            quotaPredicate(userId, claimed.slot),
             isNull(guardCollection.deletedAt)
           )
         );
@@ -718,6 +1022,7 @@ export function createGuardStore(
               eq(guardCollection.id, row.id),
               eq(guardCollection.userId, row.userId),
               eq(guardCollection.version, row.version),
+              connectionPredicate(row.userId, schedule),
               isNull(guardCollection.deletedAt),
               eq(guardCollection.enabled, true),
               row.nextSyncAt
@@ -746,7 +1051,7 @@ export function createGuardStore(
   async function defer(userId: string, id: string) {
     const row = await rowFor(userId, id);
     const nextSyncAt = new Date(clock() + DAY).toISOString();
-    const document = { ...documentOf(row), nextSyncAt };
+    const document = { ...retainedDocument(row), nextSyncAt };
     await database
       .update(guardCollection)
       .set({
@@ -760,6 +1065,7 @@ export function createGuardStore(
           eq(guardCollection.userId, userId),
           eq(guardCollection.id, id),
           eq(guardCollection.version, row.version),
+          connectionPredicate(userId, document),
           isNull(guardCollection.deletedAt),
           or(
             isNull(guardCollection.leaseExpiresAt),
@@ -767,6 +1073,169 @@ export function createGuardStore(
           )
         )
       );
+  }
+
+  /** One bounded page per stream, independent of subscriptions, pauses and scan health. */
+  async function cleanupExpired(
+    options: { limit?: number; cursor?: GuardCleanupCursor } = {}
+  ) {
+    const requestedLimit = options.limit ?? 25;
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.max(1, Math.min(25, Math.floor(requestedLimit)))
+      : 25;
+    const collectionCursor = options.cursor?.collectionId;
+    const deliveryCursor = options.cursor?.deliveryId;
+    const collectionRows: { id: string }[] =
+      collectionCursor === null
+        ? []
+        : await database
+            .select({ id: guardCollection.id })
+            .from(guardCollection)
+            .where(
+              collectionCursor
+                ? gt(guardCollection.id, collectionCursor)
+                : undefined
+            )
+            .orderBy(asc(guardCollection.id))
+            .limit(limit + 1);
+    const deliveryRows: { id: string }[] =
+      deliveryCursor === null
+        ? []
+        : await database
+            .select({ id: guardDelivery.id })
+            .from(guardDelivery)
+            .where(
+              deliveryCursor ? gt(guardDelivery.id, deliveryCursor) : undefined
+            )
+            .orderBy(asc(guardDelivery.id))
+            .limit(limit + 1);
+    const stats = {
+      reviewed: 0,
+      cleaned: 0,
+      deliveriesReviewed: 0,
+      deliveriesCleaned: 0,
+    };
+    for (const entry of collectionRows.slice(0, limit)) {
+      stats.reviewed++;
+      const [row]: GuardCollectionRow[] = await database
+        .select()
+        .from(guardCollection)
+        .where(eq(guardCollection.id, entry.id))
+        .limit(1);
+      if (!row) continue;
+      let document: GuardCollectionDetail;
+      try {
+        document = retainedDocument(row);
+      } catch {
+        // Corrupt documents cannot establish provenance and must not retain API data.
+        await deleteRows(row.userId, row.id, row.version);
+        stats.cleaned++;
+        continue;
+      }
+      let remove = !!row.deletedAt;
+      if (needsYoutubeAccount(document.source)) {
+        const [connection] = document.connectionId
+          ? await database
+              .select()
+              .from(youtubeConnection)
+              .where(
+                and(
+                  eq(youtubeConnection.id, document.connectionId),
+                  eq(youtubeConnection.userId, row.userId)
+                )
+              )
+              .limit(1)
+          : [];
+        // Give legacy grants a bounded chance to undergo their first validation.
+        // Actual reads and writes still require verifiedAt, never this fallback.
+        remove ||=
+          !connection ||
+          connection.status !== 'connected' ||
+          !connection.credentials ||
+          !isFreshGuardMetadata(
+            connection.verifiedAt ?? connection.createdAt,
+            clock()
+          );
+      }
+      if (remove) {
+        await deleteRows(row.userId, row.id, row.version);
+        stats.cleaned++;
+        continue;
+      }
+      const serialized = JSON.stringify(document);
+      const summary = summaryOf(document);
+      if (serialized !== row.document || summary !== row.summary) {
+        // Fencing both successful and failed scans prevents an in-flight request
+        // from reintroducing metadata removed by this maintenance page.
+        await database
+          .update(guardCollection)
+          .set({
+            document: serialized,
+            summary,
+            version: row.version + 1,
+            leaseToken: null,
+            leaseExpiresAt: null,
+            nextSyncAt: document.nextSyncAt,
+          })
+          .where(
+            and(
+              eq(guardCollection.id, row.id),
+              eq(guardCollection.userId, row.userId),
+              eq(guardCollection.version, row.version)
+            )
+          );
+        stats.cleaned++;
+      }
+    }
+    for (const entry of deliveryRows.slice(0, limit)) {
+      stats.deliveriesReviewed++;
+      const [row]: GuardDeliveryRow[] = await database
+        .select()
+        .from(guardDelivery)
+        .where(eq(guardDelivery.id, entry.id))
+        .limit(1);
+      if (!row) continue;
+      let stale = !isFreshGuardMetadata(row.createdAt, clock());
+      if (!stale && row.payload !== '{}') {
+        stale = !retainedPayload(row.payload, clock());
+      }
+      if (stale) {
+        await database
+          .delete(guardDelivery)
+          .where(
+            and(
+              eq(guardDelivery.id, row.id),
+              eq(guardDelivery.createdAt, row.createdAt)
+            )
+          );
+        stats.deliveriesCleaned++;
+      } else if (
+        !['pending', 'sending'].includes(row.status) &&
+        row.payload !== '{}'
+      ) {
+        await database
+          .update(guardDelivery)
+          .set({ payload: '{}', leaseToken: null, leaseExpiresAt: null })
+          .where(
+            and(
+              eq(guardDelivery.id, row.id),
+              eq(guardDelivery.status, row.status)
+            )
+          );
+        stats.deliveriesCleaned++;
+      }
+    }
+    const next: GuardCleanupCursor = {
+      collectionId:
+        collectionRows.length > limit ? collectionRows[limit - 1].id : null,
+      deliveryId:
+        deliveryRows.length > limit ? deliveryRows[limit - 1].id : null,
+    };
+    return {
+      ...stats,
+      nextCursor:
+        next.collectionId === null && next.deliveryId === null ? null : next,
+    };
   }
 
   async function deliverPending(
@@ -796,11 +1265,12 @@ export function createGuardStore(
       .limit(Math.min(10, limit));
     const stats = { attempted: 0, sent: 0, failed: 0, cancelled: 0 };
     for (const row of rows) {
-      if (row.attempts >= 5) {
+      if (row.attempts >= 5 || !isFreshGuardMetadata(row.createdAt, clock())) {
         await database
           .update(guardDelivery)
           .set({
             status: 'failed',
+            payload: '{}',
             leaseToken: null,
             leaseExpiresAt: null,
             lastError: 'Email delivery did not complete after five attempts.',
@@ -835,14 +1305,18 @@ export function createGuardStore(
         eq(guardDelivery.id, row.id),
         eq(guardDelivery.leaseToken, token)
       );
-      const payload = JSON.parse(row.payload) as GuardNotificationPayload;
+      const payload = retainedPayload(claimed.payload, clock());
       let eligible = false;
+      let parent: GuardCollectionRow | undefined;
+      let current: GuardCollectionDetail | undefined;
       try {
-        const parent = await rowFor(row.userId, row.collectionId);
+        parent = await rowFor(row.userId, row.collectionId);
         await assertAccess(row.userId, parent);
-        const current = documentOf(parent);
+        current = retainedDocument(parent);
+        await assertConnected(row.userId, current);
         const email = await verifiedEmail(row.userId);
         eligible =
+          !!payload &&
           current.enabled &&
           email === row.recipient &&
           (!payload.emailDelivery || current.emailDelivery) &&
@@ -853,12 +1327,57 @@ export function createGuardStore(
         if (
           !(
             error instanceof GuardError &&
-            ['not_found', 'plan_required'].includes(error.code)
+            ['not_found', 'plan_required', 'connection_unavailable'].includes(
+              error.code
+            )
           )
         )
           throw error;
       }
-      if (!eligible) {
+      if (eligible && parent && current) {
+        // Last read before network I/O: deleted/cancelled claims, changed parent
+        // versions and disconnected grants cannot start a queued send.
+        const [allowed] = await database
+          .select({ id: guardDelivery.id })
+          .from(guardDelivery)
+          .where(
+            and(
+              ownedLease,
+              eq(guardDelivery.status, 'sending'),
+              exists(
+                database
+                  .select({ id: user.id })
+                  .from(user)
+                  .where(
+                    and(
+                      eq(user.id, row.userId),
+                      eq(user.emailVerified, true),
+                      eq(user.email, row.recipient)
+                    )
+                  )
+              ),
+              exists(
+                database
+                  .select({ id: guardCollection.id })
+                  .from(guardCollection)
+                  .where(
+                    and(
+                      eq(guardCollection.id, parent.id),
+                      eq(guardCollection.userId, row.userId),
+                      eq(guardCollection.version, parent.version),
+                      eq(guardCollection.enabled, true),
+                      isNull(guardCollection.deletedAt),
+                      connectionPredicate(row.userId, current),
+                      quotaPredicate(row.userId, parent.slot)
+                    )
+                  )
+              )
+            )
+          )
+          .limit(1);
+        eligible = !!allowed;
+      }
+      if (!eligible || !payload) {
         await database
           .update(guardDelivery)
           .set({
@@ -905,6 +1424,7 @@ export function createGuardStore(
           .update(guardDelivery)
           .set({
             status: attempts >= 5 ? 'failed' : 'pending',
+            ...(attempts >= 5 ? { payload: '{}' } : {}),
             leaseToken: null,
             leaseExpiresAt: null,
             nextAttemptAt: new Date(
@@ -932,6 +1452,7 @@ export function createGuardStore(
     due,
     verifiedEmail,
     defer,
+    cleanupExpired,
     deliverPending,
   };
 }

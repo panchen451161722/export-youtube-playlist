@@ -130,21 +130,32 @@ export function GuardWorkspace({
         <ShieldCheck className="text-muted-foreground mt-0.5 size-5 shrink-0" />
         <div>
           <p className="text-sm font-medium">
-            {l.plan} · {l[`plan_${entitlement.plan}`]}
+            {l.plan} ·{' '}
+            {entitlement.plan === 'free' && entitlement.review
+              ? l.review_access
+              : l[`plan_${entitlement.plan}`]}
           </p>
           <p className="text-muted-foreground mt-1 max-w-xl text-xs leading-5">
-            {entitlement.canStartTrial
-              ? l.trial_note
-              : !!entitlement.trialEndsAt
-                ? `${l.trial_until} · ${date(entitlement.trialEndsAt)}`
-                : entitlement.plan === 'free'
-                  ? l.trial_expired
-                  : l.metadata_note}
+            {entitlement.plan === 'free' && entitlement.review
+              ? l.review_note
+              : entitlement.canStartTrial
+                ? l.trial_note
+                : !!entitlement.trialEndsAt
+                  ? `${l.trial_until} · ${date(entitlement.trialEndsAt)}`
+                  : entitlement.plan === 'free'
+                    ? l.trial_expired
+                    : l.metadata_note}
           </p>
+          {entitlement.review && (
+            <p className="text-muted-foreground mt-1 text-xs leading-5">
+              {l.review_access} · {entitlement.review.limit} · {l.review_until}{' '}
+              {date(entitlement.review.expiresAt)}
+            </p>
+          )}
         </div>
       </div>
       <Link
-        href={entitlement.limit ? '/settings/billing' : '/pricing'}
+        href={entitlement.plan !== 'free' ? '/settings/billing' : '/pricing'}
         className={buttonVariants({ variant: 'outline', size: 'sm' })}
       >
         {entitlement.limit ? l.upgrade : l.start_trial}

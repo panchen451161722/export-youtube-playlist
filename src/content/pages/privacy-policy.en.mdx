@@ -1,103 +1,85 @@
 export const meta = {
-  title: 'Privacy Policy | Export YouTube Playlist',
+  title: 'Privacy Policy | Playlist Expoter',
   description:
-    'Learn how Export YouTube Playlist handles playlist URLs, public YouTube metadata, downloads, analytics, and advertising.',
-  updated_at: '2026-09-01',
+    'How we handle public exports, connected YouTube accounts, saved metadata, retention, deletion, payments, and optional notifications.',
+  updated_at: '2026-10-18',
 };
 
 ## Overview
 
-Export YouTube Playlist helps you turn metadata from a public YouTube playlist into a CSV or XLSX file, or copy its video links. This policy describes the information involved when you use the service and the choices available to you.
+Playlist Expoter provides public metadata tools and an account-based Playlist Backup workspace. Public tools process the URL you submit for a preview or browser export. Creating a collection in Playlist Backup saves its source, settings, and metadata snapshots so you can review changes and export records.
 
-The exporter does not require a user account. Optional Google sign-in is available for account features and future paid entitlements, but signing in does not grant this service access to your YouTube account. The service is designed not to create an application-level history of the playlist URLs you submit or the playlist data returned for your export.
+We use YouTube API Services. YouTube and Google process information under the [Google Privacy Policy](https://policies.google.com/privacy) and [YouTube Terms of Service](https://www.youtube.com/t/terms). This independent service is not endorsed by or affiliated with YouTube or Google.
 
-## Information Processed by the Exporter
+## Public Tools and Browser Exports
 
-When you submit a playlist URL:
+Our server validates your public video, playlist, or channel URL, requests available metadata from the YouTube Data API, and returns the result to your browser. Metadata can include identifiers, titles, links, channel names, publication dates, durations, view counts, thumbnails, and playlist positions.
 
-1. The URL is sent to our server so we can validate it and extract the playlist identifier.
-2. Our server requests publicly available playlist and video metadata from the YouTube Data API.
-3. The result is returned to your browser for preview.
-4. CSV and XLSX files are generated in your browser. We do not upload the generated file back to our server.
+Public tools do not create a saved collection or application-level export history unless you separately use Playlist Backup. Download files are generated in your browser and are not uploaded back to our server. Previews may remain in browser memory until reload or closure. Hosting and security providers may still process technical request information.
 
-The public metadata may include video titles, links, channel names, publication dates, durations, view counts, thumbnails, and playlist position. Private, unavailable, or deleted content may not be returned.
+We do not download or store YouTube video or audio files. Metadata exports cannot restore content removed from YouTube.
 
-We do not use YouTube OAuth and do not ask for access to your YouTube account. Please do not submit private playlist links, credentials, API keys, or other confidential information.
+## Website Accounts and Separate YouTube Authorization
 
-## Storage and Technical Data
+Website sign-in and YouTube connection are separate choices. Google sign-in supplies identity information for your website account and session, such as your name, email address, profile image, and account identifier. We also store account and session records and timestamps needed to operate and protect the account. We do not receive your Google password.
 
-Submitted playlist URLs and returned playlist metadata are processed for the current request and are not intentionally stored in our application database. Your browser may temporarily keep the preview in memory until you reload or close the page.
+Choosing **Connect account** requests `https://www.googleapis.com/auth/youtube.readonly`. This lets us read the connected YouTube channel's information and sources you select: private playlists you can access, liked videos, and subscribed channels. “Liked music” filters liked YouTube videos to the Music category; it is not the entire YouTube Music library and may differ from its Liked Music list. Watch Later is not supported.
 
-Like most web services, our hosting and security providers may process limited technical information needed to deliver and protect the site, such as IP address, browser type, timestamps, request status, and security events. Retention and handling by those providers are subject to their own policies and operational requirements.
+We store the connected channel's identifier, title, thumbnail reference, connection status, authorization timestamps, and OAuth credentials needed for authorized requests. Dedicated YouTube connection credentials are encrypted before storage; this does not mean all account data or every identity-provider field is encrypted at the application level.
 
-## YouTube Data API
+Offline authorization lets the server refresh access for features you enable. Scheduled checks run only when scheduling is activated and the collection is enabled with a valid entitlement. The permission does not allow editing playlists, likes, or subscriptions, or uploading or deleting videos.
 
-The service uses the YouTube Data API to retrieve public information. Google may receive the playlist identifier, our server's network information, and technical request details when we make an API request. Google's handling of that information is governed by its own terms and privacy policy.
+## Saved Collections and Optional Notifications
 
-Export YouTube Playlist is an independent service and is not endorsed by or affiliated with YouTube or Google.
+Playlist Expoter stores the collection source and applicable URL, selected connection, name, check frequency, notification choices, check timestamps, recent snapshots, and metadata for items detected as missing. These records belong to your website account and are not published to other users. They support display, comparison, checks, and CSV, Excel, or JSON export. Each check currently supports up to 500 source items and at most five recent snapshots within the retention period below.
 
-## Accounts
+Historical snapshots are dated records, not claims about current YouTube content. Unavailable metadata cannot be backed up reliably.
 
-If you choose Google sign-in, we may store the account information needed to operate your profile and session, such as your name, email address, profile image, account identifier, session records, and account creation or update timestamps. We do not receive your Google password.
+Email alerts and JSON backup delivery require a configured delivery service, your enabled preferences, and a verified recipient email. When enabled, the selected provider—Resend or Cloudflare Email Service—processes the recipient address and notification content, which may include collection metadata, change details, and a JSON snapshot attachment. Manual checks do not send these scheduled notifications. Copies delivered to your mailbox are controlled by you and your email provider.
 
-You can delete your account from the Profile page. Account deletion removes the account and associated application records according to our database relationships. Legal, security, fraud-prevention, or transaction records may be retained when required after paid features are introduced.
+## Google User Data: Use and Sharing
+
+We use Google and YouTube user data for the account, collection, monitoring, export, and optional notification features described above, and as necessary for security and legal obligations. Our handling of Google API data follows the [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy), including its Limited Use requirements.
+
+We do not sell Google or YouTube user data, use it for advertising or credit decisions, or use it to train generalized artificial intelligence or machine-learning models. Private collection contents are not transferred to advertising platforms or session-recording analytics. People do not read these contents unless you authorize a specific support investigation, access is necessary for security or abuse investigation, or law requires it.
+
+Google receives requests needed for sign-in, authorization, data retrieval, and revocation. Hosting and database providers process data to operate the service; an enabled email provider processes the notification data described above. Sharing is limited to the requested features, security, or applicable legal requirements. Collection export contents are not sent to a payment provider to process subscriptions.
+
+## Retention, Disconnecting, and Deleting Data
+
+Snapshot and missing-item YouTube API metadata is retained for no more than 30 days after retrieval. New retrievals can create new current records but do not extend an old snapshot's lifetime. Pausing a collection or ending a subscription does not suspend this limit. Expired metadata is excluded from display and export and removed by cleanup. Collection settings you supplied may remain while the collection exists so you can resume checks later.
+
+- **Remove collection:** deletes its saved metadata and associated queued notification data from the active application database and stops its checks. The source on YouTube is unchanged.
+- **Disconnect a YouTube account:** after confirmation, stops access through that connection and removes its connected-account data, associated private collections, snapshots, missing-item history, and queued notification data from the active application database. We also request revocation from Google. Removal cannot be undone; reconnecting does not recover deleted snapshots.
+- **Delete website account:** **Settings → Profile** removes your account, sessions, and associated collection data from the active application database and requests revocation for all its YouTube connections. Billing, security, or legally required records may be retained only where necessary for those separate purposes.
+- **Revoke through Google:** remove access at [Google Account permissions](https://security.google.com/settings/security/permissions). Background authorization checks are scheduled daily, independently of collection frequency. When maintenance detects confirmed revocation, it removes the associated data. If authorization cannot be revalidated, access stops and associated data is removed no later than 30 days after the last successful validation.
+
+Local removal does not wait for Google's response. If revocation fails temporarily, a separate queue may retain the minimum encrypted credential needed to retry for up to seven days. It is used only for revocation, not to read YouTube data, and removed after completion or expiry. Revocation can affect other channels or Google features sharing the grant; they may require reconnection.
+
+You can also request deletion at [support@exportyoutubeplaylist.com](mailto:support@exportyoutubeplaylist.com). After verifying account ownership, we delete the relevant YouTube data as soon as possible and within seven calendar days. We never request your Google password or OAuth tokens.
+
+These controls remove data from active application storage. They do not remotely delete your downloads, delivered email, or Google's original data. Hosting-provider recovery copies and technical logs have separate operational retention; we do not promise all such copies are erased immediately. Contact us if your request also concerns those records.
 
 ## Cookies, Analytics, Security, and Advertising
 
-We may use essential storage or cookies for functions such as language and theme preferences.
+Essential cookies and local storage support sessions, authentication, language, theme, and security. Infrastructure providers such as Cloudflare may process IP addresses, browser information, timestamps, and security events. Turnstile, when enabled, evaluates technical signals to prevent automated abuse.
 
-Cloudflare may process limited technical and aggregated usage information through hosting, security, Turnstile bot protection, and Cloudflare Web Analytics. Turnstile evaluates technical signals to distinguish legitimate users from automated abuse.
+Optional analytics on logged-out public pages may include Microsoft Clarity, Cloudflare Web Analytics, or other configured providers. Clarity is configured without analytics or advertising cookies but can still process page paths, clicks, and scrolling. Third-party analytics, session recording, ads, and customer-service scripts are not loaded on account, authentication, collection, or backup pages, or on public pages served to signed-in users. Submitted URLs and public result areas are masked where public-page recording is used; we do not intentionally include source identifiers, titles, or account details in custom analytics events.
 
-We use Microsoft Clarity to understand how visitors use the site through aggregate interaction analytics, heatmaps, and session recordings. Clarity may process technical and interaction data such as device and browser information, page paths, clicks, scrolling, and navigation behavior. Playlist URLs, returned playlist or channel details, account forms, and other designated result areas are masked in Clarity. We do not intentionally send submitted URLs, video or playlist identifiers, titles, names, or email addresses as custom analytics event properties.
-
-Clarity operates on this site in permanent cookieless mode. Both analytics storage and advertising storage remain disabled, so Clarity does not use its first-party or third-party cookies to recognize visitors across pages or visits. Cookieless interaction data can still be collected, but sessions may be fragmented and some analytics features may be limited. Microsoft processes Clarity data under its own privacy terms.
-
-Advertising, including Google AdSense, is not active unless it is configured and enabled on the site. If advertising is enabled, third-party vendors, including Google, may place and read cookies on users' browsers or use web beacons, IP addresses, and similar identifiers as a result of serving ads on this site. These technologies may be used to deliver, measure, personalize, limit the frequency of, and protect against fraud in advertising, depending on your region, settings, and consent choices.
-
-Learn more about [how Google uses information from sites or apps that use its services](https://policies.google.com/technologies/partner-sites). You can also manage cookies through your browser settings and manage Google's use of advertising information through [Google Ad Settings](https://adssettings.google.com/).
-
-Before Google ads are served to visitors in the European Economic Area, the United Kingdom, or Switzerland, we will configure a Google-certified consent management platform that integrates with the IAB Transparency and Consent Framework where Google requires it. Google advertising will not be enabled for those visitors until the required consent flow is ready.
+Advertising, including Google AdSense, operates only where configured and enabled. Vendors may use cookies, web beacons, IP addresses, or similar identifiers under applicable regional consent choices. Authorized Google user data is not used for ads. See [Google's partner-site information](https://policies.google.com/technologies/partner-sites), [Google Ad Settings](https://adssettings.google.com/), and your browser controls. Where Google requires a certified consent-management platform, advertising must wait until that consent flow is available.
 
 ## Payments
 
-Paid features are not currently available. If we introduce paid plans, checkout will be handled by a payment provider and we will update this policy before collecting payment information. We do not currently collect or store payment card details for the exporter.
+Where paid plans are enabled, checkout and subscription management use the provider shown to you, currently Stripe for Playlist Expoter. The provider handles payment details under its policies. We store account and transaction references, plan, subscription status, billing dates, and related records needed for entitlements and billing. We do not receive or store your full payment-card number. Available prices and billing conditions appear before purchase.
 
-## How We Use Information
+## Security, Rights, and Changes
 
-We process information as needed to:
+We use access controls and technical safeguards, but no internet service guarantees absolute security. Depending on applicable law, you may request access, correction, deletion, or other rights relating to personal information we hold. We may verify account ownership before acting.
 
-- Validate playlist URLs and provide the requested preview and export.
-- Operate, secure, troubleshoot, and improve the service.
-- Prevent excessive automated requests and protect YouTube API quota.
-- Measure product usage or display advertising only when the relevant service has been enabled.
-- Comply with applicable legal obligations and enforce our Terms of Service.
+The service is not directed to children under the age at which their country requires parental consent. Contact us if you believe a child provided personal information through the service.
 
-We do not sell the playlist URLs you submit or the exported playlist metadata.
-
-## Data Sharing
-
-Information may be processed by YouTube/Google when the API is called and by infrastructure, security, analytics, or advertising providers that help operate enabled parts of the service. We may also disclose information when reasonably necessary to comply with law, respond to valid legal process, or protect the service and its users.
-
-## Your Choices
-
-Because the exporter does not intentionally keep a playlist-export history, there may be no saved playlist record for us to retrieve or delete. If you created an optional account, you can delete it from the Profile page. Depending on where you live, you may also have rights relating to other personal information we hold and may contact us to request access or correction.
-
-You can limit optional cookies through any consent controls shown on the site and through your browser settings. Blocking some storage may affect site preferences.
-
-## Security and Retention
-
-We use reasonable technical and organizational safeguards appropriate to a small web service. No internet service can guarantee absolute security.
-
-Application data used for an export is intended to remain only for the time needed to complete the request. Technical logs and security records, if created by our infrastructure providers, may be retained for limited operational, security, or legal purposes.
-
-## Children
-
-The service is not directed to children under the age at which parental consent is required in their country. If you believe a child has provided personal information through the service, please contact us.
-
-## Changes to This Policy
-
-We may update this policy as the service changes. The date at the top shows the latest revision. Material changes will be reflected on this page before or when the relevant feature is enabled.
+We update this policy when the service or its data practices change. The date above identifies this revision. New uses of Google user data require appropriate disclosure and consent before that use begins.
 
 ## Contact
 
-If you have questions or a privacy request, email [support@exportyoutubeplaylist.com](mailto:support@exportyoutubeplaylist.com).
+For privacy questions or requests, email [support@exportyoutubeplaylist.com](mailto:support@exportyoutubeplaylist.com).

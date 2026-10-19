@@ -724,6 +724,9 @@ export const youtubeConnection = table(
     status: text('status').notNull(),
     createdAt: text('created_at').notNull(),
     updatedAt: text('updated_at').notNull(),
+    verifiedAt: text('verified_at'),
+    nextValidationAt: text('next_validation_at'),
+    validationToken: text('validation_token'),
   },
   (t) => [
     uniqueIndex('uq_youtube_connection_owner_channel').on(
@@ -731,6 +734,30 @@ export const youtubeConnection = table(
       t.channelId
     ),
     index('idx_youtube_connection_owner').on(t.userId),
+    index('idx_youtube_connection_validation').on(
+      t.nextValidationAt,
+      t.verifiedAt
+    ),
   ]
 );
 export type YoutubeConnectionRow = typeof youtubeConnection.$inferSelect;
+
+// Encrypted revocation work survives account deletion; no foreign key by design.
+export const youtubeRevocation = table(
+  'youtube_revocation',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id'),
+    connectionId: text('connection_id').notNull(),
+    credentials: text('credentials').notNull(),
+    attempts: integer('attempts').notNull().default(0),
+    nextAttemptAt: text('next_attempt_at').notNull(),
+    leaseToken: text('lease_token'),
+    leaseExpiresAt: text('lease_expires_at'),
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => [
+    index('idx_youtube_revocation_due').on(t.nextAttemptAt, t.leaseExpiresAt),
+  ]
+);
+export type YoutubeRevocationRow = typeof youtubeRevocation.$inferSelect;
