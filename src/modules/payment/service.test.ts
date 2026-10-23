@@ -8,7 +8,14 @@ import { drizzle } from 'drizzle-orm/libsql';
 import { getTableConfig } from 'drizzle-orm/sqlite-core';
 import Stripe from 'stripe';
 
-import { config, credit, order, subscription, user } from '@/config/db/schema';
+import {
+  config,
+  credit,
+  order,
+  subscription,
+  user,
+  type Subscription,
+} from '@/config/db/schema';
 
 // Separate disposable DB and signed provider fixtures. No real Stripe account or user data.
 const folder = mkdtempSync(join(tmpdir(), 'eyp-payment-'));
@@ -24,7 +31,8 @@ for (const table of [config, credit, order, subscription, user]) {
     `CREATE TABLE "${info.name}" (${info.columns.map((c) => `"${c.name}" ${c.getSQLType()}${c.primary ? ' PRIMARY KEY' : ''}`).join(',')})`
   );
 }
-const { handleWebhook, createUserBillingPortal } = await import('./service');
+const { handleWebhook, createUserBillingPortal, guardCheckoutOptionsFor } =
+  await import('./service');
 const originalFetch = globalThis.fetch;
 let providerStatus = 'active';
 let providerId = 'sub_test';
@@ -99,6 +107,134 @@ const checkout = {
   invoice: 'in_first',
   created: start,
 };
+
+test('pricing distinguishes renewal-off access from an ended subscription without granting another trial', () => {
+  const now = Date.UTC(2026, 9, 22);
+  const ends = new Date(now + 86_400_000);
+  const manual = {
+    id: 'manual-lite',
+    subscriptionNo: 'manual-lite',
+    userId: 'fixture',
+    productId: 'guard_lite_yearly',
+    status: 'pending_cancel',
+    paymentProvider: 'manual',
+    subscriptionId: 'manual-fixture',
+    currentPeriodStart: new Date(now - 86_400_000),
+    currentPeriodEnd: ends,
+    // Deliberately later: provider fallback dates must not extend trial access.
+    canceledEndAt: new Date(now + 365 * 86_400_000),
+    createdAt: new Date(now - 86_400_000),
+    deletedAt: null,
+  } as Subscription;
+  const remote = { hasHistory: false, hasCurrent: false };
+  assert.deepEqual(guardCheckoutOptionsFor([manual], remote, now), {
+    hasSubscription: true,
+    trialEligible: false,
+    currentSubscription: {
+      planId: 'lite',
+      currentPeriodEnd: ends.toISOString(),
+      renewalOff: true,
+    },
+  });
+  for (const status of ['active', 'trialing', 'pending_cancel']) {
+    for (const offset of [0, -1]) {
+      const expired = {
+        ...manual,
+        status,
+        currentPeriodEnd: new Date(now + offset),
+      };
+      assert.deepEqual(guardCheckoutOptionsFor([expired], remote, now), {
+        hasSubscription: false,
+        trialEligible: false,
+        currentSubscription: null,
+      });
+      assert.equal(
+        guardCheckoutOptionsFor(
+          [expired],
+          { hasHistory: true, hasCurrent: true },
+          now
+        ).hasSubscription,
+        true
+      );
+    }
+  }
+  for (const patch of [
+    { status: 'canceled' },
+    { status: 'expired' },
+    { deletedAt: new Date(now) },
+  ]) {
+    assert.deepEqual(
+      guardCheckoutOptionsFor([{ ...manual, ...patch }], remote, now),
+      {
+        hasSubscription: false,
+        trialEligible: false,
+        currentSubscription: null,
+      }
+    );
+  }
+  assert.deepEqual(guardCheckoutOptionsFor([], remote, now), {
+    hasSubscription: false,
+    trialEligible: true,
+    currentSubscription: null,
+  });
+  assert.deepEqual(
+    guardCheckoutOptionsFor([], { hasHistory: true, hasCurrent: true }, now),
+    {
+      hasSubscription: true,
+      trialEligible: false,
+      currentSubscription: null,
+    }
+  );
+  for (const status of ['paused', 'past_due', 'pending']) {
+    assert.equal(
+      guardCheckoutOptionsFor(
+        [{ ...manual, status, currentPeriodEnd: new Date(now - 1) }],
+        remote,
+        now
+      ).hasSubscription,
+      true
+    );
+  }
+  // Unknown deadlines stay blocked until the subscription can be reconciled.
+  assert.equal(
+    guardCheckoutOptionsFor(
+      [{ ...manual, currentPeriodEnd: null }],
+      remote,
+      now
+    ).hasSubscription,
+    true
+  );
+});
+
+test('pricing identifies the same highest valid tier as access checks, ignoring expired and unrelated plans', () => {
+  const now = Date.UTC(2026, 9, 22);
+  const current = {
+    productId: 'guard_lite_yearly',
+    status: 'active',
+    paymentProvider: 'stripe',
+    subscriptionId: 'sub_fixture',
+    currentPeriodStart: new Date(now - 1),
+    currentPeriodEnd: new Date(now + 86_400_000),
+    createdAt: new Date(now - 1),
+    deletedAt: null,
+  } as Subscription;
+  const options = guardCheckoutOptionsFor(
+    [
+      current,
+      { ...current, productId: 'guard_pro_monthly', status: 'trialing' },
+      {
+        ...current,
+        productId: 'guard_ultra_yearly',
+        currentPeriodEnd: new Date(now),
+      },
+      { ...current, productId: 'unrelated' },
+    ],
+    { hasHistory: true, hasCurrent: true },
+    now
+  );
+  assert.equal(options.currentSubscription?.planId, 'pro');
+  assert.equal(options.currentSubscription?.renewalOff, false);
+});
 
 test('signed checkout is idempotent, renewals create one order, failed invoices suspend access and expired checkout grants nothing', async () => {
   await database

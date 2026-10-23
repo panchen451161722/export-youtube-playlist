@@ -21,7 +21,7 @@ export type GuardPricingContent = {
   title: string;
   description: string;
   annualBilling: string;
-  trial: string;
+  subscriptionNotice?: string;
   trialNote: string;
   demo: string;
   recommended: string;
@@ -47,6 +47,10 @@ export type GuardPricingContent = {
     period: string;
     collectionLabel: string;
     features: string[];
+    cta: string;
+    ctaDisabled?: boolean;
+    badge?: string;
+    statusNote?: string;
   }[];
   comparison: { feature: string; values: string[] }[];
 };
@@ -93,6 +97,14 @@ export function GuardPricing({
           </p>
         </div>
 
+        {content.subscriptionNotice && (
+          <p
+            className="border-border bg-card mt-8 rounded-xl border px-5 py-4 text-center text-sm leading-6"
+            role="status"
+          >
+            {content.subscriptionNotice}
+          </p>
+        )}
         <div className="mt-12 grid gap-5 lg:grid-cols-3">
           {content.plans.map((plan) => {
             const highlighted = plan.id === 'pro';
@@ -108,9 +120,16 @@ export function GuardPricing({
               >
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="text-lg font-semibold">{plan.name}</h3>
-                  {highlighted && (
-                    <span className="border-primary-foreground/20 bg-primary-foreground/10 rounded-full border px-3 py-1 text-[11px] font-semibold">
-                      {content.recommended}
+                  {(plan.badge || highlighted) && (
+                    <span
+                      className={cn(
+                        'rounded-full border px-3 py-1 text-[11px] font-semibold',
+                        highlighted
+                          ? 'border-primary-foreground/20 bg-primary-foreground/10'
+                          : 'border-border bg-secondary'
+                      )}
+                    >
+                      {plan.badge || content.recommended}
                     </span>
                   )}
                 </div>
@@ -168,10 +187,10 @@ export function GuardPricing({
                 {checkoutAvailable ? (
                   <button
                     type="button"
-                    disabled={!!pendingPlan}
+                    disabled={!!pendingPlan || plan.ctaDisabled}
                     onClick={() => onBuy(plan.id)}
                     className={cn(
-                      'focus-visible:ring-ring/50 mt-8 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold outline-none hover:opacity-85 focus-visible:ring-3 disabled:cursor-wait disabled:opacity-60',
+                      'focus-visible:ring-ring/50 mt-8 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none hover:opacity-85 focus-visible:ring-3 disabled:cursor-not-allowed disabled:opacity-60',
                       highlighted
                         ? 'bg-background text-foreground'
                         : 'bg-primary text-primary-foreground'
@@ -186,7 +205,7 @@ export function GuardPricing({
                         {content.buying}
                       </>
                     ) : (
-                      content.trial
+                      plan.cta
                     )}
                   </button>
                 ) : (
@@ -203,13 +222,27 @@ export function GuardPricing({
                       : content.checkoutUnavailable}
                   </p>
                 )}
+                {plan.statusNote && (
+                  <p
+                    className={cn(
+                      'mt-3 text-center text-xs leading-5',
+                      highlighted
+                        ? 'text-primary-foreground/70'
+                        : 'text-muted-foreground'
+                    )}
+                  >
+                    {plan.statusNote}
+                  </p>
+                )}
               </article>
             );
           })}
         </div>
-        <p className="text-muted-foreground mt-6 text-center text-sm leading-6">
-          {content.trialNote}
-        </p>
+        {content.trialNote && (
+          <p className="text-muted-foreground mt-6 text-center text-sm leading-6">
+            {content.trialNote}
+          </p>
+        )}
         <p className="text-muted-foreground mt-1 text-center text-xs leading-5">
           {content.footerNote}
         </p>

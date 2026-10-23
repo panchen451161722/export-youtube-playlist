@@ -22,17 +22,23 @@ import {
   subscription,
   type Subscription,
 } from '@/config/db/schema';
-import { getGuardPlan, getGuardStripePriceId } from '@/config/guard-plans';
+import {
+  getGuardPlan,
+  getGuardStripePriceId,
+  GUARD_PLANS,
+} from '@/config/guard-plans';
 import { getAllConfigs } from '@/modules/config/service';
 import { calculateCreditExpirationTime } from '@/modules/credits/service';
 import {
   findByProviderSubscriptionId,
   findBySubscriptionNo,
+  playlistExportAccessFor,
   SubscriptionStatus,
   updateBySubscriptionNo,
   type NewSubscription,
   type UpdateSubscription,
 } from '@/modules/subscriptions/service';
+import type { GuardCheckoutOptions } from '@/lib/guard-checkout';
 import { getSnowId, getUniSeq, getUuid } from '@/lib/hash';
 
 // --- Order types ---
@@ -141,18 +147,55 @@ export async function getGuardCheckoutOptions(userId: string, email: string) {
     .select()
     .from(subscription)
     .where(eq(subscription.userId, userId));
-  const history = rows.filter((s) => getGuardPlan(s.productId || ''));
   const provider = (await getPaymentManager()).getProvider('stripe');
   if (!(provider instanceof StripeProvider))
     throw new Error('Stripe is not configured');
   const remote = await provider.getSubscriptionAccess(email, userId);
+  return guardCheckoutOptionsFor(rows, remote);
+}
+
+export function guardCheckoutOptionsFor(
+  rows: Subscription[],
+  remote: { hasHistory: boolean; hasCurrent: boolean },
+  now = Date.now()
+): GuardCheckoutOptions {
+  const history = rows.filter((s) => getGuardPlan(s.productId || ''));
+  // Use the same valid-period rules and highest tier as the app's access checks.
+  const eligible = history.filter(
+    (s) => playlistExportAccessFor([s], now).subscribed
+  );
+  const current = [...GUARD_PLANS]
+    .reverse()
+    .flatMap((plan) =>
+      eligible
+        .filter((s) => getGuardPlan(s.productId || '')?.id === plan.id)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    )[0];
   return {
     trialEligible: history.length === 0 && !remote.hasHistory,
     hasSubscription:
       remote.hasCurrent ||
-      history.some(
-        (s) => !['canceled', 'expired'].includes(s.status) && !s.deletedAt
-      ),
+      history.some((s) => {
+        if (s.deletedAt || ['canceled', 'expired'].includes(s.status))
+          return false;
+        // A scheduled cancellation can outlive its webhook (especially manual
+        // grants). An ended period must not block a new purchase forever.
+        // Live Stripe subscriptions still block via remote.hasCurrent above.
+        if (
+          ['active', 'trialing', 'pending_cancel'].includes(s.status) &&
+          s.currentPeriodEnd &&
+          s.currentPeriodEnd.getTime() <= now
+        )
+          return false;
+        return true;
+      }),
+    currentSubscription: current
+      ? {
+          planId: getGuardPlan(current.productId!)!.id,
+          currentPeriodEnd: current.currentPeriodEnd!.toISOString(),
+          renewalOff: current.status === 'pending_cancel',
+        }
+      : null,
   };
 }
 

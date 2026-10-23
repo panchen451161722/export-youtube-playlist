@@ -115,7 +115,10 @@ function BillingPage() {
     queryFn: () =>
       apiGet<Subscription | null>('/api/user/subscriptions/current'),
   });
-  const current = currentQuery.data ?? null;
+  // Older API responses converted a missing subscription from null to [].
+  const current = Array.isArray(currentQuery.data)
+    ? null
+    : (currentQuery.data ?? null);
   const currentLoaded = !currentQuery.isPending;
   const renewalStopped = current?.status === 'pending_cancel';
   const currentEnd = current?.currentPeriodEnd || current?.canceledEndAt;
@@ -168,6 +171,7 @@ function BillingPage() {
             : existing
       );
       queryClient.invalidateQueries({ queryKey: ['billing'] });
+      queryClient.invalidateQueries({ queryKey: ['checkout-eligibility'] });
     },
     onError: (err) => {
       toast.error(
@@ -220,7 +224,7 @@ function BillingPage() {
     {
       header: m['settings.billing.amount'](),
       cell: (r) =>
-        r.amount && r.currency ? (
+        r.amount != null && r.currency ? (
           <span className="tabular-nums">
             {formatAmount(r.amount, r.currency)}
           </span>
@@ -316,7 +320,7 @@ function BillingPage() {
               >
                 {m['settings.billing.manage_payment']()}
               </Button>
-            ) : (
+            ) : currentLoaded && !current ? (
               <Link
                 href="/pricing"
                 className={cn(
@@ -327,7 +331,7 @@ function BillingPage() {
                 <Pencil className="size-4" />
                 {m['settings.billing.subscribe']()}
               </Link>
-            )}
+            ) : null}
           </div>
         </CardHeader>
         <CardContent>
@@ -343,7 +347,7 @@ function BillingPage() {
                   {statusLabel(current.status)}
                 </Badge>
               </div>
-              {current.amount && current.currency && (
+              {current.amount != null && current.currency && (
                 <p className="text-muted-foreground text-sm">
                   {formatAmount(current.amount, current.currency)}
                   {current.interval ? ` / ${current.interval}` : ''}

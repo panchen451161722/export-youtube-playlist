@@ -1,0 +1,301 @@
+name,visitors
+Los Angeles,13
+Ho Chi Minh City,9
+Bengaluru,8
+Toronto,7
+Seoul,6
+Sydney,6
+Ankara,5
+São Paulo,5
+Copenhagen,4
+Hyderabad,4
+Istanbul,4
+New Delhi,4
+New York City,4
+Shoreham-by-Sea,4
+Skanderborg,4
+Ashburn,3
+Barcelona,3
+Budapest,3
+Canberra,3
+Columbus,3
+Edmonton,3
+Hanoi,3
+Hayes,3
+Liversedge,3
+London,3
+Mogadishu,3
+Peterborough,3
+Pune,3
+Riyadh,3
+Tokorozawa,3
+Worms,3
+Yeongdeungpo-gu,3
+Ahmedabad,2
+Amsterdam,2
+Atlanta,2
+Bangkok,2
+Bellflower,2
+Bhopāl,2
+Bucharest,2
+Cairo,2
+Calgary,2
+Calpulalpan,2
+Dallas,2
+Delhi,2
+Detroit,2
+Dieppe,2
+Faisalabad,2
+Islamabad,2
+Jakarta,2
+Kansas City,2
+Khartoum,2
+Kuala Lumpur,2
+Kyiv,2
+Lima,2
+Lisbon,2
+Livonia,2
+Lucknow,2
+Marseille,2
+Melbourne,2
+Noisy-le-Grand,2
+Oklahoma City,2
+Oral,2
+Palma,2
+Paris,2
+Peoria,2
+Philadelphia,2
+Rawalpindi,2
+Rennes,2
+Round Rock,2
+Saint Paul,2
+Santa Cruz,2
+Santiago,2
+Setagaya,2
+Surabaya,2
+Tel Aviv,2
+Weimar,2
+Willimantic,2
+Zhubei,2
+Aalborg,1
+Aberdeen,1
+Abuja,1
+Addis Ababa,1
+Agadir,1
+Algiers,1
+Ann Arbor,1
+Annandale,1
+Apex,1
+Arad,1
+Argentré,1
+Arnhem,1
+Asunción,1
+Athlone,1
+Atyrau,1
+Aylesbury,1
+Baghdad,1
+Banqiao,1
+Beeville,1
+Bekasi,1
+Bellingham,1
+Benin City,1
+Bhubaneshwar,1
+Biberach an der Riß,1
+Bloomington,1
+Bochum,1
+Bogotá,1
+Boston,1
+Bothell,1
+Bowie,1
+Bremerton,1
+Brno,1
+Brooklyn,1
+Buenos Aires,1
+Buffalo,1
+Burleson,1
+Burlington,1
+Bursa,1
+Castries,1
+Central,1
+Ceuta,1
+Champlin,1
+Chandīgarh,1
+Charleroi,1
+Chhindwāra,1
+Chino,1
+Cilacap,1
+Clarksville,1
+Coimbatore,1
+Cork,1
+Corrientes,1
+Croydon,1
+Cumbernauld,1
+Daegu,1
+Dakar,1
+Denton,1
+Dhaka,1
+Doha,1
+Douglasville,1
+Dubai,1
+Durham,1
+Enugu-Ukwu,1
+Erbil,1
+Erith,1
+Eunpyeong-gu,1
+Euskirchen,1
+Ewing,1
+Falkirk,1
+Feliz,1
+Florence,1
+Fontaine-l'Évêque,1
+Frisco,1
+Fuquay-Varina,1
+Gallatin,1
+Gandhinagar,1
+Gangdong-gu,1
+Gdańsk,1
+Gebze,1
+Genève,1
+Georgetown,1
+Getafe,1
+Greensburg,1
+Greer,1
+Guarulhos,1
+Guatemala City,1
+Guro-gu,1
+Gustavo Adolfo Madero,1
+Gwangmyeong-si,1
+Hajnówka,1
+Hamburg,1
+Hamm,1
+Hammond,1
+Hatipara,1
+Hazard,1
+Heidelberg,1
+Higashirinkan,1
+Hillsboro,1
+Hindman,1
+Honchō,1
+Houston,1
+Hudson,1
+Irmo,1
+Irvine,1
+Ivano-Frankivsk,1
+Iztapalapa,1
+Jaboticabal,1
+Jackson,1
+Jaipur,1
+Kameido,1
+Kannur,1
+Karachi,1
+Karlsruhe,1
+Kharkiv,1
+Kitamachi,1
+Kitchener,1
+Klagenfurt am Wörthersee,1
+Klaipėda,1
+Knurów,1
+Kolkata,1
+Kornwestheim,1
+Kota Administrasi Jakarta Utara,1
+Kottayam,1
+Krefeld,1
+Kunwarpur,1
+La Marque,1
+Lahore,1
+Lake Zurich,1
+Lakewood,1
+Las Palmas de Gran Canaria,1
+Las Vegas,1
+Lawrenceville,1
+Leipzig,1
+Lilburn,1
+Lille,1
+Lohogaon,1
+Lowestoft,1
+Machilīpatnam,1
+Madrid,1
+Maglie,1
+Managua,1
+Mandaluyong City,1
+Mannersdorf am Leithagebirge,1
+Martinez,1
+Mbabane,1
+Miami,1
+Milan,1
+Millersburg,1
+Minneapolis,1
+Mississauga,1
+Mongaguá,1
+Monterey Park,1
+Montréal,1
+Montévrain,1
+Mount Sterling,1
+Mumbai,1
+Mundo Novo,1
+Mykolayiv,1
+Münchberg,1
+Nagpur,1
+Naperville,1
+Naroli,1
+Nashik,1
+Newington,1
+North Lauderdale,1
+Nottingham,1
+Nuneaton,1
+Nürnberg,1
+Odessa,1
+Orangeburg,1
+Oregon City,1
+Osan,1
+Ottawa,1
+Paraparaumu,1
+Pattaya,1
+Perth,1
+Petaling Jaya,1
+Pflugerville,1
+Plano,1
+Plymouth,1
+Poltava,1
+Pontianak,1
+Považská Bystrica,1
+Poznań,1
+Princeton,1
+Queens,1
+Reading,1
+Recife,1
+Registro,1
+Remoulins,1
+Richmond,1
+Richmond Hill,1
+Rosario,1
+Rye,1
+Rājkot,1
+Sacramento,1
+Saint Joseph,1
+Saint-Jérôme,1
+Saint-Nazaire,1
+San Isidro,1
+San Jose,1
+San José,1
+San Leandro,1
+Sanaa,1
+Santa Cruz de la Sierra,1
+Santiago de Compostela,1
+Seongbuk-gu,1
+Sheffield,1
+Shinjuku,1
+Singapore,1
+Skopje,1
+Sofia,1
+Solânea,1
+South Gate,1
+Southampton,1
+Southgate,1
+Spokane,1
+Srinagar,1
+St. Charles,1
+St. Petersburg,1
+Stirling,1
+Surrey,1
+São Gonçalo do Amarante,1

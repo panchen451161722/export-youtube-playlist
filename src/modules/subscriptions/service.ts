@@ -1,4 +1,14 @@
-import { and, count, desc, eq, inArray, isNull } from 'drizzle-orm';
+import {
+  and,
+  count,
+  desc,
+  eq,
+  gt,
+  inArray,
+  isNull,
+  lte,
+  or,
+} from 'drizzle-orm';
 
 import { db } from '@/core/db';
 import { subscription, type Subscription } from '@/config/db/schema';
@@ -67,12 +77,19 @@ export async function findByProviderSubscriptionId(params: {
 }
 
 export async function getCurrentSubscription(userId: string) {
+  const now = new Date();
   const [result] = await db()
     .select()
     .from(subscription)
     .where(
       and(
         eq(subscription.userId, userId),
+        isNull(subscription.deletedAt),
+        gt(subscription.currentPeriodEnd, now),
+        or(
+          isNull(subscription.currentPeriodStart),
+          lte(subscription.currentPeriodStart, now)
+        ),
         inArray(subscription.status, [
           SubscriptionStatus.ACTIVE,
           SubscriptionStatus.PENDING_CANCEL,

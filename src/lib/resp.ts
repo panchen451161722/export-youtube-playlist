@@ -1,5 +1,6 @@
 export function respData(data: any, init?: ResponseInit) {
-  return respJson(0, 'ok', data ?? [], init);
+  // Preserve null for absent optional records; only an omitted payload defaults to [].
+  return respJson(0, 'ok', data === undefined ? [] : data, init);
 }
 
 export function respOk(init?: ResponseInit) {

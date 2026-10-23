@@ -1951,6 +1951,14 @@
   "youtube_accounts.not_configured_notice": "本站尚未完成 YouTube 账号连接配置，请联系网站管理员。",
   "youtube_accounts.session_missing_notice": "Google 返回时未获取到网站登录会话，请在同一浏览器中登录本站后重新连接。",
   "guardPricing.manage": "管理现有订阅",
+  "guardPricing.view_subscription": "查看订阅",
+  "guardPricing.billing_options": "查看账单选项",
+  "guardPricing.available_after_period": "本期结束后可订阅",
+  "guardPricing.current_plan": "当前套餐",
+  "guardPricing.renewal_off_until": "续费已关闭 · 可使用至 {date}",
+  "guardPricing.current_ending": "你的 {plan} 套餐可使用至 {date}，自动续费已关闭。本期结束后可重新选择套餐订阅。",
+  "guardPricing.current_active": "你正在使用 {plan} 套餐，可在账单页面查看订阅和付款选项。",
+  "guardPricing.existing_subscription": "你已有订阅，请先在账单页面查看订阅状态和付款选项。",
   "settings.payments.trialing": "试用开通（未扣款）",
   "guardPricing.compare_items_value": "无固定条目上限¹"
 }

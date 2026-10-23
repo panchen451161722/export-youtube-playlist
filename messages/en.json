@@ -1951,6 +1951,14 @@
   "youtube_accounts.not_configured_notice": "YouTube account connection is not configured on this site. Contact the site administrator.",
   "youtube_accounts.session_missing_notice": "Your website sign-in session was not available when Google returned. Sign in to this website and connect again in the same browser.",
   "guardPricing.manage": "Manage subscription",
+  "guardPricing.view_subscription": "View subscription",
+  "guardPricing.billing_options": "View billing options",
+  "guardPricing.available_after_period": "Subscribe after this period ends",
+  "guardPricing.current_plan": "Current plan",
+  "guardPricing.renewal_off_until": "Renewal off · Available until {date}",
+  "guardPricing.current_ending": "Your {plan} plan remains available until {date}. Automatic renewal is off. You can start a new subscription after this period ends.",
+  "guardPricing.current_active": "You're using {plan}. Review your subscription and payment options in Billing.",
+  "guardPricing.existing_subscription": "You already have a subscription. View its status and payment options in Billing before starting another.",
   "settings.payments.trialing": "Trial started (no charge)",
   "guardPricing.compare_items_value": "No fixed item limit¹"
 }

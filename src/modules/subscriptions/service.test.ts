@@ -32,8 +32,11 @@ for (const table of [user, subscription, guardWorkspace]) {
     `CREATE TABLE "${info.name}" (${info.columns.map((column) => `"${column.name}" ${column.getSQLType()}${column.primary ? ' PRIMARY KEY' : ''}`).join(',')})`
   );
 }
-const { getPlaylistExportAccess, playlistExportAccessFor } =
-  await import('./service');
+const {
+  getPlaylistExportAccess,
+  playlistExportAccessFor,
+  getCurrentSubscription,
+} = await import('./service');
 after(() => {
   client.close();
   rmSync(folder, { recursive: true, force: true });
@@ -61,6 +64,57 @@ const current = {
   currentPeriodEnd: new Date(now + 1000),
   deletedAt: null,
 } as Subscription;
+
+test('billing keeps renewal-off access until its deadline and excludes ended, deleted and future periods', async () => {
+  const now = Date.now();
+  const base = {
+    ...current,
+    userId: 'billing-status-fixture',
+    status: 'pending_cancel',
+    currentPeriodStart: new Date(now - 86_400_000),
+    currentPeriodEnd: new Date(now + 86_400_000),
+    createdAt: new Date(now - 86_400_000),
+  };
+  await database.insert(user).values({
+    id: base.userId,
+    name: 'Fixture',
+    email: 'billing-status@example.invalid',
+  });
+  await database.insert(subscription).values([
+    { ...base, id: 'billing-current', subscriptionNo: 'billing-current' },
+    {
+      ...base,
+      id: 'billing-ended',
+      subscriptionNo: 'billing-ended',
+      currentPeriodEnd: new Date(now - 1000),
+      createdAt: new Date(now),
+    },
+    {
+      ...base,
+      id: 'billing-deleted',
+      subscriptionNo: 'billing-deleted',
+      deletedAt: new Date(now),
+      createdAt: new Date(now),
+    },
+    {
+      ...base,
+      id: 'billing-future',
+      subscriptionNo: 'billing-future',
+      currentPeriodStart: new Date(now + 60_000),
+      createdAt: new Date(now),
+    },
+  ]);
+  assert.equal(
+    (await getCurrentSubscription(base.userId))?.subscriptionNo,
+    'billing-current'
+  );
+  const { eq } = await import('drizzle-orm');
+  await database
+    .update(subscription)
+    .set({ currentPeriodEnd: new Date(now - 1000) })
+    .where(eq(subscription.id, 'billing-current'));
+  assert.equal(await getCurrentSubscription(base.userId), undefined);
+});
 
 test('every recognized annual and legacy monthly plan grants subscriber exports during its valid period', () => {
   for (const plan of ['lite', 'pro', 'ultra']) {
