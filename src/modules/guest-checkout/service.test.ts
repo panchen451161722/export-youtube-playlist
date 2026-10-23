@@ -757,10 +757,10 @@ test('a canceled prior trial blocks a repeat, and paid checkout requires a separ
   assert.equal(createParams.has('subscription_data[trial_period_days]'), false);
   assert.equal(createParams.get('metadata[trial_days]'), '0');
   assert.equal((await service.guestById(retry.id))?.purchaseMode, 'paid');
-  assert.equal(
-    (await flow.startGuestPaidCheckout(row.id, token)).checkout_url,
-    retry.checkout_url
-  );
+  assert.ok('checkout_url' in retry);
+  const repeated = await flow.startGuestPaidCheckout(row.id, token);
+  assert.ok('checkout_url' in repeated);
+  assert.equal(repeated.checkout_url, retry.checkout_url);
   assert.equal(
     (await flow.startGuestCheckout(input(), token)).id,
     row.id,
