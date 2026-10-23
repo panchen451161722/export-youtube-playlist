@@ -1960,5 +1960,11 @@
   "guardPricing.current_active": "You're using {plan}. Review your subscription and payment options in Billing.",
   "guardPricing.existing_subscription": "You already have a subscription. View its status and payment options in Billing before starting another.",
   "settings.payments.trialing": "Trial started (no charge)",
-  "guardPricing.compare_items_value": "No fixed item limit¹"
+  "guardPricing.compare_items_value": "No fixed item limit¹",
+  "exportBackup.success": "Export complete",
+  "exportBackup.title": "Keep this playlist backed up",
+  "exportBackup.description": "Save future snapshots and see which videos were added or went missing.",
+  "exportBackup.action": "Set up automatic backups",
+  "exportBackup.note": "Choose a backup plan to get started. Nothing is enabled until you confirm.",
+  "exportBackup.draft_ready": "Your exported playlist is ready to add. Choose a plan, then confirm your backup settings."
 }

@@ -12,6 +12,7 @@ import {
 } from '@/config/guard-plans';
 import { SUBSCRIBER_PLAYLIST_EXPORT_LIMIT } from '@/config/playlist-export';
 import { apiGet, apiPost } from '@/lib/api-client';
+import { readBackupDraft } from '@/lib/backup-draft';
 import {
   guardPricingAction,
   type GuardCheckoutOptions,
@@ -52,7 +53,9 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
       apiPost<{ checkout_url: string }>('/api/payment/checkout', {
         product_id: guardProductId(planId),
         payment_provider: checkoutProvider,
-        redirect: '/settings/collections',
+        redirect: readBackupDraft()
+          ? '/youtube-playlist-backup'
+          : '/settings/collections',
         expect_trial: trialEligible,
       }),
     onSuccess: (result) => {

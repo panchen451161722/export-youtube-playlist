@@ -1,6 +1,7 @@
 import { tDynamic } from '@/core/i18n/dynamic';
 import { isIndexablePath } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
+import { exportBackupContent } from '@/blocks/export-backup-content';
 import { ToolGuideSection } from '@/blocks/tools/tool-guide';
 import {
   ChannelUtilityTool,
@@ -184,6 +185,7 @@ export function PublicToolPage({ toolKey }: { toolKey: string }) {
           />
         ) : (
           <ChannelUtilityTool
+            backupContent={exportBackupContent()}
             mode={definition.mode}
             labels={channelLabels(submit)}
           />

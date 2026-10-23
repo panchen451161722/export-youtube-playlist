@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import {
@@ -16,6 +16,11 @@ import { authClient, useSession } from '@/core/auth/client';
 import { Link, useRouter } from '@/core/i18n/navigation';
 import { GUARD_SNAPSHOT_LIMIT } from '@/config/guard-plans';
 import { apiGet, apiPost } from '@/lib/api-client';
+import {
+  clearBackupDraft,
+  readBackupDraft,
+  type BackupDraft,
+} from '@/lib/backup-draft';
 import {
   collectionView,
   formatCollectionDate,
@@ -113,6 +118,11 @@ export function PlaylistBackup() {
 }
 
 function BackupSetup() {
+  const [draft, setDraft] = useState<BackupDraft | null>(null);
+  const draftOpened = useRef(false);
+  useEffect(() => {
+    setDraft(readBackupDraft());
+  }, []);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<GuardCollection | null>(null);
   const [deleting, setDeleting] = useState<GuardCollection | null>(null);
@@ -146,6 +156,10 @@ function BackupSetup() {
         action
       ),
     onSuccess: (result, action) => {
+      if (action.action === 'create') {
+        clearBackupDraft();
+        setDraft(null);
+      }
       if (action.action === 'delete') {
         queryClient.removeQueries({
           queryKey: [...queryKey, action.id],
@@ -189,6 +203,12 @@ function BackupSetup() {
     (overview.data?.collections.length ?? 0) < entitlement.limit;
   const busy =
     mutation.isPending || verification.isPending || youtube.connect.isPending;
+  useEffect(() => {
+    if (draft && canCreate && !draftOpened.current) {
+      draftOpened.current = true;
+      setOpen(true);
+    }
+  }, [draft, canCreate]);
   const labels = {
     private_playlist: m['youtube_accounts.private_playlist'](),
     liked_videos: m['youtube_accounts.liked_videos'](),
@@ -306,9 +326,18 @@ function BackupSetup() {
   return (
     <>
       <section
+        id="backup-setup"
         className="border-border bg-card rounded-2xl border p-5 shadow-sm sm:p-7"
         aria-labelledby="backup-action-title"
       >
+        {draft && !canCreate && (
+          <p
+            className="bg-secondary mb-5 rounded-lg p-4 text-sm leading-6"
+            role="status"
+          >
+            {m['exportBackup.draft_ready']()}
+          </p>
+        )}
         {youtube.notice && (
           <p role="status" className="bg-secondary mb-5 rounded-lg p-3 text-sm">
             {labels[`${youtube.notice}_notice`]}
@@ -597,6 +626,7 @@ function BackupSetup() {
                 }
                 showEmailBackup={false}
                 initialValues={{
+                  ...(draft ? { url: draft.url, source: draft.source } : {}),
                   frequency: 'daily',
                   notifyMissing: true,
                   notifyAdded: true,

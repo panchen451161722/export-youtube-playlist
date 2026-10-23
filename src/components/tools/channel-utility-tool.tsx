@@ -11,12 +11,9 @@ import {
 import { toast } from 'sonner';
 
 import { Link } from '@/core/i18n/navigation';
+import { trackEvent } from '@/lib/analytics';
 import { apiPost } from '@/lib/api-client';
-import {
-  clarityErrorType,
-  resultSizeBucket,
-  trackClarityEvent,
-} from '@/lib/clarity';
+import { clarityErrorType, resultSizeBucket } from '@/lib/clarity';
 import { cn } from '@/lib/utils';
 import {
   channelVideosToExportRecords,
@@ -25,6 +22,10 @@ import {
   YOUTUBE_EXPORT_FORMATS,
   type YouTubeExportFormat,
 } from '@/lib/youtube-export';
+import {
+  ExportBackupCta,
+  type ExportBackupContent,
+} from '@/components/export-backup-cta';
 import { ExportFormatPicker } from '@/components/export-format-picker';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -120,6 +121,7 @@ export type ChannelUtilityLabels = {
 };
 
 type Props = {
+  backupContent?: ExportBackupContent;
   mode: ChannelUtilityMode;
   labels: ChannelUtilityLabels;
 };
@@ -221,7 +223,8 @@ function VideoRows({
   );
 }
 
-export function ChannelUtilityTool({ mode, labels }: Props) {
+export function ChannelUtilityTool({ mode, labels, backupContent }: Props) {
+  const [exportedPlaylist, setExportedPlaylist] = useState<string | null>(null);
   const [url, setUrl] = useState('');
   const [mediaType, setMediaType] = useState<ChannelMediaType>('all');
   const [sort, setSort] = useState<ChannelVideoSort>('original');
@@ -258,13 +261,14 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
       return result;
     },
     onMutate: () => {
-      trackClarityEvent('tool_run_started', {
+      setExportedPlaylist(null);
+      trackEvent('tool_run_started', {
         tool: `channel_${mode}`,
         media_type: mediaType,
       });
     },
     onSuccess: (data) => {
-      trackClarityEvent('tool_run_succeeded', {
+      trackEvent('tool_run_succeeded', {
         tool: `channel_${mode}`,
         media_type: mediaType,
         result_size: resultSizeBucket(
@@ -273,9 +277,10 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
         truncated: data.truncated,
       });
       if (mode === 'export') {
-        trackClarityEvent('export_downloaded', {
+        setExportedPlaylist(data.uploadsPlaylistUrl);
+        trackEvent('export_downloaded', {
           tool: 'channel_export',
-          output_format: selectedFormats.join('_'),
+          output_format: selectedFormats.join('_') || 'default',
           result_size: resultSizeBucket(data.videos.length),
         });
         triggerExportConfetti();
@@ -283,7 +288,7 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
       }
     },
     onError: (error) => {
-      trackClarityEvent('tool_run_failed', {
+      trackEvent('tool_run_failed', {
         tool: `channel_${mode}`,
         error_type: clarityErrorType(error),
       });
@@ -328,7 +333,7 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
     try {
       await copyText(value);
       setCopyStatus(status);
-      trackClarityEvent('result_copied', {
+      trackEvent('result_copied', {
         tool: `channel_${mode}`,
         output_format: mode,
       });
@@ -360,7 +365,7 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
               : '';
     if (!csv) return;
     downloadText(csv, `${fileBase}-${mode}.csv`, 'text/csv');
-    trackClarityEvent('export_downloaded', {
+    trackEvent('export_downloaded', {
       tool: `channel_${mode}`,
       output_format: 'csv',
       result_size: resultSizeBucket(
@@ -374,21 +379,23 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
   const handleSelectedExport = async () => {
     if (!mutation.data || exportingFiles) return;
     setExportingFiles(true);
+    setExportedPlaylist(null);
     try {
       await downloadYouTubeExports({
         records: channelVideosToExportRecords(sortedVideos),
         context: { title: mutation.data.title, source: 'channel' },
         formats: selectedFormats,
       });
-      trackClarityEvent('export_downloaded', {
+      setExportedPlaylist(mutation.data.uploadsPlaylistUrl);
+      trackEvent('export_downloaded', {
         tool: 'channel_export',
-        output_format: selectedFormats.join('_'),
+        output_format: selectedFormats.join('_') || 'default',
         result_size: resultSizeBucket(sortedVideos.length),
       });
       triggerExportConfetti();
       toast.success(labels.downloadSuccess);
     } catch (error) {
-      trackClarityEvent('tool_run_failed', {
+      trackEvent('tool_run_failed', {
         tool: 'channel_export',
         error_type: clarityErrorType(error),
       });
@@ -481,6 +488,14 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
           </p>
         ) : null}
       </form>
+      {exportedPlaylist && backupContent && (
+        <ExportBackupCta
+          key={mutation.submittedAt}
+          content={backupContent}
+          playlistUrl={exportedPlaylist}
+          tool="channel_export"
+        />
+      )}
 
       {mutation.data ? (
         <section
@@ -647,7 +662,7 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
                       mutation.data?.keywords.join('\r\n') ?? '',
                       `${fileBase}-keywords.txt`
                     );
-                    trackClarityEvent('export_downloaded', {
+                    trackEvent('export_downloaded', {
                       tool: 'channel_keywords',
                       output_format: 'txt',
                       result_size: resultSizeBucket(
@@ -691,7 +706,7 @@ export function ChannelUtilityTool({ mode, labels }: Props) {
                               target="_blank"
                               rel="noreferrer"
                               onClick={() =>
-                                trackClarityEvent('export_downloaded', {
+                                trackEvent('export_downloaded', {
                                   tool: 'channel_assets',
                                   output_format: 'jpg',
                                 })

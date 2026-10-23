@@ -10,12 +10,13 @@ import {
   Users,
 } from 'lucide-react';
 
+import { trackEvent } from '@/lib/analytics';
 import { apiPost } from '@/lib/api-client';
+import { clarityErrorType, resultSizeBucket } from '@/lib/clarity';
 import {
-  clarityErrorType,
-  resultSizeBucket,
-  trackClarityEvent,
-} from '@/lib/clarity';
+  ExportBackupCta,
+  type ExportBackupContent,
+} from '@/components/export-backup-cta';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -80,6 +81,7 @@ export type PlaylistAnalyzerLabels = {
 export type PlaylistAnalyzerToolProps = {
   labels: PlaylistAnalyzerLabels;
   locale?: string;
+  backupContent?: ExportBackupContent;
 };
 
 type MetricCardProps = {
@@ -192,24 +194,27 @@ function downloadCsv(content: string, name: string) {
 export function PlaylistAnalyzerTool({
   labels,
   locale = 'en',
+  backupContent,
 }: PlaylistAnalyzerToolProps) {
+  const [downloaded, setDownloaded] = useState(false);
   const [url, setUrl] = useState('');
   const [clientError, setClientError] = useState('');
   const mutation = useMutation({
     mutationFn: (playlistUrl: string) =>
       apiPost<PlaylistExport>('/api/youtube-playlist', { url: playlistUrl }),
     onMutate: () => {
-      trackClarityEvent('tool_run_started', { tool: 'playlist_analyzer' });
+      setDownloaded(false);
+      trackEvent('tool_run_started', { tool: 'playlist_analyzer' });
     },
     onSuccess: (data) => {
-      trackClarityEvent('tool_run_succeeded', {
+      trackEvent('tool_run_succeeded', {
         tool: 'playlist_analyzer',
         result_size: resultSizeBucket(data.videos.length),
         truncated: data.truncated,
       });
     },
     onError: (error) => {
-      trackClarityEvent('tool_run_failed', {
+      trackEvent('tool_run_failed', {
         tool: 'playlist_analyzer',
         error_type: clarityErrorType(error),
       });
@@ -230,9 +235,10 @@ export function PlaylistAnalyzerTool({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setDownloaded(false);
     if (!isValidYouTubePlaylistUrl(url)) {
       setClientError(labels.invalidUrl);
-      trackClarityEvent('tool_run_failed', {
+      trackEvent('tool_run_failed', {
         tool: 'playlist_analyzer',
         error_type: 'invalid_url',
       });
@@ -260,7 +266,8 @@ export function PlaylistAnalyzerTool({
       createPlaylistAnalyzerCsv(mutation.data),
       `${fileName}-analysis.csv`
     );
-    trackClarityEvent('export_downloaded', {
+    setDownloaded(true);
+    trackEvent('export_downloaded', {
       tool: 'playlist_analyzer',
       output_format: 'csv',
       result_size: resultSizeBucket(mutation.data.videos.length),
@@ -421,6 +428,14 @@ export function PlaylistAnalyzerTool({
             {error}
           </div>
         </form>
+        {downloaded && mutation.data && backupContent && (
+          <ExportBackupCta
+            key={mutation.submittedAt}
+            content={backupContent}
+            playlistUrl={`https://www.youtube.com/playlist?list=${mutation.data.playlistId}`}
+            tool="playlist_analyzer"
+          />
+        )}
       </div>
 
       {mutation.data && analysis ? (

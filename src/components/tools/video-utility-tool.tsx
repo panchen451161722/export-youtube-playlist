@@ -9,8 +9,9 @@ import {
   Search,
 } from 'lucide-react';
 
+import { trackEvent } from '@/lib/analytics';
 import { apiPost } from '@/lib/api-client';
-import { clarityErrorType, trackClarityEvent } from '@/lib/clarity';
+import { clarityErrorType } from '@/lib/clarity';
 import { cn } from '@/lib/utils';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -154,13 +155,13 @@ export function VideoUtilityTool({ mode, labels }: Props) {
     mutationFn: (videoUrl: string) =>
       apiPost<VideoToolData>('/api/youtube-video', { url: videoUrl }),
     onMutate: () => {
-      trackClarityEvent('tool_run_started', { tool: `video_${mode}` });
+      trackEvent('tool_run_started', { tool: `video_${mode}` });
     },
     onSuccess: () => {
-      trackClarityEvent('tool_run_succeeded', { tool: `video_${mode}` });
+      trackEvent('tool_run_succeeded', { tool: `video_${mode}` });
     },
     onError: (error) => {
-      trackClarityEvent('tool_run_failed', {
+      trackEvent('tool_run_failed', {
         tool: `video_${mode}`,
         error_type: clarityErrorType(error),
       });
@@ -240,7 +241,7 @@ export function VideoUtilityTool({ mode, labels }: Props) {
     try {
       await copyText(value);
       setCopyStatus(status);
-      trackClarityEvent('result_copied', {
+      trackEvent('result_copied', {
         tool: `video_${mode}`,
         output_format: status,
       });
@@ -256,7 +257,7 @@ export function VideoUtilityTool({ mode, labels }: Props) {
 
   const download = (value: string, fileName: string, outputFormat: string) => {
     downloadText(value, fileName);
-    trackClarityEvent('export_downloaded', {
+    trackEvent('export_downloaded', {
       tool: `video_${mode}`,
       output_format: outputFormat,
     });
@@ -351,7 +352,7 @@ export function VideoUtilityTool({ mode, labels }: Props) {
                         target="_blank"
                         rel="noreferrer"
                         onClick={() =>
-                          trackClarityEvent('export_downloaded', {
+                          trackEvent('export_downloaded', {
                             tool: 'video_thumbnail',
                             output_format: 'jpg',
                           })

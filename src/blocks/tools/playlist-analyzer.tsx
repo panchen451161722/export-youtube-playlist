@@ -2,6 +2,7 @@ import { FREE_PLAYLIST_EXPORT_LIMIT } from '@/config/playlist-export';
 import { m } from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
 import { usePlaylistExportAccess } from '@/hooks/use-playlist-export-access';
+import { exportBackupContent } from '@/blocks/export-backup-content';
 import { ToolGuideSection } from '@/blocks/tools/tool-guide';
 import { PlaylistAnalyzerTool } from '@/components/tools/playlist-analyzer-tool';
 import { ToolPageShell } from '@/components/tools/tool-page-shell';
@@ -21,6 +22,7 @@ export function PlaylistAnalyzer() {
       description={m['tools.analyzer.description']()}
       tool={
         <PlaylistAnalyzerTool
+          backupContent={exportBackupContent()}
           locale={getLocale()}
           labels={{
             formTitle: m['tools.analyzer.form_title'](),

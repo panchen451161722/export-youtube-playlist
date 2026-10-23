@@ -9,12 +9,13 @@ import {
   Search,
 } from 'lucide-react';
 
+import { trackEvent } from '@/lib/analytics';
 import { apiPost } from '@/lib/api-client';
+import { clarityErrorType, resultSizeBucket } from '@/lib/clarity';
 import {
-  clarityErrorType,
-  resultSizeBucket,
-  trackClarityEvent,
-} from '@/lib/clarity';
+  ExportBackupCta,
+  type ExportBackupContent,
+} from '@/components/export-backup-cta';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -57,6 +58,7 @@ export interface PlaylistExtractionToolLabels {
 export interface PlaylistExtractionToolProps {
   mode: PlaylistExtractionMode;
   labels: PlaylistExtractionToolLabels;
+  backupContent?: ExportBackupContent;
 }
 
 type ExtractionFormat =
@@ -187,7 +189,9 @@ function replaceResultTokens(template: string, result: PlaylistExport): string {
 export function PlaylistExtractionTool({
   mode,
   labels,
+  backupContent,
 }: PlaylistExtractionToolProps) {
+  const [downloaded, setDownloaded] = useState(false);
   const id = useId();
   const inputId = `${id}-playlist-url`;
   const helperId = `${id}-helper`;
@@ -208,20 +212,21 @@ export function PlaylistExtractionTool({
         url: playlistUrl,
       }),
     onMutate: () => {
-      trackClarityEvent('tool_run_started', {
+      setDownloaded(false);
+      trackEvent('tool_run_started', {
         tool: `playlist_${mode}`,
         output_format: format,
       });
     },
     onSuccess: (data) => {
-      trackClarityEvent('tool_run_succeeded', {
+      trackEvent('tool_run_succeeded', {
         tool: `playlist_${mode}`,
         result_size: resultSizeBucket(data.videos.length),
         truncated: data.truncated,
       });
     },
     onError: (error) => {
-      trackClarityEvent('tool_run_failed', {
+      trackEvent('tool_run_failed', {
         tool: `playlist_${mode}`,
         error_type: clarityErrorType(error),
       });
@@ -255,10 +260,11 @@ export function PlaylistExtractionTool({
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setDownloaded(false);
     setCopyStatus('idle');
     if (!isValidPlaylistUrl(url)) {
       setClientError(labels.invalidUrl);
-      trackClarityEvent('tool_run_failed', {
+      trackEvent('tool_run_failed', {
         tool: `playlist_${mode}`,
         error_type: 'invalid_url',
       });
@@ -272,7 +278,7 @@ export function PlaylistExtractionTool({
     try {
       await copyText(resultText);
       setCopyStatus('copied');
-      trackClarityEvent('result_copied', {
+      trackEvent('result_copied', {
         tool: `playlist_${mode}`,
         output_format: format,
         result_size: resultSizeBucket(mutation.data?.videos.length ?? 0),
@@ -287,7 +293,8 @@ export function PlaylistExtractionTool({
     if (!mutation.data) return;
     const fileName = safeFileName(mutation.data.title, labels.fileFallback);
     downloadText(resultText, 'text/plain', `${fileName}.txt`);
-    trackClarityEvent('export_downloaded', {
+    setDownloaded(true);
+    trackEvent('export_downloaded', {
       tool: `playlist_${mode}`,
       output_format: 'txt',
       result_size: resultSizeBucket(mutation.data.videos.length),
@@ -302,7 +309,8 @@ export function PlaylistExtractionTool({
       'text/csv',
       `${fileName}.csv`
     );
-    trackClarityEvent('export_downloaded', {
+    setDownloaded(true);
+    trackEvent('export_downloaded', {
       tool: `playlist_${mode}`,
       output_format: 'csv',
       result_size: resultSizeBucket(mutation.data.videos.length),
@@ -394,6 +402,14 @@ export function PlaylistExtractionTool({
         </div>
       ) : null}
 
+      {downloaded && mutation.data && backupContent && (
+        <ExportBackupCta
+          key={mutation.submittedAt}
+          content={backupContent}
+          playlistUrl={`https://www.youtube.com/playlist?list=${mutation.data.playlistId}`}
+          tool={`playlist_${mode}`}
+        />
+      )}
       {mutation.data ? (
         <section
           data-clarity-mask="true"

@@ -1,6 +1,7 @@
 import { FREE_PLAYLIST_EXPORT_LIMIT } from '@/config/playlist-export';
 import { m } from '@/paraglide/messages.js';
 import { usePlaylistExportAccess } from '@/hooks/use-playlist-export-access';
+import { exportBackupContent } from '@/blocks/export-backup-content';
 import { PlaylistExtractionTool } from '@/components/tools/playlist-extraction-tool';
 import { ToolPageShell } from '@/components/tools/tool-page-shell';
 
@@ -19,6 +20,7 @@ export function PlaylistTitleExtractor() {
       description={m['tools.title.description']()}
       tool={
         <PlaylistExtractionTool
+          backupContent={exportBackupContent()}
           mode="titles"
           labels={{
             inputLabel: m['tools.common.input_label'](),

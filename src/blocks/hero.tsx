@@ -16,12 +16,9 @@ import { toast } from 'sonner';
 
 import { Link } from '@/core/i18n/navigation';
 import { FREE_PLAYLIST_EXPORT_LIMIT } from '@/config/playlist-export';
+import { trackEvent } from '@/lib/analytics';
 import { apiPost } from '@/lib/api-client';
-import {
-  clarityErrorType,
-  resultSizeBucket,
-  trackClarityEvent,
-} from '@/lib/clarity';
+import { clarityErrorType, resultSizeBucket } from '@/lib/clarity';
 import {
   downloadYouTubeExports,
   playlistVideosToExportRecords,
@@ -31,6 +28,8 @@ import {
 } from '@/lib/youtube-export';
 import { m } from '@/paraglide/messages.js';
 import { usePlaylistExportAccess } from '@/hooks/use-playlist-export-access';
+import { exportBackupContent } from '@/blocks/export-backup-content';
+import { ExportBackupCta } from '@/components/export-backup-cta';
 import { ExportFormatPicker } from '@/components/export-format-picker';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -148,6 +147,7 @@ export function Hero({
   copy,
 }: HeroProps = {}) {
   const access = usePlaylistExportAccess();
+  const [exportedPlaylist, setExportedPlaylist] = useState<string | null>(null);
   const [url, setUrl] = useState('');
   const [clientError, setClientError] = useState('');
   const [formats, setFormats] = useState<YouTubeExportFormat[]>(() => [
@@ -173,20 +173,22 @@ export function Hero({
       return result;
     },
     onMutate: ({ selectedFormats }) => {
-      trackClarityEvent('tool_run_started', {
+      setExportedPlaylist(null);
+      trackEvent('tool_run_started', {
         tool: 'playlist_export',
         output_format: selectedFormats.join('_') || 'default',
       });
     },
-    onSuccess: (data, { selectedFormats }) => {
+    onSuccess: (data, { selectedFormats, playlistUrl }) => {
+      setExportedPlaylist(playlistUrl);
       const eventTags = {
         tool: 'playlist_export',
         output_format: selectedFormats.join('_') || 'default',
         result_size: resultSizeBucket(data.videos.length),
         truncated: data.truncated,
       };
-      trackClarityEvent('tool_run_succeeded', eventTags);
-      trackClarityEvent('export_downloaded', eventTags);
+      trackEvent('tool_run_succeeded', eventTags);
+      trackEvent('export_downloaded', eventTags);
       triggerExportConfetti();
       toast.success(m['landing.exporter.success'](), {
         duration: 6000,
@@ -200,7 +202,7 @@ export function Hero({
       });
     },
     onError: (error) => {
-      trackClarityEvent('tool_run_failed', {
+      trackEvent('tool_run_failed', {
         tool: 'playlist_export',
         error_type: clarityErrorType(error),
       });
@@ -210,8 +212,9 @@ export function Hero({
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!isValidPlaylistUrl(url)) {
+      setExportedPlaylist(null);
       setClientError(m['landing.exporter.error.invalid']());
-      trackClarityEvent('tool_run_failed', {
+      trackEvent('tool_run_failed', {
         tool: 'playlist_export',
         error_type: 'invalid_url',
       });
@@ -414,6 +417,15 @@ export function Hero({
           {m['landing.exporter.truncated']({ limit: mutation.data.limit })}
         </div>
       ) : null}
+
+      {exportedPlaylist && (
+        <ExportBackupCta
+          key={mutation.submittedAt}
+          content={exportBackupContent()}
+          playlistUrl={exportedPlaylist}
+          tool="playlist_export"
+        />
+      )}
 
       {!isToolPage ? (
         <div className="border-border mt-6 grid grid-cols-2 divide-x border-t pt-5 text-center">
