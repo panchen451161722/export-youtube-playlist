@@ -5,7 +5,6 @@ import { useSession } from '@/core/auth/client';
 import { useRouter } from '@/core/i18n/navigation';
 import {
   GUARD_PLANS,
-  GUARD_SCAN_LIMIT,
   GUARD_SNAPSHOT_LIMIT,
   GUARD_TRIAL_DAYS,
   guardProductId,
@@ -100,7 +99,7 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
     comparisonTitle: m['guardPricing.comparison_title'](),
     comparisonDescription: m['guardPricing.comparison_description'](),
     featureLabel: m['guardPricing.feature_label'](),
-    supportNote: m['guardPricing.support_note']({ count: GUARD_SCAN_LIMIT }),
+    supportNote: m['guardPricing.support_note'](),
     faqTitle: m['guardPricing.faq_title'](),
     faq: [
       {
@@ -144,7 +143,7 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
       },
       {
         feature: m['guardPricing.compare_items'](),
-        values: same(String(GUARD_SCAN_LIMIT)),
+        values: same(m['guardPricing.compare_items_value']()),
       },
       {
         feature: m['guardPricing.compare_playlist_exports'](),

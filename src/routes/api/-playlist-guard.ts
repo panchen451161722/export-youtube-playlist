@@ -14,7 +14,7 @@ import {
   youtubeConfig,
 } from '@/modules/youtube-connections/service';
 import {
-  getPlaylistExport,
+  getPlaylistBackup,
   parseYouTubePlaylistUrl,
   PlaylistServiceError,
 } from '@/modules/youtube-playlist/service';
@@ -315,15 +315,15 @@ export async function scanGuardPublicSource(
         'title' | 'uploadsPlaylistUrl'
       >
     >;
-    getPlaylistExport: (
-      input: Parameters<typeof getPlaylistExport>[0]
+    getPlaylistBackup: (
+      input: Parameters<typeof getPlaylistBackup>[0]
     ) => Promise<
       Pick<
-        Awaited<ReturnType<typeof getPlaylistExport>>,
+        Awaited<ReturnType<typeof getPlaylistBackup>>,
         'truncated' | 'scannedCount' | 'totalItems' | 'videos'
       >
     >;
-  } = { getChannelToolData, getPlaylistExport }
+  } = { getChannelToolData, getPlaylistBackup }
 ): Promise<GuardScan> {
   try {
     let playlistUrl = collection.url;
@@ -337,7 +337,7 @@ export async function scanGuardPublicSource(
       playlistUrl = channel.uploadsPlaylistUrl;
       sourceTitle = channel.title;
     }
-    const result = await services.getPlaylistExport({ playlistUrl, apiKey });
+    const result = await services.getPlaylistBackup({ playlistUrl, apiKey });
     return {
       complete: !result.truncated && result.scannedCount >= result.totalItems,
       sourceTitle,

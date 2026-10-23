@@ -1,4 +1,3 @@
-import { GUARD_SCAN_LIMIT } from '@/config/guard-plans';
 import type {
   GuardCollectionDetail,
   GuardItem,
@@ -65,8 +64,15 @@ export async function scanAuthorizedYoutube(
   token: string,
   fetcher: typeof fetch = fetch
 ) {
+  // Uncapped scans must still finish before the guard's three-minute lease.
+  const signal = AbortSignal.timeout(150_000);
+  const scanFetch: typeof fetch = (input, init) =>
+    fetcher(input, {
+      ...init,
+      signal: init?.signal ? AbortSignal.any([signal, init.signal]) : signal,
+    });
   const get = <T>(path: string, params: Record<string, string>) =>
-    youtubeGet<Page<T>>(path, params, token, fetcher);
+    youtubeGet<Page<T>>(path, params, token, scanFetch);
   async function all<T>(path: string, params: Record<string, string>) {
     const items: T[] = [];
     let next = '';
@@ -84,18 +90,16 @@ export async function scanAuthorizedYoutube(
         maxResults: '50',
         ...(next ? { pageToken: next } : {}),
       });
-      if (!Array.isArray(page.items))
+      if (
+        !Array.isArray(page.items) ||
+        (page.nextPageToken && !page.items.length)
+      )
         throw new YoutubeAccountError(
           'incomplete_scan',
           'YouTube returned an incomplete response. Previous snapshots were preserved.',
           502
         );
       items.push(...page.items);
-      if (
-        items.length > GUARD_SCAN_LIMIT ||
-        (items.length === GUARD_SCAN_LIMIT && page.nextPageToken)
-      )
-        return { items, complete: false };
       next = page.nextPageToken || '';
     } while (next);
     return { items, complete: true };

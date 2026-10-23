@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 
 import { authClient, useSession } from '@/core/auth/client';
 import { Link, useRouter } from '@/core/i18n/navigation';
-import { GUARD_SCAN_LIMIT, GUARD_SNAPSHOT_LIMIT } from '@/config/guard-plans';
+import { GUARD_SNAPSHOT_LIMIT } from '@/config/guard-plans';
 import { apiGet, apiPost } from '@/lib/api-client';
 import {
   collectionView,
@@ -102,7 +102,6 @@ export function PlaylistBackup() {
             </p>
             <p className="text-muted-foreground mt-3 text-sm leading-6">
               {m['backup.limit_text']({
-                videos: GUARD_SCAN_LIMIT,
                 snapshots: GUARD_SNAPSHOT_LIMIT,
               })}
             </p>

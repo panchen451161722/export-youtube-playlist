@@ -22,6 +22,7 @@ import {
   localizeHref,
   setLocale,
 } from '@/paraglide/runtime.js';
+import { BillingMenuItem } from '@/blocks/billing-menu-item';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -125,6 +126,7 @@ export function UserMenu({
               <ListVideo className="size-4" />
               {m['guardPricing.nav_collections']()}
             </DropdownMenuItem>
+            <BillingMenuItem />
             {profileHref && (
               <DropdownMenuItem
                 onClick={() => {

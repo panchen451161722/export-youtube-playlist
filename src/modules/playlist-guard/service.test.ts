@@ -448,3 +448,18 @@ test('channel scans save the real title and replace generated names without over
   );
   assert.equal(saved.sourceTitle, '柴静 Chai Jing');
 });
+
+test('large complete backups retain all items and more than 500 missing records', () => {
+  const items = Array.from({ length: 601 }, (_, index) => video(String(index)));
+  const initial = applyScan(empty, { complete: true, items }, now);
+  assert.equal(initial.itemCount, 601);
+  assert.equal(initial.snapshots[0].items.length, 601);
+  const removed = applyScan(initial, { complete: true, items: [] }, now + 1000);
+  assert.equal(removed.missingCount, 601);
+  assert.equal(removed.snapshots[0].removed, 601);
+  assert.equal(removed.missing.at(-1)?.id, '600');
+  const restored = applyScan(removed, { complete: true, items }, now + 2000);
+  assert.equal(restored.snapshots[0].restored, 601);
+  assert.equal(restored.missingCount, 0);
+  assert.equal(restored.runCount, 3);
+});

@@ -468,17 +468,15 @@ function normalizeVideo(
  * Unavailable videos count toward the scanned limit and are reported as skipped.
  * Playlist data is returned to the caller and is never persisted.
  */
-export async function getPlaylistExport(params: {
+type PlaylistReadParams = {
   playlistUrl: string;
   apiKey?: string;
   fetchImpl?: typeof fetch;
-  maxItems?: number;
-}): Promise<PlaylistExport> {
-  const playlistId = parseYouTubePlaylistUrl(params.playlistUrl);
-  const apiKey = (params.apiKey ?? envConfigs.youtube_api_key).trim();
-  if (!apiKey) throw new PlaylistServiceError('configuration');
+};
 
-  const fetchImpl = params.fetchImpl ?? fetch;
+export async function getPlaylistExport(
+  params: PlaylistReadParams & { maxItems?: number }
+): Promise<PlaylistExport> {
   const maxItems =
     params.maxItems !== undefined &&
     Number.isFinite(params.maxItems) &&
@@ -491,12 +489,34 @@ export async function getPlaylistExport(params: {
           )
         )
       : FREE_PLAYLIST_EXPORT_LIMIT;
+  return readPlaylist(params, maxItems);
+}
+
+/** Server-only backup scans follow every page, independently of one-off export tiers. */
+export async function getPlaylistBackup(
+  params: PlaylistReadParams
+): Promise<Omit<PlaylistExport, 'limit'>> {
+  const { limit: _limit, ...result } = await readPlaylist(params, Infinity);
+  return result;
+}
+
+async function readPlaylist(
+  params: PlaylistReadParams,
+  maxItems: number
+): Promise<PlaylistExport> {
+  const playlistId = parseYouTubePlaylistUrl(params.playlistUrl);
+  const apiKey = (params.apiKey ?? envConfigs.youtube_api_key).trim();
+  if (!apiKey) throw new PlaylistServiceError('configuration');
+  const fetchImpl = params.fetchImpl ?? fetch;
+  const fullScan = !Number.isFinite(maxItems);
   const controller = new AbortController();
-  // Larger exports need more pagination time, while each upstream request still
-  // has its own short timeout. The overall budget remains bounded by the cap.
+  // Bound elapsed time even for uncapped backups, leaving time to save within
+  // the guard's three-minute scan lease. Each upstream request also times out.
   const timeout = setTimeout(
     () => controller.abort(),
-    REQUEST_TIMEOUT_MS * Math.ceil(maxItems / FREE_PLAYLIST_EXPORT_LIMIT)
+    fullScan
+      ? 150_000
+      : REQUEST_TIMEOUT_MS * Math.ceil(maxItems / FREE_PLAYLIST_EXPORT_LIMIT)
   );
 
   try {
@@ -536,6 +556,8 @@ export async function getPlaylistExport(params: {
         fetchImpl,
       });
       pageTotal = Math.max(pageTotal, page.pageInfo?.totalResults ?? 0);
+      if (fullScan && !Array.isArray(page.items))
+        throw new PlaylistServiceError('upstream');
       const pageItems = page.items ?? [];
       const remaining = maxItems - rawItems.length;
       rawItems.push(...pageItems.slice(0, remaining));
@@ -585,6 +607,11 @@ export async function getPlaylistExport(params: {
           })
         )
       );
+      if (
+        fullScan &&
+        responses.some((response) => !Array.isArray(response.items))
+      )
+        throw new PlaylistServiceError('upstream');
       videoResponses.push(...responses);
     }
     const videosById = new Map<string, RawVideo>();

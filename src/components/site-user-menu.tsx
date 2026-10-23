@@ -4,6 +4,7 @@ import { signOut } from '@/core/auth/client';
 import { Link, useRouter } from '@/core/i18n/navigation';
 import { m } from '@/paraglide/messages.js';
 import { useUserPermissions } from '@/hooks/use-user-permissions';
+import { BillingMenuItem } from '@/blocks/billing-menu-item';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -70,6 +71,7 @@ export function SiteUserMenu({
           <ListVideo className="size-4" />
           {m['guardPricing.nav_collections']()}
         </DropdownMenuItem>
+        <BillingMenuItem />
         <DropdownMenuItem render={<Link href="/settings/profile" />}>
           <SettingsIcon className="size-4" />
           {m['common.nav.settings']()}

@@ -87,6 +87,11 @@ function isCancellable(status?: string | null) {
   return s === 'active' || s === 'trialing';
 }
 
+function statusLabel(status: string) {
+  const tab = TABS.find((tab) => tab !== 'all' && tab === status.toLowerCase());
+  return tab ? tDynamic(`settings.billing.tab_${tab}`) : status;
+}
+
 function BillingPage() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>('all');
@@ -112,6 +117,8 @@ function BillingPage() {
   });
   const current = currentQuery.data ?? null;
   const currentLoaded = !currentQuery.isPending;
+  const renewalStopped = current?.status === 'pending_cancel';
+  const currentEnd = current?.currentPeriodEnd || current?.canceledEndAt;
 
   const listQuery = useQuery({
     queryKey: ['billing', 'list', page, tab, debouncedSearch],
@@ -147,10 +154,19 @@ function BillingPage() {
 
   const cancelMutation = useMutation({
     mutationFn: (subscriptionNo: string) =>
-      apiPost('/api/user/subscriptions/cancel', { subscriptionNo }),
-    onSuccess: () => {
+      apiPost<Subscription>('/api/user/subscriptions/cancel', {
+        subscriptionNo,
+      }),
+    onSuccess: (updated) => {
       toast.success(m['settings.billing.cancel_success']());
       setCanceling(null);
+      queryClient.setQueryData<Subscription | null>(
+        ['billing', 'current'],
+        (existing) =>
+          existing?.subscriptionNo === updated.subscriptionNo
+            ? updated
+            : existing
+      );
       queryClient.invalidateQueries({ queryKey: ['billing'] });
     },
     onError: (err) => {
@@ -164,7 +180,7 @@ function BillingPage() {
   const submitting = cancelMutation.isPending;
 
   function confirmCancel() {
-    if (!canceling) return;
+    if (!canceling || submitting) return;
     cancelMutation.mutate(canceling.subscriptionNo);
   }
 
@@ -197,7 +213,9 @@ function BillingPage() {
     },
     {
       header: m['settings.billing.status'](),
-      cell: (r) => <Badge variant={statusVariant(r.status)}>{r.status}</Badge>,
+      cell: (r) => (
+        <Badge variant={statusVariant(r.status)}>{statusLabel(r.status)}</Badge>
+      ),
     },
     {
       header: m['settings.billing.amount'](),
@@ -285,9 +303,9 @@ function BillingPage() {
         </p>
       </div>
 
-      <Card className="max-w-md">
+      <Card className="max-w-xl">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <CardTitle>{m['settings.billing.subscription']()}</CardTitle>
             {current?.paymentProvider === 'stripe' ? (
               <Button
@@ -317,12 +335,12 @@ function BillingPage() {
             <p className="text-muted-foreground text-sm">…</p>
           ) : current ? (
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <p className="text-3xl font-bold">
                   {current.planName || current.productName || '—'}
                 </p>
                 <Badge variant={statusVariant(current.status)}>
-                  {current.status}
+                  {statusLabel(current.status)}
                 </Badge>
               </div>
               {current.amount && current.currency && (
@@ -331,21 +349,35 @@ function BillingPage() {
                   {current.interval ? ` / ${current.interval}` : ''}
                 </p>
               )}
-              {current.canceledEndAt ? (
-                <p className="text-destructive text-sm">
-                  {m['settings.billing.ends_on']({
-                    date: new Date(current.canceledEndAt).toLocaleDateString(),
-                  })}
-                </p>
-              ) : current.currentPeriodEnd ? (
+              {currentEnd ? (
                 <p className="text-muted-foreground text-sm">
-                  {m['settings.billing.renews_on']({
-                    date: new Date(
-                      current.currentPeriodEnd
-                    ).toLocaleDateString(),
-                  })}
+                  {renewalStopped || current.canceledEndAt
+                    ? m['settings.billing.ends_on']({
+                        date: new Date(currentEnd).toLocaleDateString(),
+                      })
+                    : m['settings.billing.renews_on']({
+                        date: new Date(currentEnd).toLocaleDateString(),
+                      })}
                 </p>
               ) : null}
+              {renewalStopped && (
+                <p className="text-muted-foreground text-sm" role="status">
+                  {m['settings.billing.renewal_stopped']()}
+                </p>
+              )}
+              {isCancellable(current.status) && (
+                <div className="mt-5 border-t pt-4">
+                  <Button
+                    variant="outline"
+                    className="text-destructive"
+                    disabled={submitting}
+                    onClick={() => setCanceling(current)}
+                  >
+                    <XCircle className="size-4" />
+                    {m['settings.billing.cancel']()}
+                  </Button>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-muted-foreground text-3xl font-bold">
@@ -411,7 +443,7 @@ function BillingPage() {
               </DetailRow>
               <DetailRow label={m['settings.billing.status']()}>
                 <Badge variant={statusVariant(viewing.status)}>
-                  {viewing.status}
+                  {statusLabel(viewing.status)}
                 </Badge>
               </DetailRow>
               <DetailRow label={m['settings.billing.amount']()}>
@@ -459,7 +491,10 @@ function BillingPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!canceling} onOpenChange={(v) => !v && setCanceling(null)}>
+      <Dialog
+        open={!!canceling}
+        onOpenChange={(v) => !v && !submitting && setCanceling(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{m['settings.billing.cancel_title']()}</DialogTitle>
@@ -469,6 +504,16 @@ function BillingPage() {
               })}
             </DialogDescription>
           </DialogHeader>
+          {canceling?.paymentProvider === 'stripe' &&
+            canceling.currentPeriodEnd && (
+              <p className="bg-muted rounded-lg p-3 text-sm">
+                {m['settings.billing.cancel_access_until']({
+                  date: new Date(
+                    canceling.currentPeriodEnd
+                  ).toLocaleDateString(),
+                })}
+              </p>
+            )}
           <DialogFooter>
             <Button
               variant="outline"

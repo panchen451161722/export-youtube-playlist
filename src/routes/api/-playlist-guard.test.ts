@@ -3,7 +3,7 @@ import { test } from 'node:test';
 
 import { GuardError } from '@/modules/playlist-guard/service';
 import {
-  getPlaylistExport,
+  getPlaylistBackup,
   PlaylistServiceError,
 } from '@/modules/youtube-playlist/service';
 import {
@@ -348,7 +348,7 @@ test('public scans preserve safe network and API errors so failed collections ca
           getChannelToolData: async () => {
             throw error;
           },
-          getPlaylistExport,
+          getPlaylistBackup,
         }
       ),
       (caught: unknown) =>
@@ -368,7 +368,7 @@ test('public scans preserve safe network and API errors so failed collections ca
       'test-key',
       {
         getChannelToolData,
-        getPlaylistExport: async () => {
+        getPlaylistBackup: async () => {
           throw new PlaylistServiceError('private_or_not_found');
         },
       }
@@ -390,7 +390,7 @@ test('channel scans carry the actual YouTube title and use its uploads playlist'
             'https://www.youtube.com/playlist?list=UU1234567890',
         };
       },
-      getPlaylistExport: async ({ playlistUrl }) => {
+      getPlaylistBackup: async ({ playlistUrl }) => {
         assert.equal(
           playlistUrl,
           'https://www.youtube.com/playlist?list=UU1234567890'

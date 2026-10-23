@@ -125,7 +125,7 @@ test('private playlist reads authenticated metadata and subscriptions store chan
   assert.equal(subs.items[0].kind, 'channel');
   assert.equal(subs.items[0].url, 'https://www.youtube.com/channel/UCfixture');
 });
-test('failed/invalid/over-limit reads never become successful empty snapshots', async () => {
+test('failed/invalid reads never become successful empty snapshots', async () => {
   const source = { source: 'liked_music' as const, url: '' };
   await assert.rejects(
     scanAuthorizedYoutube(source, 'fixture', (async () =>
@@ -135,15 +135,70 @@ test('failed/invalid/over-limit reads never become successful empty snapshots', 
     scanAuthorizedYoutube(source, 'fixture', (async () =>
       Response.json({})) as typeof fetch)
   );
-  const large = await scanAuthorizedYoutube(source, 'fixture', (async () =>
-    Response.json({
-      items: Array.from({ length: 501 }, (_, i) => video(String(i), '22')),
-    })) as typeof fetch);
-  assert.equal(large.complete, false);
   const repeated = (async () =>
     Response.json({
       items: [video('same')],
       nextPageToken: 'repeat',
     })) as typeof fetch;
   await assert.rejects(scanAuthorizedYoutube(source, 'fixture', repeated));
+});
+
+test('authorized sources follow all pages beyond 500 and hydrate every private-playlist batch', async () => {
+  for (const source of [
+    'liked_videos',
+    'liked_music',
+    'subscriptions',
+    'private_playlist',
+  ] as const) {
+    let pages = 0;
+    const batches: string[][] = [];
+    const fetcher = (async (input: URL | RequestInfo, init?: RequestInit) => {
+      assert.ok(init?.signal);
+      const url = new URL(String(input));
+      const ids = url.searchParams.get('id');
+      if (ids) {
+        batches.push(ids.split(','));
+        return Response.json({ items: ids.split(',').map((id) => video(id)) });
+      }
+      pages++;
+      const start = Number(url.searchParams.get('pageToken') || 0);
+      const end = Math.min(start + 50, 601);
+      return Response.json({
+        nextPageToken: end < 601 ? String(end) : undefined,
+        items: Array.from({ length: end - start }, (_, i) => {
+          const id = String(start + i);
+          if (source === 'private_playlist')
+            return { contentDetails: { videoId: id } };
+          if (source === 'subscriptions')
+            return { snippet: { title: id, resourceId: { channelId: id } } };
+          return video(
+            id,
+            source === 'liked_music' && start + i < 600 ? '22' : '10'
+          );
+        }),
+      });
+    }) as typeof fetch;
+    const result = await scanAuthorizedYoutube(
+      { source, url: 'https://www.youtube.com/playlist?list=PLfixture' },
+      'fixture',
+      fetcher
+    );
+    assert.equal(result.complete, true);
+    assert.equal(pages, 13);
+    assert.equal(result.items.length, source === 'liked_music' ? 1 : 601);
+    assert.equal(result.items.at(-1)?.id, '600');
+    if (source === 'private_playlist') assert.equal(batches.flat().length, 601);
+  }
+});
+
+test('an empty authorized page with a continuation token is rejected', async () => {
+  await assert.rejects(
+    scanAuthorizedYoutube(
+      { source: 'liked_videos', url: '' },
+      'fixture',
+      (async () =>
+        Response.json({ items: [], nextPageToken: 'more' })) as typeof fetch
+    ),
+    /incomplete/
+  );
 });

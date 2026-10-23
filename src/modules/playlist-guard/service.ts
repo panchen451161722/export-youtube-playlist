@@ -37,11 +37,7 @@ import {
   type GuardWorkspaceRow,
   type Subscription,
 } from '@/config/db/schema';
-import {
-  GUARD_PLANS,
-  GUARD_SCAN_LIMIT,
-  GUARD_SNAPSHOT_LIMIT,
-} from '@/config/guard-plans';
+import { GUARD_PLANS, GUARD_SNAPSHOT_LIMIT } from '@/config/guard-plans';
 import { getUuid } from '@/lib/hash';
 import {
   notificationPayload,
@@ -206,10 +202,10 @@ export function applyScan(
   scan: GuardScan,
   now: number
 ): GuardCollectionDetail {
-  if (!scan.complete || scan.items.length > GUARD_SCAN_LIMIT)
+  if (!scan.complete)
     throw new GuardError(
       'incomplete_scan',
-      'This source exceeds the 500-item limit or returned incomplete data. The previous snapshot was preserved.',
+      'YouTube returned incomplete data. No new snapshot was saved; any existing snapshots were preserved. Please try again.',
       422
     );
   previous = pruneGuardMetadata(previous, now);
@@ -236,9 +232,9 @@ export function applyScan(
       missingSince: timestamp,
       lastSeenAt: previous.snapshots[0].createdAt,
     });
-  const missing: GuardMissingItem[] = [...missingById.values()]
-    .sort((a, b) => b.missingSince.localeCompare(a.missingSince))
-    .slice(0, GUARD_SCAN_LIMIT);
+  const missing: GuardMissingItem[] = [...missingById.values()].sort((a, b) =>
+    b.missingSince.localeCompare(a.missingSince)
+  );
   const snapshot: GuardSnapshot = {
     id: getUuid(),
     createdAt: timestamp,

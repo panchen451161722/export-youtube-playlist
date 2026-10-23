@@ -8,6 +8,7 @@ import {
 
 import {
   extractDescriptionMetadata,
+  getPlaylistBackup,
   getPlaylistExport,
   parseYouTubeDuration,
 } from './service';
@@ -402,4 +403,59 @@ test('getPlaylistExport maps the rich video metadata without extra requests', as
     descriptionEmails: ['contact@example.com'],
     descriptionLinks: ['https://example.com/resource'],
   });
+});
+
+test('backup scans follow every page beyond both one-off export caps', async () => {
+  const api = createPaginatedApi({
+    itemCount: 5_101,
+    unavailablePositions: [500],
+  });
+  const result = await getPlaylistBackup({
+    playlistUrl,
+    apiKey: 'test-key',
+    fetchImpl: api.fetchImpl,
+  });
+  assert.equal(result.scannedCount, 5_101);
+  assert.equal(result.returnedItems, 5_100);
+  assert.equal(result.skippedCount, 1);
+  assert.equal(result.truncated, false);
+  assert.equal(result.videos.at(-1)?.videoId, 'video-5100');
+  assert.equal(result.videos.at(-1)?.position, 5_101);
+  assert.equal(api.pageRequests.length, 103);
+  assert.equal(api.maxConcurrentVideoRequests, 5);
+  assert.equal('limit' in result, false);
+});
+
+test('backup scans reject malformed page or video responses instead of accepting empty snapshots', async () => {
+  for (const brokenResource of ['playlistItems', 'videos']) {
+    const api = createPaginatedApi({ itemCount: 1 });
+    const fetchImpl: typeof fetch = async (input, init) => {
+      const url = new URL(input instanceof Request ? input.url : String(input));
+      return url.pathname.endsWith('/' + brokenResource)
+        ? Response.json({})
+        : api.fetchImpl(input, init);
+    };
+    await assert.rejects(
+      getPlaylistBackup({ playlistUrl, apiKey: 'test-key', fetchImpl })
+    );
+  }
+});
+
+test('broken backup pagination stays incomplete even without a reported total', async () => {
+  const fetchImpl: typeof fetch = async (input) => {
+    const url = new URL(input instanceof Request ? input.url : String(input));
+    if (url.pathname.endsWith('/playlists'))
+      return Response.json({ items: [{}] });
+    if (url.pathname.endsWith('/videos')) return Response.json({ items: [] });
+    return Response.json({
+      items: [{ contentDetails: { videoId: 'video-1' } }],
+      nextPageToken: 'repeat',
+    });
+  };
+  const result = await getPlaylistBackup({
+    playlistUrl,
+    apiKey: 'test-key',
+    fetchImpl,
+  });
+  assert.equal(result.truncated, true);
 });
