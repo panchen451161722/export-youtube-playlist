@@ -12,8 +12,8 @@ export function isPrivateDocumentPath(pathname: string): boolean {
     return true;
   }
   return (
-    /^\/(settings|admin|api)(\/|$)/.test(path) ||
-    /^\/(youtube-playlist-backup|sign-in|sign-up|forgot-password|reset-password|verify-email|redeem-invite)(\/|$)/.test(
+    /^\/(settings|admin|api|dev)(\/|$)/.test(path) ||
+    /^\/(youtube-playlist-backup|claim-backup|sign-in|sign-up|forgot-password|reset-password|verify-email|redeem-invite)(\/|$)/.test(
       path
     )
   );

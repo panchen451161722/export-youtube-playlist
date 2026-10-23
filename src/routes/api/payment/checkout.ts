@@ -9,6 +9,8 @@ import {
   getGuardCheckoutOptions,
 } from '@/modules/payment/service';
 import { createGuardStore } from '@/modules/playlist-guard/service';
+import { backupCheckoutPaths } from '@/lib/backup-checkout';
+import { paymentAppUrl } from '@/lib/payment-return-url';
 import { enforceMinIntervalRateLimit } from '@/lib/rate-limit';
 import { respData, respErr } from '@/lib/resp';
 
@@ -96,16 +98,16 @@ async function POST({ request }: { request: Request }) {
     }
 
     // Build success/cancel URLs — only accept same-origin redirects.
-    const baseUrl = configs.app_url || 'http://localhost:3000';
-    const safeRedirectPath = safeSameOriginPath(
-      redirect,
-      '/settings/billing',
-      baseUrl
-    );
+    const baseUrl = paymentAppUrl(configs.app_url, request.url);
+    const backupPaths = backupCheckoutPaths(body.checkout_flow, body.locale);
+    const safeRedirectPath =
+      backupPaths?.success ??
+      safeSameOriginPath(redirect, '/settings/billing', baseUrl);
     const successUrl = `${baseUrl}${safeRedirectPath}`;
-    const cancelUrl = `${baseUrl}/pricing`;
+    const cancelUrl = `${baseUrl}${backupPaths?.cancel ?? '/pricing'}`;
 
     const checkout = await createCheckout({
+      requestUrl: request.url,
       userId: session.user.id,
       userEmail: session.user.email,
       productName: product.productName,
@@ -113,6 +115,10 @@ async function POST({ request }: { request: Request }) {
       credits: product.credits,
       creditsValidDays: product.creditsValidDays,
       paymentOrder: {
+        metadata: {
+          checkout_flow: backupPaths ? 'backup' : 'pricing',
+          checkout_locale: body.locale === 'zh' ? 'zh' : 'en',
+        },
         productId: product.productId,
         price: { amount: product.priceInCents, currency: product.currency },
         type: product.type,

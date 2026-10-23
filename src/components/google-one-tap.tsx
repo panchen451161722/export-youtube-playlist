@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, useRef } from 'react';
 
 import { getAuthClient, useSession } from '@/core/auth/client';
@@ -10,7 +8,13 @@ import { usePublicConfig } from '@/hooks/use-public-config';
 // admin has enabled it. Self-contained: pulls config from
 // /api/config/public, gates on session, and triggers at most once
 // per page load.
-export function GoogleOneTap({ callbackURL = '/' }: { callbackURL?: string }) {
+export function GoogleOneTap({
+  callbackURL = '/',
+  onBeforePrompt,
+}: {
+  callbackURL?: string;
+  onBeforePrompt?: () => void;
+}) {
   const { data: session, isPending } = useSession();
   const { data: configs } = usePublicConfig();
   const triggered = useRef(false);
@@ -28,6 +32,7 @@ export function GoogleOneTap({ callbackURL = '/' }: { callbackURL?: string }) {
     }
 
     triggered.current = true;
+    onBeforePrompt?.();
     const client = getAuthClient(configs);
     (client as any)
       .oneTap?.({
@@ -41,7 +46,7 @@ export function GoogleOneTap({ callbackURL = '/' }: { callbackURL?: string }) {
         // Same — One Tap cancellations throw NetworkError/AbortError that
         // aren't actionable.
       });
-  }, [callbackURL, configs, session, isPending]);
+  }, [callbackURL, configs, session, isPending, onBeforePrompt]);
 
   return null;
 }

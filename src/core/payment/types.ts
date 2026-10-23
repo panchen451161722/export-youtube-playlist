@@ -93,6 +93,7 @@ export interface PaymentOrder {
   description?: string; // checkout description
   successUrl?: string;
   cancelUrl?: string;
+  expiresAt?: Date;
   metadata?: Record<string, any>;
   plan?: PaymentPlan; // required for subscription
   customFields?: PaymentCustomField[]; // optional for custom fields

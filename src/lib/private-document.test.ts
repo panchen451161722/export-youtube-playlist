@@ -38,6 +38,8 @@ test('private routes and locale variants cannot load optional third-party script
     '/settings/collections',
     '/zh/settings/profile',
     '/admin',
+    '/dev/guest-trial',
+    '/zh/dev/guest-trial',
     '/youtube-playlist-backup',
     '/zh/youtube-playlist-backup/',
     '/sign-in',

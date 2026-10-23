@@ -327,3 +327,139 @@ test('a completed trial requires a confirmed payment method and uses trial_end a
   );
   assert.equal(trial.paymentInfo?.paymentAmount, 0);
 });
+
+test('Checkout retries keep their flow, while switching into backup or changing locale replaces the open session', async () => {
+  const { PaymentType, PaymentInterval } = await import('./types');
+  const provider = new StripeProvider({
+    secretKey: 'sk_test_placeholder',
+    publishableKey: '',
+  });
+  const order = {
+    type: PaymentType.SUBSCRIPTION,
+    price: { amount: 990, currency: 'usd' },
+    plan: { name: 'Lite', interval: PaymentInterval.YEAR, intervalCount: 1 },
+    customer: { email: 'fixture@example.invalid' },
+    successUrl: 'https://example.invalid/callback',
+    cancelUrl: 'https://example.invalid/youtube-playlist-backup?setup=cancel',
+    metadata: {
+      app: 'export-youtube-playlist',
+      user_id: 'fixture',
+      product_id: 'guard_lite_yearly',
+      trial_days: '0',
+      checkout_flow: 'backup',
+      checkout_locale: 'en',
+    },
+  };
+  const expired: string[] = [];
+  const created: any[] = [];
+  let open = {
+    id: 'cs_pricing',
+    success_url: order.successUrl,
+    cancel_url: order.cancelUrl,
+    status: 'open',
+    url: 'https://checkout.stripe.com/old',
+    metadata: { ...order.metadata, checkout_flow: 'pricing' },
+  };
+  Object.defineProperty(provider, 'client', {
+    value: {
+      customers: {
+        list: async () => ({
+          data: [{ id: 'cus_fixture', metadata: order.metadata }],
+        }),
+      },
+      subscriptions: { list: async () => ({ data: [] }) },
+      checkout: {
+        sessions: {
+          list: async () => ({ data: [open] }),
+          expire: async (id: string) => {
+            expired.push(id);
+          },
+          create: async (params: any) => {
+            created.push(params);
+            open = {
+              id: `cs_backup_${created.length}`,
+              success_url: params.success_url,
+              cancel_url: params.cancel_url,
+              status: 'open',
+              url: 'https://checkout.stripe.com/backup',
+              metadata: params.metadata,
+            };
+            return open;
+          },
+        },
+      },
+    },
+  });
+  const first = await provider.createPayment({ order });
+  const retry = await provider.createPayment({ order });
+  assert.equal(first.checkoutInfo.sessionId, retry.checkoutInfo.sessionId);
+  assert.equal(created.length, 1);
+  assert.deepEqual(expired, ['cs_pricing']);
+  assert.equal(created[0].cancel_url, order.cancelUrl);
+  assert.equal(created[0].success_url, order.successUrl);
+  await provider.createPayment({
+    order: { ...order, metadata: { ...order.metadata, checkout_locale: 'zh' } },
+  });
+  assert.equal(created.length, 2);
+  assert.deepEqual(expired, ['cs_pricing', 'cs_backup_1']);
+  const changedOrigin = {
+    ...order,
+    metadata: { ...order.metadata, checkout_locale: 'zh' },
+    successUrl:
+      'http://localhost:3000/api/payment/callback?order_no=next&redirect=%2Fyoutube-playlist-backup',
+    cancelUrl: 'http://localhost:3000/youtube-playlist-backup?setup=cancel',
+  };
+  await provider.createPayment({ order: changedOrigin });
+  assert.equal(
+    created.length,
+    3,
+    'stale destinations cannot reuse an old Checkout'
+  );
+  assert.equal(created[2].cancel_url, changedOrigin.cancelUrl);
+  await provider.createPayment({
+    order: {
+      ...changedOrigin,
+      successUrl: changedOrigin.successUrl.replace(
+        'order_no=next',
+        'order_no=retry'
+      ),
+    },
+  });
+  assert.equal(
+    created.length,
+    3,
+    'changing only the generated order number still reuses the session'
+  );
+});
+
+test('rejecting a guest trial refuses a different checkout owner without canceling', async () => {
+  const provider = new StripeProvider({
+    secretKey: 'unit-test-placeholder',
+    publishableKey: '',
+  });
+  let canceled = false;
+  Object.defineProperty(provider, 'client', {
+    value: {
+      subscriptions: {
+        retrieve: async () => ({
+          id: 'sub_other',
+          status: 'trialing',
+          trial_start: 1700000000,
+          metadata: {
+            app: 'export-youtube-playlist',
+            checkout_flow: 'guest_backup',
+            guest_checkout_id: 'other',
+          },
+        }),
+        cancel: async () => {
+          canceled = true;
+        },
+      },
+    },
+  });
+  await assert.rejects(
+    provider.rejectGuestTrial('sub_other', 'requested'),
+    /ownership mismatch/
+  );
+  assert.equal(canceled, false);
+});

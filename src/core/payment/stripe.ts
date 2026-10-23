@@ -1,5 +1,7 @@
 import Stripe from 'stripe';
 
+import { sameCheckoutReturnUrls } from '@/lib/payment-return-url';
+
 import {
   CheckoutSession,
   PaymentBilling,
@@ -68,6 +70,76 @@ export class StripeProvider implements PaymentProvider {
       );
     }
     return { hasHistory, hasCurrent };
+  }
+
+  async expireOpenCheckout(sessionId: string) {
+    const session = await this.client.checkout.sessions.retrieve(sessionId);
+    if (session.status === 'open')
+      await this.client.checkout.sessions.expire(sessionId);
+    return session.status === 'complete' ? 'complete' : 'expired';
+  }
+
+  /** Billing email is used for eligibility only, never for account authentication. */
+  async getGuestSubscriptionHistory(
+    email: string,
+    excludeId: string,
+    approvedGuestIds: Set<string>
+  ) {
+    let hasHistory = false;
+    let hasCurrent = false;
+    for await (const customer of this.client.customers.list({
+      email,
+      limit: 100,
+    })) {
+      for await (const sub of this.client.subscriptions.list({
+        customer: customer.id,
+        status: 'all',
+        limit: 100,
+      })) {
+        if (
+          sub.id === excludeId ||
+          sub.metadata.app !== 'export-youtube-playlist' ||
+          !/^guard_(lite|pro|ultra)_yearly$/.test(sub.metadata.product_id || '')
+        )
+          continue;
+        // Concurrent new guest trials are serialized by the database email reservation.
+        if (
+          sub.metadata.guest_trial_policy === 'email_v1' &&
+          ['trialing', 'canceled'].includes(sub.status) &&
+          !approvedGuestIds.has(sub.id)
+        )
+          continue;
+        if (
+          sub.status === 'incomplete_expired' ||
+          (sub.status === 'incomplete' && !sub.trial_start)
+        )
+          continue;
+        hasHistory = true;
+        hasCurrent ||= !['canceled', 'incomplete_expired'].includes(sub.status);
+      }
+    }
+    return { hasHistory, hasCurrent };
+  }
+
+  /** Only cancel the newly created guest trial, never a prior customer's subscription. */
+  async rejectGuestTrial(subscriptionId: string, guestId: string) {
+    let sub = await this.client.subscriptions.retrieve(subscriptionId);
+    if (
+      sub.metadata.app !== 'export-youtube-playlist' ||
+      sub.metadata.guest_checkout_id !== guestId ||
+      sub.metadata.checkout_flow !== 'guest_backup' ||
+      !sub.trial_start
+    )
+      throw new Error('Guest trial ownership mismatch');
+    if (sub.status !== 'canceled') {
+      sub = await this.client.subscriptions.cancel(subscriptionId, {
+        invoice_now: false,
+        prorate: false,
+      });
+    }
+    if (sub.status !== 'canceled')
+      throw new Error('Guest trial cancellation not confirmed');
+    return this.buildPaymentSessionFromSubscription(sub);
   }
 
   async createPayment({
@@ -172,7 +244,12 @@ export class StripeProvider implements PaymentProvider {
       // One open Checkout per account. Reuse retries and expire an abandoned
       // selection before changing plans. Stripe also serializes concurrent
       // creations with the same generation key (including different plans).
-      let checkoutGeneration: string | undefined;
+      // A guest has no customer yet. Its server-created purchase ID survives request retries.
+      let checkoutGeneration: string | undefined =
+        order.metadata?.checkout_flow === 'guest_backup' &&
+        order.metadata?.guest_checkout_id
+          ? `guest-${order.metadata.guest_checkout_id}`
+          : undefined;
       if (customerId && order.metadata?.app === 'export-youtube-playlist') {
         const subscriptions = await this.client.subscriptions.list({
           customer: customerId,
@@ -205,6 +282,11 @@ export class StripeProvider implements PaymentProvider {
           open.metadata?.product_id === order.metadata.product_id &&
           open.metadata?.trial_days ===
             String(order.plan?.trialPeriodDays || 0) &&
+          (open.metadata?.checkout_flow || 'pricing') ===
+            (order.metadata.checkout_flow || 'pricing') &&
+          (open.metadata?.checkout_locale || 'en') ===
+            (order.metadata.checkout_locale || 'en') &&
+          sameCheckoutReturnUrls(open, order) &&
           open.url
         ) {
           return {
@@ -224,6 +306,9 @@ export class StripeProvider implements PaymentProvider {
         mode:
           order.type === PaymentType.SUBSCRIPTION ? 'subscription' : 'payment',
         line_items: [lineItem],
+        ...(order.expiresAt
+          ? { expires_at: Math.floor(order.expiresAt.getTime() / 1000) }
+          : {}),
       };
 
       if (order.type === PaymentType.SUBSCRIPTION) {

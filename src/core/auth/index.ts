@@ -1,6 +1,7 @@
 import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { oneTap } from 'better-auth/plugins';
+import { magicLink, oneTap } from 'better-auth/plugins';
+import { and, eq, isNull, lt, or } from 'drizzle-orm';
 
 import { db } from '@/core/db';
 import type { EmailProvider } from '@/core/email';
@@ -15,7 +16,9 @@ import {
 import { AUTH_SECRET_PLACEHOLDER, envConfigs } from '@/config';
 import * as schema from '@/config/db/schema';
 import { getAllConfigs } from '@/modules/config/service';
+import { guestPaths } from '@/lib/guest-checkout';
 import { getUuid } from '@/lib/hash';
+import { m } from '@/paraglide/messages.js';
 
 function assertProductionAuthSecret() {
   // Only enforce at runtime in production.
@@ -118,7 +121,7 @@ function getSocialSignature(configs: Record<string, string>) {
  * Build the configured email provider from admin settings.
  * Returns null if the chosen provider is not fully configured.
  */
-function getEmailProvider(
+export function getEmailProvider(
   configs: Record<string, string>
 ): { provider: EmailProvider; from: string } | null {
   const preview = previewMailUrl();
@@ -161,6 +164,86 @@ function isEmailConfigured(configs: Record<string, string>): boolean {
 function getAuthPlugins(configs: Record<string, string> | undefined) {
   if (!configs) return [];
   const plugins: any[] = [];
+  plugins.push(
+    magicLink({
+      expiresIn: 3600,
+      storeToken: 'hashed',
+      rateLimit: { window: 60, max: 3 },
+      sendMagicLink: async ({ email, token, metadata }) => {
+        const id = metadata?.purchaseId;
+        if (typeof id !== 'string' || id.length > 100)
+          throw new Error('Claim unavailable');
+        const [purchase] = await db()
+          .select()
+          .from(schema.guestCheckout)
+          .where(
+            and(
+              eq(schema.guestCheckout.id, id),
+              eq(schema.guestCheckout.email, email.toLowerCase())
+            )
+          )
+          .limit(1);
+        if (!purchase || !['fulfilled', 'claimed'].includes(purchase.status))
+          throw new Error('Claim unavailable');
+        const now = new Date().toISOString();
+        // Also gates direct calls to Better Auth's public magic-link endpoint.
+        const sent = await db()
+          .update(schema.guestCheckout)
+          .set({ mailAttemptAt: now })
+          .where(
+            and(
+              eq(schema.guestCheckout.id, id),
+              or(
+                isNull(schema.guestCheckout.mailAttemptAt),
+                lt(
+                  schema.guestCheckout.mailAttemptAt,
+                  new Date(Date.now() - 60_000).toISOString()
+                )
+              )
+            )
+          )
+          .returning({ id: schema.guestCheckout.id });
+        if (!sent.length)
+          throw new Error('Please wait before requesting another email');
+        const all = await getAllConfigs();
+        const mail = getEmailProvider(all);
+        if (!mail) throw new Error('Claim email unavailable');
+        const locale = purchase.locale === 'zh' ? 'zh' : 'en';
+        const link = new URL(
+          guestPaths(id, locale).claim,
+          all.app_url || envConfigs.app_url
+        );
+        link.hash = new URLSearchParams({ token }).toString();
+        const name = all.app_name || envConfigs.app_name;
+        const subject = m['guestClaim.email_subject']({ name }, { locale });
+        const body = m['guestClaim.email_body']({}, { locale });
+        const action = m['guestClaim.email_action']({}, { locale });
+        const escape = (value: string) =>
+          value.replace(
+            /[&<>"']/g,
+            (c) =>
+              ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;',
+              })[c]!
+          );
+        const result = await mail.provider.sendEmail({
+          to: email,
+          subject,
+          text: `${body}\n\n${action}: ${link.href}`,
+          html: `<p>${escape(body)}</p><p><a href="${escape(link.href)}">${escape(action)}</a></p>`,
+        });
+        if (!result.success) throw new Error('Claim email delivery failed');
+        await db()
+          .update(schema.guestCheckout)
+          .set({ mailSentAt: new Date().toISOString(), lastError: null })
+          .where(eq(schema.guestCheckout.id, id));
+      },
+    })
+  );
   if (
     configs.google_auth_enabled !== 'false' &&
     configs.google_client_id &&

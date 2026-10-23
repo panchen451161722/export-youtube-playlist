@@ -761,3 +761,49 @@ export const youtubeRevocation = table(
   ]
 );
 export type YoutubeRevocationRow = typeof youtubeRevocation.$inferSelect;
+
+// Guest purchases stay isolated until the checkout email has been verified.
+export const guestCheckout = table(
+  'guest_checkout',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    browserTokenHash: text('browser_token_hash').notNull(),
+    email: text('email').notNull(),
+    activeBrowserHash: text('active_browser_hash'),
+    trialEmailHash: text('trial_email_hash'),
+    trialDecision: text('trial_decision'),
+    purchaseMode: text('purchase_mode').notNull().default('trial'),
+    retryOf: text('retry_of'),
+    lastCheckedAt: text('last_checked_at'),
+    productId: text('product_id').notNull(),
+    locale: text('locale').notNull(),
+    status: text('status').notNull(),
+    checkoutSessionId: text('checkout_session_id'),
+    orderNo: text('order_no'),
+    collectionId: text('collection_id'),
+    claimedByUserId: text('claimed_by_user_id').references(() => user.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: text('created_at').notNull(),
+    expiresAt: text('expires_at').notNull(),
+    leaseToken: text('lease_token'),
+    leaseExpiresAt: text('lease_expires_at'),
+    mailSentAt: text('mail_sent_at'),
+    mailAttemptAt: text('mail_attempt_at'),
+    lastError: text('last_error'),
+    backup: text('backup').notNull(),
+    checkoutUrl: text('checkout_url'),
+  },
+  (t) => [
+    uniqueIndex('uq_guest_active_browser_hash').on(t.activeBrowserHash),
+    uniqueIndex('uq_guest_trial_email').on(t.trialEmailHash),
+    uniqueIndex('uq_guest_retry').on(t.retryOf),
+    uniqueIndex('uq_guest_session').on(t.checkoutSessionId),
+    index('idx_guest_browser').on(t.browserTokenHash),
+    index('idx_guest_order').on(t.orderNo),
+  ]
+);
+export type GuestCheckoutRow = typeof guestCheckout.$inferSelect;

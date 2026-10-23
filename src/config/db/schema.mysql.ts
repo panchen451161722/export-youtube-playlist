@@ -685,3 +685,50 @@ export const youtubeRevocation = table(
   ]
 );
 export type YoutubeRevocationRow = typeof youtubeRevocation.$inferSelect;
+
+// Guest purchases stay isolated until the checkout email has been verified.
+export const guestCheckout = table(
+  'guest_checkout',
+  {
+    id: varchar191('id').primaryKey(),
+    userId: varchar191('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    browserTokenHash: varchar191('browser_token_hash').notNull(),
+    email: varchar191('email').notNull(),
+    activeBrowserHash: varchar191('active_browser_hash'),
+    trialEmailHash: varchar191('trial_email_hash'),
+    trialDecision: varchar191('trial_decision'),
+    purchaseMode: varchar191('purchase_mode').notNull().default('trial'),
+    retryOf: varchar191('retry_of'),
+    lastCheckedAt: varchar191('last_checked_at'),
+    productId: varchar191('product_id').notNull(),
+    locale: varchar191('locale').notNull(),
+    status: varchar191('status').notNull(),
+    checkoutSessionId: varchar191('checkout_session_id'),
+    orderNo: varchar191('order_no'),
+    collectionId: varchar191('collection_id'),
+    claimedByUserId: varchar191('claimed_by_user_id').references(
+      () => user.id,
+      { onDelete: 'set null' }
+    ),
+    createdAt: varchar191('created_at').notNull(),
+    expiresAt: varchar191('expires_at').notNull(),
+    leaseToken: varchar191('lease_token'),
+    leaseExpiresAt: varchar191('lease_expires_at'),
+    mailSentAt: varchar191('mail_sent_at'),
+    mailAttemptAt: varchar191('mail_attempt_at'),
+    lastError: varchar191('last_error'),
+    backup: text('backup').notNull(),
+    checkoutUrl: text('checkout_url'),
+  },
+  (t) => [
+    uniqueIndex('uq_guest_active_browser_hash').on(t.activeBrowserHash),
+    uniqueIndex('uq_guest_trial_email').on(t.trialEmailHash),
+    uniqueIndex('uq_guest_retry').on(t.retryOf),
+    uniqueIndex('uq_guest_session').on(t.checkoutSessionId),
+    index('idx_guest_browser').on(t.browserTokenHash),
+    index('idx_guest_order').on(t.orderNo),
+  ]
+);
+export type GuestCheckoutRow = typeof guestCheckout.$inferSelect;

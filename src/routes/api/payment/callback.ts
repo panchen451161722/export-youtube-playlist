@@ -2,6 +2,9 @@ import { createFileRoute } from '@tanstack/react-router';
 
 import { getAllConfigs } from '@/modules/config/service';
 import { handlePaymentCallback } from '@/modules/payment/service';
+import { paymentAppUrl } from '@/lib/payment-return-url';
+
+import { completeGuestFromOrder } from './-guest-checkout';
 
 /**
  * GET /api/payment/callback?order_no=xxx&redirect=xxx
@@ -32,15 +35,16 @@ async function GET({ request }: { request: Request }) {
   const orderNo = url.searchParams.get('order_no');
   const redirect = url.searchParams.get('redirect');
   const configs = await getAllConfigs();
-  const appUrl = configs.app_url || 'http://localhost:3000';
+  const appUrl = paymentAppUrl(configs.app_url, request.url);
   const fallback = `${appUrl}/settings/billing`;
 
   try {
     if (orderNo) {
       await handlePaymentCallback(orderNo);
+      await completeGuestFromOrder(orderNo);
     }
   } catch (error: any) {
-    console.error('payment callback error:', error);
+    console.error('Payment callback processing incomplete');
   }
 
   return new Response(null, {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import {
@@ -17,6 +17,7 @@ import { Link, useRouter } from '@/core/i18n/navigation';
 import { GUARD_SNAPSHOT_LIMIT } from '@/config/guard-plans';
 import { apiGet, apiPost } from '@/lib/api-client';
 import {
+  backupArrival,
   clearBackupDraft,
   readBackupDraft,
   type BackupDraft,
@@ -36,6 +37,8 @@ import type {
 import { m } from '@/paraglide/messages.js';
 import { getLocale, localizeHref } from '@/paraglide/runtime.js';
 import { useYoutubeConnections } from '@/hooks/use-youtube-connections';
+import { BackupOnboarding } from '@/blocks/playlist-guard/backup-onboarding';
+import { GuestCheckoutResult } from '@/blocks/playlist-guard/guest-checkout-status';
 import { CollectionDialog } from '@/components/playlist-guard/collection-dialog';
 import { CollectionCards } from '@/components/playlist-guard/collection-views';
 import {
@@ -119,10 +122,29 @@ export function PlaylistBackup() {
 
 function BackupSetup() {
   const [draft, setDraft] = useState<BackupDraft | null>(null);
-  const draftOpened = useRef(false);
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [checkoutCancelled, setCheckoutCancelled] = useState(false);
+  const [guestId, setGuestId] = useState<string | null>(null);
   useEffect(() => {
-    setDraft(readBackupDraft());
+    const params = new URLSearchParams(window.location.search);
+    const guest = params.get('guest');
+    if (guest && /^[a-f0-9-]{36}$/i.test(guest)) {
+      setGuestId(guest);
+      setCheckoutCancelled(params.get('setup') === 'cancel');
+      return;
+    }
+    const arrival = backupArrival(window.location.search);
+    setDraft(arrival.draft);
+    setQuickOpen(arrival.open);
+    setCheckoutCancelled(arrival.cancelled);
+    if (new URLSearchParams(window.location.search).has('setup'))
+      router.replace('/youtube-playlist-backup');
   }, []);
+  function openQuickSetup() {
+    setDraft(readBackupDraft());
+    setCheckoutCancelled(false);
+    setQuickOpen(true);
+  }
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<GuardCollection | null>(null);
   const [deleting, setDeleting] = useState<GuardCollection | null>(null);
@@ -203,12 +225,6 @@ function BackupSetup() {
     (overview.data?.collections.length ?? 0) < entitlement.limit;
   const busy =
     mutation.isPending || verification.isPending || youtube.connect.isPending;
-  useEffect(() => {
-    if (draft && canCreate && !draftOpened.current) {
-      draftOpened.current = true;
-      setOpen(true);
-    }
-  }, [draft, canCreate]);
   const labels = {
     private_playlist: m['youtube_accounts.private_playlist'](),
     liked_videos: m['youtube_accounts.liked_videos'](),
@@ -330,13 +346,13 @@ function BackupSetup() {
         className="border-border bg-card rounded-2xl border p-5 shadow-sm sm:p-7"
         aria-labelledby="backup-action-title"
       >
-        {draft && !canCreate && (
-          <p
-            className="bg-secondary mb-5 rounded-lg p-4 text-sm leading-6"
-            role="status"
-          >
-            {m['exportBackup.draft_ready']()}
-          </p>
+        {draft && !quickOpen && (
+          <div className="bg-secondary mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg p-4 text-sm leading-6">
+            <p>{m['backupFlow.resume_note']()}</p>
+            <Button variant="outline" onClick={openQuickSetup}>
+              {m['backupFlow.resume']()}
+            </Button>
+          </div>
         )}
         {youtube.notice && (
           <p role="status" className="bg-secondary mb-5 rounded-lg p-3 text-sm">
@@ -357,18 +373,19 @@ function BackupSetup() {
               type="button"
               className={addNewClass}
               aria-label={m['guard_tour.add_new']()}
-              onClick={() => setOpen(true)}
+              onClick={() => (canCreate ? setOpen(true) : openQuickSetup())}
             >
               {addNewContent}
             </button>
           ) : (
-            <Link
-              href="/pricing"
+            <button
+              type="button"
+              onClick={openQuickSetup}
               className={addNewClass}
               aria-label={m['guard_tour.add_new']()}
             >
               {addNewContent}
-            </Link>
+            </button>
           )}
           <div className="flex flex-col justify-center py-2">
             <h3 className="text-xl font-semibold">
@@ -382,16 +399,26 @@ function BackupSetup() {
                 : m['backup.get_started_text']()}
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Link
-                href={loggedIn ? '/settings/collections' : '/pricing'}
-                className={buttonVariants({ className: 'h-12 px-5 text-base' })}
-              >
-                {loggedIn ? <ListVideo aria-hidden="true" /> : null}
-                {loggedIn
-                  ? m['guardPricing.nav_collections']()
-                  : m['backup.view_pricing']()}
-                <ArrowRight aria-hidden="true" />
-              </Link>
+              {loggedIn ? (
+                <Link
+                  href="/settings/collections"
+                  className={buttonVariants({
+                    className: 'h-12 px-5 text-base',
+                  })}
+                >
+                  <ListVideo aria-hidden="true" />
+                  {m['guardPricing.nav_collections']()}
+                  <ArrowRight aria-hidden="true" />
+                </Link>
+              ) : (
+                <Button
+                  className="h-12 px-5 text-base"
+                  onClick={openQuickSetup}
+                >
+                  {m['backupFlow.start']()}
+                  <ArrowRight aria-hidden="true" />
+                </Button>
+              )}
               <Link
                 href="/demo"
                 className={buttonVariants({
@@ -409,6 +436,34 @@ function BackupSetup() {
           </div>
         </div>
       </section>
+      {guestId && (
+        <GuestCheckoutResult
+          id={guestId}
+          cancelled={checkoutCancelled}
+          onClose={() => {
+            setGuestId(null);
+            router.replace('/youtube-playlist-backup');
+          }}
+          onCancelled={() => {
+            setGuestId(null);
+            router.replace('/youtube-playlist-backup');
+            setDraft(readBackupDraft());
+            setCheckoutCancelled(true);
+            setQuickOpen(true);
+          }}
+        />
+      )}
+      {quickOpen && !guestId && (
+        <BackupOnboarding
+          initialDraft={draft}
+          cancelled={checkoutCancelled}
+          onClose={() => {
+            setQuickOpen(false);
+            setDraft(readBackupDraft());
+          }}
+          onCreated={() => setDraft(null)}
+        />
+      )}
       {user && (
         <section
           className="mt-8 space-y-5"

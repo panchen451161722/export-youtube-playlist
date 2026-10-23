@@ -2,10 +2,14 @@ import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
 
 import {
+  backupArrival,
   clearBackupDraft,
+  DEFAULT_BACKUP_PREFERENCES,
+  mayCompleteBackup,
   playlistBackupUrl,
   readBackupDraft,
   saveBackupDraft,
+  writeBackupDraft,
 } from './backup-draft';
 
 const url = 'https://www.youtube.com/playlist?list=PL1234567890';
@@ -40,9 +44,82 @@ test('draft keeps only the canonical playlist URL, dropping other URL data', () 
     url,
     source: 'playlist',
     savedAt: readBackupDraft()!.savedAt,
+    resume: 'entry',
   });
   clearBackupDraft();
   assert.equal(readBackupDraft(), null);
+});
+
+test('entry opens once and an auth return restores the selected playlist and plan', () => {
+  browser();
+  saveBackupDraft(url);
+  assert.equal(backupArrival('').open, true);
+  assert.equal(backupArrival('').open, false);
+  writeBackupDraft({
+    url,
+    source: 'playlist',
+    savedAt: Date.now(),
+    preferences: {
+      ...DEFAULT_BACKUP_PREFERENCES,
+      planId: 'pro',
+      frequency: 'weekly',
+    },
+  });
+  const returned = backupArrival('?setup=auth');
+  assert.equal(returned.open, true);
+  assert.equal(returned.draft?.url, url);
+  assert.equal(returned.draft?.preferences?.planId, 'pro');
+  assert.equal(returned.draft?.preferences?.frequency, 'weekly');
+  assert.equal(backupArrival('').open, false);
+});
+
+test('checkout return requires the same account and server entitlement before auto-creation', () => {
+  browser();
+  saveBackupDraft(url);
+  assert.equal(
+    mayCompleteBackup(backupArrival('?setup=success').draft, 'owner', 2),
+    false
+  );
+  writeBackupDraft({
+    url,
+    source: 'playlist',
+    savedAt: Date.now(),
+    resume: 'checkout',
+    checkout: { userId: 'owner', returned: false },
+  });
+  assert.equal(mayCompleteBackup(backupArrival('').draft, 'owner', 2), false);
+  const paid = backupArrival('?setup=success');
+  assert.equal(paid.open, true);
+  assert.equal(mayCompleteBackup(paid.draft, 'owner', 0), false);
+  assert.equal(mayCompleteBackup(paid.draft, 'other-account', 2), false);
+  assert.equal(mayCompleteBackup(paid.draft, 'owner', 2), true);
+  assert.equal(
+    backupArrival('').open,
+    true,
+    'a refresh can finish an interrupted return'
+  );
+});
+
+test('canceling checkout keeps settings and removes automatic creation consent', () => {
+  browser();
+  writeBackupDraft({
+    url,
+    source: 'playlist',
+    savedAt: Date.now(),
+    preferences: DEFAULT_BACKUP_PREFERENCES,
+    resume: 'checkout',
+    checkout: { userId: 'owner', returned: false },
+  });
+  const cancelled = backupArrival('?setup=cancel');
+  assert.equal(cancelled.cancelled, true);
+  assert.equal(cancelled.open, true);
+  assert.deepEqual(cancelled.draft?.preferences, DEFAULT_BACKUP_PREFERENCES);
+  assert.equal(cancelled.draft?.checkout, undefined);
+  assert.equal(
+    mayCompleteBackup(backupArrival('?setup=success').draft, 'owner', 2),
+    false
+  );
+  assert.equal(backupArrival('').open, false);
 });
 
 test('draft rejects non-YouTube destinations and invalid playlist IDs', () => {

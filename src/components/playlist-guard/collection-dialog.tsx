@@ -19,6 +19,7 @@ export function CollectionDialog({
   closeLabel,
   busy,
   onClose,
+  footer,
   children,
 }: {
   title: string;
@@ -26,6 +27,7 @@ export function CollectionDialog({
   closeLabel: string;
   busy: boolean;
   onClose: () => void;
+  footer?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -64,6 +66,11 @@ export function CollectionDialog({
             <span className="sr-only">{closeLabel}</span>
           </DialogClose>
           <div className="min-h-0 overflow-y-auto p-5 sm:p-7">{children}</div>
+          {footer && (
+            <div className="border-border shrink-0 border-t px-5 py-4 sm:px-7">
+              {footer}
+            </div>
+          )}
         </DialogPrimitive.Popup>
       </DialogPortal>
     </Dialog>

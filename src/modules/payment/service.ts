@@ -40,6 +40,9 @@ import {
 } from '@/modules/subscriptions/service';
 import type { GuardCheckoutOptions } from '@/lib/guard-checkout';
 import { getSnowId, getUniSeq, getUuid } from '@/lib/hash';
+import { paymentAppUrl } from '@/lib/payment-return-url';
+
+import { guestSubscriptionHistory } from './guest-trial';
 
 // --- Order types ---
 
@@ -151,7 +154,12 @@ export async function getGuardCheckoutOptions(userId: string, email: string) {
   if (!(provider instanceof StripeProvider))
     throw new Error('Stripe is not configured');
   const remote = await provider.getSubscriptionAccess(email, userId);
-  return guardCheckoutOptionsFor(rows, remote);
+  // Include guest purchases tied to this billing email, even before account claiming.
+  const guestHistory = await guestSubscriptionHistory(provider, email, '');
+  return guardCheckoutOptionsFor(rows, {
+    hasHistory: remote.hasHistory || guestHistory.hasHistory,
+    hasCurrent: remote.hasCurrent || guestHistory.hasCurrent,
+  });
 }
 
 export function guardCheckoutOptionsFor(
@@ -208,6 +216,7 @@ export async function createCheckout(params: {
   planName?: string;
   credits?: number;
   creditsValidDays?: number;
+  requestUrl?: string;
 }): Promise<CheckoutSession> {
   const {
     userId,
@@ -220,9 +229,9 @@ export async function createCheckout(params: {
     creditsValidDays,
   } = params;
   const pm = await getPaymentManager();
-  const orderNo = getUniSeq('ORD');
+  const orderNo = paymentOrder.orderNo || getUniSeq('ORD');
   const configs = await getAllConfigs();
-  const appUrl = configs.app_url || 'http://localhost:3000';
+  const appUrl = paymentAppUrl(configs.app_url, params.requestUrl);
 
   // Resolve provider-specific product ID (e.g. Creem product_ids_mapping)
   const resolvedProvider = provider || pm.getDefaultProvider()?.name;
@@ -825,6 +834,34 @@ export async function getUserOrders(userId: string) {
     .from(order)
     .where(and(eq(order.userId, userId), isNull(order.deletedAt)))
     .orderBy(desc(order.createdAt));
+}
+
+export async function expireGuestPaymentSession(sessionId: string) {
+  const provider = (await getPaymentManager()).getProvider('stripe');
+  if (!(provider instanceof StripeProvider))
+    throw new Error('Stripe unavailable');
+  return provider.expireOpenCheckout(sessionId);
+}
+
+export async function getGuestSubscriptionHistory(
+  email: string,
+  excludeId: string
+) {
+  const provider = (await getPaymentManager()).getProvider('stripe');
+  if (!(provider instanceof StripeProvider))
+    throw new Error('Stripe unavailable');
+  return guestSubscriptionHistory(provider, email, excludeId);
+}
+
+export async function rejectGuestTrial(
+  subscriptionId: string,
+  guestId: string
+) {
+  const provider = (await getPaymentManager()).getProvider('stripe');
+  if (!(provider instanceof StripeProvider))
+    throw new Error('Stripe unavailable');
+  const session = await provider.rejectGuestTrial(subscriptionId, guestId);
+  await handleSubscriptionCanceled(session, 'stripe');
 }
 
 /** D1 and libSQL batches are atomic and avoid overlapping interactive transactions. */

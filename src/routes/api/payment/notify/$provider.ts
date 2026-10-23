@@ -3,6 +3,8 @@ import { createFileRoute } from '@tanstack/react-router';
 import { handleWebhook } from '@/modules/payment/service';
 import { respErr, respOk } from '@/lib/resp';
 
+import { completeGuestFromEvent } from '../-guest-checkout';
+
 export const Route = createFileRoute('/api/payment/notify/$provider')({
   server: {
     handlers: {
@@ -13,6 +15,8 @@ export const Route = createFileRoute('/api/payment/notify/$provider')({
 
         try {
           const event = await handleWebhook({ req: request, provider });
+          if (provider === 'stripe')
+            await completeGuestFromEvent(event.paymentSession);
 
           console.log(`Payment event [${provider}]: ${event.eventType}`);
 
