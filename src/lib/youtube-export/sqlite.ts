@@ -22,6 +22,10 @@ export async function createSqliteBytes(
   sqlitePromise ??= sqlite3InitModule({
     print: () => undefined,
     printErr: () => undefined,
+  }).catch((error: unknown) => {
+    // A failed WASM load must not poison every subsequent export on this page.
+    sqlitePromise = undefined;
+    throw error;
   });
   const sqlite3 = await sqlitePromise;
   const db = new sqlite3.oo1.DB(':memory:', 'c');

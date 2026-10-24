@@ -37,7 +37,7 @@ export interface PlaylistExtractionToolLabels {
   numberedTitles: string;
   resultsHeading: string;
   resultSummary: string;
-  truncated: (limit: number) => string;
+  truncated: string;
   empty: string;
   copyAll: string;
   copySuccess: string;
@@ -408,6 +408,9 @@ export function PlaylistExtractionTool({
           content={backupContent}
           playlistUrl={`https://www.youtube.com/playlist?list=${mutation.data.playlistId}`}
           tool={`playlist_${mode}`}
+          partialExportCount={
+            mutation.data.truncated ? mutation.data.videos.length : undefined
+          }
         />
       )}
       {mutation.data ? (
@@ -477,13 +480,13 @@ export function PlaylistExtractionTool({
                 </p>
               ) : null}
 
-              {mutation.data.truncated ? (
-                <div
+              {mutation.data.truncated && !(downloaded && backupContent) ? (
+                <p
                   role="status"
-                  className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-100"
+                  className="mt-3 text-xs text-amber-800 dark:text-amber-300"
                 >
-                  {labels.truncated(mutation.data.limit)}
-                </div>
+                  {labels.truncated}
+                </p>
               ) : null}
 
               <pre

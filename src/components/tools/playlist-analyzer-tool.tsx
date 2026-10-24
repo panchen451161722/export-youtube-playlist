@@ -46,7 +46,7 @@ export type PlaylistAnalyzerLabels = {
   emptyResult: string;
   resultsTitle: (playlistTitle: string) => string;
   returnedVideos: (count: number) => string;
-  truncatedNotice: (limit: number) => string;
+  truncatedNotice: string;
   metricsHeading: string;
   videoCount: string;
   totalDuration: string;
@@ -434,6 +434,9 @@ export function PlaylistAnalyzerTool({
             content={backupContent}
             playlistUrl={`https://www.youtube.com/playlist?list=${mutation.data.playlistId}`}
             tool="playlist_analyzer"
+            partialExportCount={
+              mutation.data.truncated ? mutation.data.videos.length : undefined
+            }
           />
         )}
       </div>
@@ -462,9 +465,12 @@ export function PlaylistAnalyzerTool({
                 <Download aria-hidden />
                 {labels.downloadCsv}
               </Button>
-              {mutation.data.truncated ? (
-                <p className="border-border bg-secondary text-secondary-foreground rounded-lg border px-3 py-2 text-xs">
-                  {labels.truncatedNotice(mutation.data.limit)}
+              {mutation.data.truncated && !(downloaded && backupContent) ? (
+                <p
+                  role="status"
+                  className="text-xs text-amber-800 dark:text-amber-300"
+                >
+                  {labels.truncatedNotice}
                 </p>
               ) : null}
             </div>

@@ -46,8 +46,7 @@ export function PlaylistAnalyzer() {
               }),
             returnedVideos: (count) =>
               m['tools.analyzer.returned_videos']({ count }),
-            truncatedNotice: (limit) =>
-              m['tools.analyzer.truncated_notice']({ limit }),
+            truncatedNotice: m['tools.analyzer.truncated_notice'](),
             metricsHeading: m['tools.analyzer.summary_title'](),
             videoCount: m['tools.analyzer.video_count'](),
             totalDuration: m['tools.analyzer.total_duration'](),

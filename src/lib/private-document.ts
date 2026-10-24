@@ -50,7 +50,9 @@ export function privateDocumentHeaders(
     'Cache-Control': 'private, no-store',
     'Referrer-Policy': 'same-origin',
     'Content-Security-Policy': [
-      "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://accounts.google.com",
+      // SQLite exports compile same-origin WASM, including on signed-in pages.
+      // Permit WASM without enabling JavaScript eval or third-party trackers.
+      "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://challenges.cloudflare.com https://accounts.google.com",
       "connect-src 'self' https://challenges.cloudflare.com https://accounts.google.com",
       "object-src 'none'",
       "base-uri 'self'",

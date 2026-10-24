@@ -38,7 +38,7 @@ export function PlaylistTitleExtractor() {
               count: '{count}',
               playlist: '{playlist}',
             }),
-            truncated: (limit) => m['tools.common.truncated']({ limit }),
+            truncated: m['tools.common.truncated'](),
             empty: m['tools.common.empty'](),
             copyAll: m['tools.common.copy'](),
             copySuccess: m['tools.common.copied'](),

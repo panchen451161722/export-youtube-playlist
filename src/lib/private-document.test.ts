@@ -33,6 +33,37 @@ test('private documents and authenticated public responses block edge-injected a
   );
 });
 
+test('signed-in export pages permit SQLite WASM without enabling JavaScript eval or trackers', () => {
+  for (const path of [
+    '/',
+    '/zh',
+    '/tools/export-youtube-playlist-to-excel',
+    '/zh/tools/export-youtube-channel',
+  ]) {
+    const headers = privateDocumentHeaders(
+      new Request(`https://example.test${path}`, {
+        headers: { cookie: '__Secure-better-auth.session_token=opaque' },
+      })
+    );
+    const directives = headers['Content-Security-Policy'].split('; ');
+    const scripts = directives
+      .find((directive) => directive.startsWith('script-src '))!
+      .split(' ');
+    assert.ok(scripts.includes("'wasm-unsafe-eval'"), path);
+    assert.ok(!scripts.includes("'unsafe-eval'"), path);
+    assert.deepEqual(
+      scripts.filter((source) => source.startsWith('https:')),
+      ['https://challenges.cloudflare.com', 'https://accounts.google.com']
+    );
+    assert.ok(
+      directives.includes(
+        "connect-src 'self' https://challenges.cloudflare.com https://accounts.google.com"
+      )
+    );
+    assert.equal(headers['Cache-Control'], 'private, no-store');
+  }
+});
+
 test('private routes and locale variants cannot load optional third-party scripts', () => {
   for (const path of [
     '/settings/collections',

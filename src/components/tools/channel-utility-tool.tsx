@@ -488,12 +488,15 @@ export function ChannelUtilityTool({ mode, labels, backupContent }: Props) {
           </p>
         ) : null}
       </form>
-      {exportedPlaylist && backupContent && (
+      {exportedPlaylist && mutation.data && backupContent && (
         <ExportBackupCta
           key={mutation.submittedAt}
           content={backupContent}
           playlistUrl={exportedPlaylist}
           tool="channel_export"
+          partialExportCount={
+            mutation.data.truncated ? mutation.data.videos.length : undefined
+          }
         />
       )}
 

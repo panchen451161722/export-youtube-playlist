@@ -55,7 +55,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 
-# database
+# local database and analytics data
 /data/
 /drizzle/
 src/config/db/schema.ts
@@ -67,4 +67,4 @@ package-lock.json
 /public/uploads/
 
 # Local Plausible exports and analysis inputs
-/Plausible export exportyoutubeplaylist.com 7d*/
+/Plausible export */

@@ -409,21 +409,15 @@ export function Hero({
         </div>
       ) : null}
 
-      {mutation.data?.truncated ? (
-        <div
-          role="status"
-          className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-3.5 text-sm text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-100"
-        >
-          {m['landing.exporter.truncated']({ limit: mutation.data.limit })}
-        </div>
-      ) : null}
-
-      {exportedPlaylist && (
+      {exportedPlaylist && mutation.data && (
         <ExportBackupCta
           key={mutation.submittedAt}
           content={exportBackupContent()}
           playlistUrl={exportedPlaylist}
           tool="playlist_export"
+          partialExportCount={
+            mutation.data.truncated ? mutation.data.videos.length : undefined
+          }
         />
       )}
 
