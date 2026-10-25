@@ -99,6 +99,28 @@ All admin pages include:
 | `pnpm rbac:init`   | Create roles + permissions + optional admin user |
 | `pnpm rbac:assign` | Assign role to user                              |
 
+## IndexNow — next release
+
+Key: `791d51e58f416ad58d0fefce94462254`. The UTF-8 verification file is
+`public/791d51e58f416ad58d0fefce94462254.txt` and will be deployed with the site.
+
+The user requested that the **next release submit the newly added multilingual
+pages** to IndexNow after deployment. This submission is pending:
+
+1. Identify the new localized page URLs in that release and check that they are
+   live, indexable, and present in the production sitemap.
+2. Verify that `https://exportyoutubeplaylist.com/791d51e58f416ad58d0fefce94462254.txt`
+   returns HTTP 200 with the key above as its text content.
+3. POST JSON to `https://api.indexnow.org/indexnow` with `host` set to
+   `exportyoutubeplaylist.com`, the `key` above, `keyLocation` set to the verification
+   URL above, and `urlList` containing only those newly added multilingual URLs
+   (at most 10,000 per request).
+4. Record the submitted URLs and response after submission. HTTP 200 means received;
+   HTTP 202 means key validation is pending. Neither confirms indexing.
+
+No scheduled or build-time submission is configured.
+Reference: [Bing IndexNow setup](https://www.bing.com/indexnow/getstarted).
+
 ## Claude Code Skills
 
 | Skill              | What it does                                        |
