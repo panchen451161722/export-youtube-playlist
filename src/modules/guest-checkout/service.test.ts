@@ -85,6 +85,7 @@ const { getAllConfigs } = await import('@/modules/config/service');
 const originalFetch = globalThis.fetch;
 const mails: { text: string; to: string }[] = [];
 let mailFails = false;
+let youtubeRequests = 0;
 let stripeStatus = 'open';
 let serial = 0;
 let currentSession: any;
@@ -115,6 +116,7 @@ globalThis.fetch = async (input, init) => {
     return new Response('ok');
   }
   if (url.hostname === 'www.googleapis.com') {
+    youtubeRequests += 1;
     if (url.pathname.endsWith('/playlists'))
       return Response.json({
         items: [
@@ -897,4 +899,101 @@ test('parallel guest trials reserve one normalized email and grant only one back
   assert.equal(results.filter((r) => r?.status === 'fulfilled').length, 1);
   assert.equal(results.filter((r) => r?.status === 'trial_rejected').length, 1);
   assert.equal(results.filter((r) => r?.collectionId).length, 1);
+});
+
+test('private guest checkout waits for YouTube authorization and only the verified buyer can claim its plan', async () => {
+  const values = input();
+  values.backup.source = 'private_playlist';
+  const result = await flow.startGuestCheckout(values, service.newGuestToken());
+  const beforeReads = youtubeRequests;
+  const beforeMails = mails.length;
+  await paid(result.id, 'private-buyer@example.invalid', true);
+  const row = (await service.guestById(result.id))!;
+  assert.equal(row.status, 'fulfilled');
+  assert.equal(row.collectionId, null);
+  assert.equal(
+    youtubeRequests,
+    beforeReads,
+    'private content must not use the public scan'
+  );
+  const status = await service.guestStatus(row);
+  assert.equal(status.backupSaved, false);
+  assert.equal(status.needsYoutubeConnection, true);
+  assert.equal(mails.length, beforeMails + 1);
+  assert.match(mails.at(-1)!.text, /has not been read or backed up/);
+  await flow.completeGuestCheckout(row.id);
+  assert.equal(youtubeRequests, beforeReads);
+  assert.equal(
+    mails.length,
+    beforeMails + 1,
+    'fulfillment replay sends no duplicate mail'
+  );
+  await database.insert(user).values({
+    id: 'private-owner',
+    name: 'Private owner',
+    email: row.email,
+    emailVerified: false,
+  });
+  await assert.rejects(
+    service.claimGuest(row.id, 'attacker'),
+    /claim_forbidden/
+  );
+  await assert.rejects(
+    service.claimGuest(row.id, 'private-owner'),
+    /claim_forbidden/
+  );
+  await database
+    .update(user)
+    .set({ emailVerified: true })
+    .where(eq(user.id, 'private-owner'));
+  const claimed = await service.claimGuest(row.id, 'private-owner');
+  assert.equal(claimed.privateBackup?.source, 'private_playlist');
+  assert.equal(claimed.privateBackup?.url, values.backup.url);
+  assert.deepEqual(await service.claimGuest(row.id, 'private-owner'), claimed);
+  const [purchased] = await database
+    .select()
+    .from(order)
+    .where(eq(order.orderNo, row.orderNo!));
+  assert.equal(purchased.userId, 'private-owner');
+  const [plan] = await database
+    .select()
+    .from(subscription)
+    .where(eq(subscription.subscriptionNo, purchased.subscriptionNo!));
+  assert.equal(plan.userId, 'private-owner');
+  assert.equal(
+    (
+      await database
+        .select()
+        .from(guardCollection)
+        .where(eq(guardCollection.userId, 'private-owner'))
+    ).length,
+    0
+  );
+});
+
+test('private checkout intent does not grant an unpaid plan and rejects unsupported sources', async () => {
+  const values = input();
+  values.backup.source = 'private_playlist';
+  const result = await flow.startGuestCheckout(values, service.newGuestToken());
+  const row = (await service.guestById(result.id))!;
+  await database.insert(user).values({
+    id: 'private-unpaid',
+    name: 'Unpaid',
+    email: 'unpaid@example.invalid',
+    emailVerified: true,
+  });
+  await service.updateGuest(row.id, { email: 'unpaid@example.invalid' });
+  await assert.rejects(
+    service.claimGuest(row.id, 'private-unpaid'),
+    /backup_not_ready/
+  );
+  await flow.completeGuestCheckout(row.id);
+  assert.equal((await service.guestById(row.id))?.status, 'pending');
+  assert.equal(
+    guestCheckoutSchema.safeParse({
+      ...values,
+      backup: { ...values.backup, source: 'watch_later' },
+    }).success,
+    false
+  );
 });

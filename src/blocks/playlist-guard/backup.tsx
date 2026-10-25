@@ -20,6 +20,7 @@ import {
   backupArrival,
   clearBackupDraft,
   readBackupDraft,
+  writeBackupDraft,
   type BackupDraft,
 } from '@/lib/backup-draft';
 import {
@@ -135,13 +136,15 @@ function BackupSetup() {
     }
     const arrival = backupArrival(window.location.search);
     setDraft(arrival.draft);
-    setQuickOpen(arrival.open);
+    const privateDraft = arrival.draft?.source === 'private_playlist';
+    setQuickOpen(arrival.open || (!!privateDraft && params.has('youtube')));
     setCheckoutCancelled(arrival.cancelled);
     if (new URLSearchParams(window.location.search).has('setup'))
       router.replace('/youtube-playlist-backup');
   }, []);
   function openQuickSetup() {
-    setDraft(readBackupDraft());
+    const saved = readBackupDraft();
+    setDraft(saved);
     setCheckoutCancelled(false);
     setQuickOpen(true);
   }
@@ -457,6 +460,11 @@ function BackupSetup() {
         <BackupOnboarding
           initialDraft={draft}
           cancelled={checkoutCancelled}
+          onConnectPrivate={() => {
+            setDraft(readBackupDraft());
+            setQuickOpen(false);
+            setOpen(true);
+          }}
           onClose={() => {
             setQuickOpen(false);
             setDraft(readBackupDraft());
@@ -661,7 +669,15 @@ function BackupSetup() {
                 accounts={youtube.query.data?.accounts}
                 accountsLoading={youtube.query.isPending}
                 accountsConfigured={youtube.query.data?.configured}
-                onConnect={(id) => youtube.connect.mutate(id)}
+                onConnect={(id) => {
+                  if (draft?.source === 'private_playlist')
+                    writeBackupDraft({
+                      ...draft,
+                      savedAt: Date.now(),
+                      resume: 'entry',
+                    });
+                  youtube.connect.mutate(id);
+                }}
                 key={user?.id ?? 'guest'}
                 labels={labels}
                 busy={busy}
@@ -683,9 +699,10 @@ function BackupSetup() {
                 initialValues={{
                   ...(draft ? { url: draft.url, source: draft.source } : {}),
                   frequency: 'daily',
-                  notifyMissing: true,
-                  notifyAdded: true,
-                  notifyRestored: true,
+                  ...draft?.preferences,
+                  notifyMissing: draft?.preferences?.notifyMissing ?? true,
+                  notifyAdded: draft?.preferences?.notifyAdded ?? true,
+                  notifyRestored: draft?.preferences?.notifyRestored ?? true,
                   emailDelivery: false,
                 }}
                 onSave={(action) => mutation.mutateAsync(action)}

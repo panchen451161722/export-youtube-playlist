@@ -11,5 +11,14 @@ export function exportBackupContent(): ExportBackupContent {
     description: m['exportBackup.description'](),
     action: m['exportBackup.action'](),
     note: m['exportBackup.note'](),
+    privatePlaylist: {
+      status: m['exportBackup.private.status'](),
+      badge: m['exportBackup.private.badge'](),
+      title: m['exportBackup.private.title'](),
+      description: m['exportBackup.private.description'](),
+      action: m['exportBackup.private.action'](),
+      connectedAction: m['exportBackup.private.connected_action'](),
+      note: m['exportBackup.private.note'](),
+    },
   };
 }

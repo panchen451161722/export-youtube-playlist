@@ -13,6 +13,11 @@ import { trackEvent } from '@/lib/analytics';
 import { apiPost } from '@/lib/api-client';
 import { clarityErrorType } from '@/lib/clarity';
 import { cn } from '@/lib/utils';
+import {
+  getYouTubeToolErrorMessage,
+  type YouTubeToolErrorMessages,
+} from '@/lib/youtube-tool-error';
+import { useToolInput } from '@/hooks/use-tool-input';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -34,6 +39,7 @@ export type VideoUtilityLabels = {
   submit: string;
   loading: string;
   error: string;
+  errors: YouTubeToolErrorMessages;
   results: string;
   copy: string;
   copied: string;
@@ -87,26 +93,6 @@ type Props = {
 
 type TagSort = 'original' | 'az' | 'za' | 'longest' | 'shortest';
 
-function getErrorMessage(error: unknown, fallback: string) {
-  if (!(error instanceof Error)) return fallback;
-  if (error.message.includes('youtube_api_key_missing')) {
-    return 'The YouTube API key is not configured yet.';
-  }
-  if (
-    error.message.includes('invalid_youtube_url') ||
-    error.message.includes('not_found')
-  ) {
-    return fallback;
-  }
-  if (error.message.includes('quota_exceeded')) {
-    return 'The YouTube API quota is temporarily exhausted. Please try again later.';
-  }
-  if (error.message.includes('request_timeout')) {
-    return 'YouTube took too long to respond. Please try again.';
-  }
-  return fallback;
-}
-
 function ResultHeader({
   data,
   labels,
@@ -137,7 +123,7 @@ function ResultHeader({
 }
 
 export function VideoUtilityTool({ mode, labels }: Props) {
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useToolInput();
   const [copyStatus, setCopyStatus] = useState('');
   const [includeDescriptionTags, setIncludeDescriptionTags] = useState(false);
   const [tagSort, setTagSort] = useState<TagSort>('original');
@@ -311,7 +297,7 @@ export function VideoUtilityTool({ mode, labels }: Props) {
         ) : null}
         {mutation.error ? (
           <p role="alert" className="text-destructive mt-3 text-sm">
-            {getErrorMessage(mutation.error, labels.error)}
+            {getYouTubeToolErrorMessage(mutation.error, labels.errors)}
           </p>
         ) : null}
       </form>

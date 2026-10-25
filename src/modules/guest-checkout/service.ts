@@ -13,9 +13,10 @@ import {
   type GuestCheckoutRow,
 } from '@/config/db/schema';
 import { GUARD_PLANS, guardProductId } from '@/config/guard-plans';
-import type {
-  GuestCheckoutInput,
-  GuestCheckoutStatus,
+import {
+  guestBackupSchema,
+  type GuestCheckoutInput,
+  type GuestCheckoutStatus,
 } from '@/lib/guest-checkout';
 import { getUniSeq, getUuid } from '@/lib/hash';
 
@@ -303,6 +304,9 @@ export async function guestStatus(
     email: row.email ? `${local.slice(0, 2)}***@${domain}` : '',
     mailSent: !!row.mailSentAt,
     backupSaved: !!row.collectionId,
+    needsYoutubeConnection:
+      guestBackupSchema.parse(JSON.parse(row.backup)).source ===
+      'private_playlist',
     lastError: row.lastError,
     rejectionReason:
       row.trialDecision === 'trial_used' ||
@@ -323,20 +327,53 @@ export async function claimGuest(id: string, ownerId: string) {
   const row = await guestById(id);
   if (!row || !owner?.emailVerified || owner.email.toLowerCase() !== row.email)
     throw new GuestCheckoutError('claim_forbidden', 403);
+  const values = guestBackupSchema.parse(JSON.parse(row.backup));
+  const privateBackup =
+    values.source === 'private_playlist' ? values : undefined;
   if (row.claimedByUserId) {
     if (row.claimedByUserId !== ownerId)
       throw new GuestCheckoutError('claim_forbidden', 403);
-    return { claimed: true, paused: false };
+    return { claimed: true, paused: false, privateBackup };
   }
   if (
     row.status !== 'fulfilled' ||
-    !row.collectionId ||
+    (!row.collectionId && !privateBackup) ||
     !(await confirmedGuestOrder(row))
   )
     throw new GuestCheckoutError('backup_not_ready');
   const token = await leaseGuest(id);
   if (!token) throw new GuestCheckoutError('please_retry');
   try {
+    const proof = sql`exists (select 1 from ${guestCheckout} where ${guestCheckout.id} = ${id} and ${guestCheckout.leaseToken} = ${token} and ${guestCheckout.claimedByUserId} is null) and exists (select 1 from ${user} where ${user.id} = ${ownerId} and ${user.emailVerified} = true and lower(${user.email}) = ${row.email})`;
+    if (privateBackup) {
+      // Claim the purchased entitlement only. Reading private metadata still
+      // requires a separate, explicit YouTube connection owned by this user.
+      await atomic((database) => [
+        database
+          .update(order)
+          .set({ userId: ownerId, userEmail: owner.email })
+          .where(and(eq(order.userId, row.userId), proof)),
+        database
+          .update(subscription)
+          .set({ userId: ownerId, userEmail: owner.email })
+          .where(and(eq(subscription.userId, row.userId), proof)),
+        database
+          .update(credit)
+          .set({ userId: ownerId, userEmail: owner.email })
+          .where(and(eq(credit.userId, row.userId), proof)),
+        database
+          .update(guestCheckout)
+          .set({
+            status: 'claimed',
+            claimedByUserId: ownerId,
+            activeBrowserHash: null,
+          })
+          .where(and(eq(guestCheckout.id, id), proof)),
+      ]);
+      if ((await guestById(id))?.claimedByUserId !== ownerId)
+        throw new GuestCheckoutError('please_retry');
+      return { claimed: true, paused: false, privateBackup };
+    }
     const collections = await db()
       .select()
       .from(guardCollection)
@@ -352,7 +389,7 @@ export async function claimGuest(id: string, ownerId: string) {
         .from(guardCollection)
         .where(
           and(
-            eq(guardCollection.id, row.collectionId),
+            eq(guardCollection.id, row.collectionId!),
             eq(guardCollection.userId, row.userId)
           )
         )
@@ -375,7 +412,6 @@ export async function claimGuest(id: string, ownerId: string) {
       doc.enabled = false;
       summary.enabled = false;
     }
-    const proof = sql`exists (select 1 from ${guestCheckout} where ${guestCheckout.id} = ${id} and ${guestCheckout.leaseToken} = ${token} and ${guestCheckout.claimedByUserId} is null) and exists (select 1 from ${user} where ${user.id} = ${ownerId} and ${user.emailVerified} = true and lower(${user.email}) = ${row.email})`;
     await atomic((database) => [
       database
         .update(order)

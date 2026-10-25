@@ -22,7 +22,7 @@ export const DEFAULT_BACKUP_PREFERENCES: BackupPreferences = {
 };
 export type BackupDraft = {
   url: string;
-  source: 'playlist';
+  source: 'playlist' | 'private_playlist';
   savedAt: number;
   preferences?: BackupPreferences;
   resume?: 'entry' | 'auth' | 'checkout';
@@ -53,7 +53,10 @@ export function playlistBackupUrl(input: string): string | null {
   }
 }
 
-export function saveBackupDraft(input: string) {
+export function saveBackupDraft(
+  input: string,
+  source: BackupDraft['source'] = 'playlist'
+) {
   const url = playlistBackupUrl(input);
   if (!url || typeof window === 'undefined') return;
   try {
@@ -62,7 +65,7 @@ export function saveBackupDraft(input: string) {
       STORAGE_KEY,
       JSON.stringify({
         url,
-        source: 'playlist',
+        source,
         savedAt: Date.now(),
         resume: 'entry',
       })
@@ -90,7 +93,8 @@ export function readBackupDraft(): BackupDraft | null {
     if (!url) return null;
     const draft: BackupDraft = {
       url,
-      source: 'playlist',
+      source:
+        data.source === 'private_playlist' ? 'private_playlist' : 'playlist',
       savedAt: data.savedAt,
     };
     if (['entry', 'auth', 'checkout'].includes(data.resume))
@@ -133,7 +137,7 @@ export function writeBackupDraft(draft: BackupDraft): boolean {
   try {
     window.sessionStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ ...draft, url, source: 'playlist' })
+      JSON.stringify({ ...draft, url })
     );
     return true;
   } catch {
@@ -174,7 +178,8 @@ export function mayCompleteBackup(
 ) {
   return !!(
     userId &&
-    draft?.checkout?.returned &&
+    draft?.source === 'playlist' &&
+    draft.checkout?.returned &&
     draft.checkout.userId === userId &&
     limit > 0
   );

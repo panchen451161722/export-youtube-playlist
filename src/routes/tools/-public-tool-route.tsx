@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 
 import { envConfigs } from '@/config';
 import { localizedPageUrl, publicPageSeo } from '@/lib/seo';
+import { validateToolInputSearch } from '@/lib/youtube-input-alternative';
 import { m } from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
 import { Footer } from '@/blocks/footer';
@@ -143,6 +144,7 @@ export function publicToolRouteOptions(definition: PublicToolDefinition) {
     publicToolSeoMessages[definition.key as keyof typeof publicToolSeoMessages];
 
   return {
+    validateSearch: validateToolInputSearch,
     loader: () => {
       const locale = getLocale();
       return {

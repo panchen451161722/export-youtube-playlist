@@ -1,5 +1,6 @@
 import { tDynamic } from '@/core/i18n/dynamic';
 import { isIndexablePath } from '@/lib/seo';
+import type { YouTubeToolErrorMessages } from '@/lib/youtube-tool-error';
 import { m } from '@/paraglide/messages.js';
 import { exportBackupContent } from '@/blocks/export-backup-content';
 import { ToolGuideSection } from '@/blocks/tools/tool-guide';
@@ -21,6 +22,31 @@ function ui(key: string) {
   return tDynamic(`tools.extra.ui.${key}`);
 }
 
+function toolErrors(kind: 'video' | 'channel'): YouTubeToolErrorMessages {
+  return {
+    fallback:
+      kind === 'channel'
+        ? m['tools.extra.ui.channel_error']()
+        : m['tools.extra.ui.video_error'](),
+    invalidUrl:
+      kind === 'channel'
+        ? m['tools.extra.error.channel_invalid']()
+        : m['tools.extra.error.video_invalid'](),
+    notFound:
+      kind === 'channel'
+        ? m['tools.extra.error.channel_not_found']()
+        : m['tools.extra.error.video_not_found'](),
+    network: m['tools.extra.error.network'](),
+    connection: m['tools.extra.error.connection'](),
+    timeout: m['tools.extra.error.timeout'](),
+    configuration: m['tools.extra.error.configuration'](),
+    quota: m['tools.extra.error.quota'](),
+    rateLimit: m['tools.extra.error.rate_limit'](),
+    upstream: m['tools.extra.error.upstream'](),
+    export: m['tools.extra.error.export'](),
+  };
+}
+
 function videoLabels(
   submit: string,
   rightsNotice?: string
@@ -33,6 +59,7 @@ function videoLabels(
     submit,
     loading: ui('loading'),
     error: ui('video_error'),
+    errors: toolErrors('video'),
     results: ui('results'),
     copy: ui('copy'),
     copied: ui('copied'),
@@ -88,6 +115,7 @@ function channelLabels(submit: string): ChannelUtilityLabels {
     submit,
     loading: ui('loading'),
     error: ui('channel_error'),
+    errors: toolErrors('channel'),
     results: ui('results'),
     copy: ui('copy'),
     copied: ui('copied'),

@@ -282,33 +282,35 @@ export async function completeGuestCheckout(id: string) {
     }
     if (row.status !== 'fulfilled') {
       const values = guestBackupSchema.parse(JSON.parse(row.backup));
-      const store = createGuardStore();
-      const input = normalizeGuardSource({
-        source: 'playlist',
-        name: row.locale === 'zh' ? '播放列表备份' : 'Playlist backup',
-        url: values.url,
-        frequency: values.frequency,
-        notifyMissing: values.notifyMissing,
-        notifyAdded: values.notifyAdded,
-        notifyRestored: values.notifyRestored,
-        emailDelivery: false,
-      });
-      let collection = (await store.list(row.userId)).find(
-        (item) => item.url === values.url
-      );
-      if (!collection)
-        collection = await store.create(row.userId, input.input, input.key);
-      await updateGuest(id, { collectionId: collection.id }, lease);
-      // Persist before scanning: a YouTube outage must never lose a paid backup.
-      if (!collection.lastSyncedAt) {
-        try {
-          await store.sync(
-            row.userId,
-            collection.id,
-            (await guardRuntime()).scan
-          );
-        } catch {
-          /* Retry from Collections or the existing scheduler. */
+      if (values.source !== 'private_playlist') {
+        const store = createGuardStore();
+        const input = normalizeGuardSource({
+          source: 'playlist',
+          name: row.locale === 'zh' ? '播放列表备份' : 'Playlist backup',
+          url: values.url,
+          frequency: values.frequency,
+          notifyMissing: values.notifyMissing,
+          notifyAdded: values.notifyAdded,
+          notifyRestored: values.notifyRestored,
+          emailDelivery: false,
+        });
+        let collection = (await store.list(row.userId)).find(
+          (item) => item.url === values.url
+        );
+        if (!collection)
+          collection = await store.create(row.userId, input.input, input.key);
+        await updateGuest(id, { collectionId: collection.id }, lease);
+        // Persist before scanning: a YouTube outage must never lose a paid backup.
+        if (!collection.lastSyncedAt) {
+          try {
+            await store.sync(
+              row.userId,
+              collection.id,
+              (await guardRuntime()).scan
+            );
+          } catch {
+            /* Retry from Collections or the existing scheduler. */
+          }
         }
       }
       await updateGuest(id, { status: 'fulfilled', lastError: null }, lease);
@@ -321,7 +323,7 @@ export async function completeGuestCheckout(id: string) {
         lastError:
           (await guestById(id))?.status === 'trial_cancel_pending'
             ? 'trial_cancel_pending'
-            : (await guestById(id))?.collectionId
+            : (await guestById(id))?.status === 'fulfilled'
               ? 'email_pending'
               : 'backup_pending',
       },

@@ -2,6 +2,7 @@ import { FREE_PLAYLIST_EXPORT_LIMIT } from '@/config/playlist-export';
 import { m } from '@/paraglide/messages.js';
 import { usePlaylistExportAccess } from '@/hooks/use-playlist-export-access';
 import { exportBackupContent } from '@/blocks/export-backup-content';
+import { inputToolRecommendationContent } from '@/blocks/tools/input-tool-recommendation-content';
 import { PlaylistExtractionTool } from '@/components/tools/playlist-extraction-tool';
 import { ToolPageShell } from '@/components/tools/tool-page-shell';
 
@@ -21,6 +22,7 @@ export function PlaylistLinkExtractor() {
       tool={
         <PlaylistExtractionTool
           backupContent={exportBackupContent()}
+          recommendationContent={inputToolRecommendationContent()}
           mode="links"
           labels={{
             inputLabel: m['tools.common.input_label'](),

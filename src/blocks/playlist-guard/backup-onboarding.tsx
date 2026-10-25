@@ -50,14 +50,17 @@ export function BackupOnboarding({
   cancelled,
   onClose,
   onCreated,
+  onConnectPrivate,
 }: {
   initialDraft: BackupDraft | null;
   cancelled: boolean;
   onClose: () => void;
   onCreated: () => void;
+  onConnectPrivate: () => void;
 }) {
   const { data: session, isPending: sessionPending } = useSession();
   const user = session?.user;
+  const privatePlaylist = initialDraft?.source === 'private_playlist';
   const config = usePublicConfig();
   const queryClient = useQueryClient();
   const formId = useId();
@@ -127,6 +130,11 @@ export function BackupOnboarding({
       }
       if (overview.isFetching || !overview.data) return;
       if (limit > 0) {
+        if (privatePlaylist) {
+          persist(value);
+          onConnectPrivate();
+          return;
+        }
         create.mutate(value);
         return;
       }
@@ -150,7 +158,7 @@ export function BackupOnboarding({
     const { url: _url, ...preferences } = values;
     return writeBackupDraft({
       url,
-      source: 'playlist',
+      source: privatePlaylist ? 'private_playlist' : 'playlist',
       savedAt: Date.now(),
       preferences,
       resume,
@@ -247,7 +255,10 @@ export function BackupOnboarding({
   const guestCheckout = useMutation({
     mutationFn: async (values: SetupValues) => {
       persist(values);
-      const backup = values;
+      const backup = {
+        ...values,
+        source: privatePlaylist ? 'private_playlist' : 'playlist',
+      };
       return apiPost<{
         id: string;
         checkout_url?: string;
@@ -282,6 +293,7 @@ export function BackupOnboarding({
   useEffect(() => {
     if (
       !autoStarted.current &&
+      !privatePlaylist &&
       mayCompleteBackup(confirmedDraft, user?.id, limit) &&
       overview.isSuccess &&
       !overview.isFetching
@@ -299,6 +311,25 @@ export function BackupOnboarding({
     limit,
     overview.isSuccess,
     overview.isFetching,
+  ]);
+
+  useEffect(() => {
+    if (
+      privatePlaylist &&
+      user &&
+      overview.isSuccess &&
+      !overview.isFetching &&
+      limit > 0
+    ) {
+      persist(form.state.values);
+      onConnectPrivate();
+    }
+  }, [
+    privatePlaylist,
+    user?.id,
+    overview.isSuccess,
+    overview.isFetching,
+    limit,
   ]);
 
   const busy =
@@ -406,18 +437,28 @@ export function BackupOnboarding({
                         : loading
                           ? m['guard.loading']()
                           : !user
-                            ? m['backupFlow.start_trial']({
-                                days: GUARD_TRIAL_DAYS,
-                              })
+                            ? privatePlaylist
+                              ? m['privateCheckout.start_trial']({
+                                  days: GUARD_TRIAL_DAYS,
+                                })
+                              : m['backupFlow.start_trial']({
+                                  days: GUARD_TRIAL_DAYS,
+                                })
                             : !needsPlan
                               ? existing
                                 ? m['backupFlow.view_backup']()
                                 : m['backupFlow.enable']()
                               : trial
-                                ? m['backupFlow.start_trial']({
-                                    days: GUARD_TRIAL_DAYS,
-                                  })
-                                : m['backupFlow.subscribe']()}
+                                ? privatePlaylist
+                                  ? m['privateCheckout.start_trial']({
+                                      days: GUARD_TRIAL_DAYS,
+                                    })
+                                  : m['backupFlow.start_trial']({
+                                      days: GUARD_TRIAL_DAYS,
+                                    })
+                                : privatePlaylist
+                                  ? m['privateCheckout.subscribe']()
+                                  : m['backupFlow.subscribe']()}
                     {!busy && !loading && <ArrowRight className="size-4" />}
                   </Button>
                   {!user && (
@@ -449,7 +490,9 @@ export function BackupOnboarding({
                     )}
                   {user && needsPlan && !loading && (
                     <p className="text-muted-foreground text-center text-xs leading-5">
-                      {m['backupFlow.confirm_note']()}
+                      {privatePlaylist
+                        ? m['privateCheckout.confirm_note']()
+                        : m['backupFlow.confirm_note']()}
                     </p>
                   )}
                 </>
@@ -488,9 +531,15 @@ export function BackupOnboarding({
       title={
         create.isSuccess
           ? m['backupFlow.success_title']()
-          : m['backupFlow.title']()
+          : privatePlaylist
+            ? m['privateCheckout.title']()
+            : m['backupFlow.title']()
       }
-      description={m['backupFlow.description']()}
+      description={
+        privatePlaylist
+          ? m['privateCheckout.description']()
+          : m['backupFlow.description']()
+      }
       closeLabel={m['guard.close']()}
       busy={busy}
       onClose={dismiss}

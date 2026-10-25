@@ -3,6 +3,7 @@ import { m } from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
 import { usePlaylistExportAccess } from '@/hooks/use-playlist-export-access';
 import { exportBackupContent } from '@/blocks/export-backup-content';
+import { inputToolRecommendationContent } from '@/blocks/tools/input-tool-recommendation-content';
 import { ToolGuideSection } from '@/blocks/tools/tool-guide';
 import { PlaylistAnalyzerTool } from '@/components/tools/playlist-analyzer-tool';
 import { ToolPageShell } from '@/components/tools/tool-page-shell';
@@ -23,6 +24,7 @@ export function PlaylistAnalyzer() {
       tool={
         <PlaylistAnalyzerTool
           backupContent={exportBackupContent()}
+          recommendationContent={inputToolRecommendationContent()}
           locale={getLocale()}
           labels={{
             formTitle: m['tools.analyzer.form_title'](),

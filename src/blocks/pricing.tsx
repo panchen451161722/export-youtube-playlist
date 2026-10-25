@@ -12,7 +12,7 @@ import {
 } from '@/config/guard-plans';
 import { SUBSCRIBER_PLAYLIST_EXPORT_LIMIT } from '@/config/playlist-export';
 import { apiGet, apiPost } from '@/lib/api-client';
-import { readBackupDraft } from '@/lib/backup-draft';
+import { readBackupDraft, writeBackupDraft } from '@/lib/backup-draft';
 import {
   guardPricingAction,
   type GuardCheckoutOptions,
@@ -49,15 +49,19 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
       )
     : '';
   const checkout = useMutation({
-    mutationFn: (planId: GuardPlanId) =>
-      apiPost<{ checkout_url: string }>('/api/payment/checkout', {
+    mutationFn: (planId: GuardPlanId) => {
+      const draft = readBackupDraft();
+      if (draft?.source === 'private_playlist')
+        writeBackupDraft({ ...draft, savedAt: Date.now(), resume: 'entry' });
+      return apiPost<{ checkout_url: string }>('/api/payment/checkout', {
         product_id: guardProductId(planId),
         payment_provider: checkoutProvider,
         redirect: readBackupDraft()
           ? '/youtube-playlist-backup'
           : '/settings/collections',
         expect_trial: trialEligible,
-      }),
+      });
+    },
     onSuccess: (result) => {
       // Only a successful, explicit checkout request may leave this page.
       const url = new URL(result.checkout_url);

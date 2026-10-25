@@ -13,10 +13,17 @@ import {
 import { trackEvent } from '@/lib/analytics';
 import { apiPost } from '@/lib/api-client';
 import { clarityErrorType, resultSizeBucket } from '@/lib/clarity';
+import { getYouTubeInputAlternative } from '@/lib/youtube-input-alternative';
+import { isUnavailablePlaylistError } from '@/lib/youtube-playlist-error';
+import { usePlaylistExportAccess } from '@/hooks/use-playlist-export-access';
 import {
   ExportBackupCta,
   type ExportBackupContent,
 } from '@/components/export-backup-cta';
+import {
+  InputToolRecommendation,
+  type InputToolRecommendationContent,
+} from '@/components/tools/input-tool-recommendation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -82,6 +89,7 @@ export type PlaylistAnalyzerToolProps = {
   labels: PlaylistAnalyzerLabels;
   locale?: string;
   backupContent?: ExportBackupContent;
+  recommendationContent?: InputToolRecommendationContent;
 };
 
 type MetricCardProps = {
@@ -195,10 +203,15 @@ export function PlaylistAnalyzerTool({
   labels,
   locale = 'en',
   backupContent,
+  recommendationContent,
 }: PlaylistAnalyzerToolProps) {
+  const access = usePlaylistExportAccess();
   const [downloaded, setDownloaded] = useState(false);
   const [url, setUrl] = useState('');
   const [clientError, setClientError] = useState('');
+  const alternative = recommendationContent
+    ? getYouTubeInputAlternative(url)
+    : null;
   const mutation = useMutation({
     mutationFn: (playlistUrl: string) =>
       apiPost<PlaylistExport>('/api/youtube-playlist', { url: playlistUrl }),
@@ -236,6 +249,7 @@ export function PlaylistAnalyzerTool({
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setDownloaded(false);
+    if (alternative) return;
     if (!isValidYouTubePlaylistUrl(url)) {
       setClientError(labels.invalidUrl);
       trackEvent('tool_run_failed', {
@@ -254,6 +268,13 @@ export function PlaylistAnalyzerTool({
     : mutation.error instanceof Error
       ? getErrorMessage(mutation.error.message, labels)
       : '';
+
+  const unavailablePlaylist =
+    !!backupContent?.privatePlaylist &&
+    !clientError &&
+    mutation.isError &&
+    isUnavailablePlaylistError(mutation.error) &&
+    mutation.variables === url.trim();
 
   const formatNumber = (value: number | null) =>
     value === null ? labels.missing : numberFormatter.format(value);
@@ -390,14 +411,17 @@ export function PlaylistAnalyzerTool({
             <Input
               id="playlist-analyzer-url"
               name="playlist-analyzer-url"
-              type="url"
+              type="text"
+              inputMode="url"
               value={url}
               onChange={(event) => {
                 setUrl(event.target.value);
                 if (clientError) setClientError('');
+                mutation.reset();
+                setDownloaded(false);
               }}
               placeholder={labels.urlPlaceholder}
-              aria-describedby="playlist-analyzer-helper playlist-analyzer-error"
+              aria-describedby={`playlist-analyzer-helper playlist-analyzer-error${alternative ? ' playlist-analyzer-recommendation' : ''}`}
               aria-invalid={Boolean(error)}
               disabled={mutation.isPending}
               className="bg-background h-11 flex-1 px-3"
@@ -420,14 +444,34 @@ export function PlaylistAnalyzerTool({
           >
             {labels.urlHelper}
           </p>
-          <div
-            id="playlist-analyzer-error"
-            aria-live="polite"
-            className="text-destructive mt-2 min-h-5 text-sm"
-          >
-            {error}
-          </div>
+          {alternative && recommendationContent && (
+            <InputToolRecommendation
+              id="playlist-analyzer-recommendation"
+              alternative={alternative}
+              content={recommendationContent}
+            />
+          )}
+          {!unavailablePlaylist && (
+            <div
+              id="playlist-analyzer-error"
+              aria-live="polite"
+              className="text-destructive mt-2 min-h-5 text-sm"
+            >
+              {error}
+            </div>
+          )}
         </form>
+        {unavailablePlaylist && mutation.variables && backupContent && (
+          <ExportBackupCta
+            key={`private-${mutation.submittedAt}`}
+            content={backupContent}
+            playlistUrl={mutation.variables}
+            tool="playlist_analyzer"
+            privatePlaylist
+            errorId="playlist-analyzer-error"
+            subscribed={access.data?.subscribed}
+          />
+        )}
         {downloaded && mutation.data && backupContent && (
           <ExportBackupCta
             key={mutation.submittedAt}

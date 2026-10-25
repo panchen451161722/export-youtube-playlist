@@ -12,10 +12,17 @@ import {
 import { trackEvent } from '@/lib/analytics';
 import { apiPost } from '@/lib/api-client';
 import { clarityErrorType, resultSizeBucket } from '@/lib/clarity';
+import { getYouTubeInputAlternative } from '@/lib/youtube-input-alternative';
+import { isUnavailablePlaylistError } from '@/lib/youtube-playlist-error';
+import { usePlaylistExportAccess } from '@/hooks/use-playlist-export-access';
 import {
   ExportBackupCta,
   type ExportBackupContent,
 } from '@/components/export-backup-cta';
+import {
+  InputToolRecommendation,
+  type InputToolRecommendationContent,
+} from '@/components/tools/input-tool-recommendation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -59,6 +66,7 @@ export interface PlaylistExtractionToolProps {
   mode: PlaylistExtractionMode;
   labels: PlaylistExtractionToolLabels;
   backupContent?: ExportBackupContent;
+  recommendationContent?: InputToolRecommendationContent;
 }
 
 type ExtractionFormat =
@@ -190,7 +198,9 @@ export function PlaylistExtractionTool({
   mode,
   labels,
   backupContent,
+  recommendationContent,
 }: PlaylistExtractionToolProps) {
+  const access = usePlaylistExportAccess();
   const [downloaded, setDownloaded] = useState(false);
   const id = useId();
   const inputId = `${id}-playlist-url`;
@@ -199,6 +209,9 @@ export function PlaylistExtractionTool({
   const formatName = `${id}-format`;
   const [url, setUrl] = useState('');
   const [clientError, setClientError] = useState('');
+  const alternative = recommendationContent
+    ? getYouTubeInputAlternative(url)
+    : null;
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>(
     'idle'
   );
@@ -244,6 +257,13 @@ export function PlaylistExtractionTool({
       ? getErrorCopy(mutation.error.message, labels)
       : '';
 
+  const unavailablePlaylist =
+    !!backupContent?.privatePlaylist &&
+    !clientError &&
+    mutation.isError &&
+    isUnavailablePlaylistError(mutation.error) &&
+    mutation.variables === url.trim();
+
   const formatOptions =
     mode === 'links'
       ? [
@@ -262,6 +282,7 @@ export function PlaylistExtractionTool({
     event.preventDefault();
     setDownloaded(false);
     setCopyStatus('idle');
+    if (alternative) return;
     if (!isValidPlaylistUrl(url)) {
       setClientError(labels.invalidUrl);
       trackEvent('tool_run_failed', {
@@ -330,14 +351,19 @@ export function PlaylistExtractionTool({
           <Input
             id={inputId}
             name="playlist-url"
-            type="url"
+            type="text"
+            inputMode="url"
             value={url}
+            disabled={mutation.isPending}
             onChange={(event) => {
               setUrl(event.target.value);
               if (clientError) setClientError('');
+              mutation.reset();
+              setDownloaded(false);
+              setCopyStatus('idle');
             }}
             placeholder={labels.inputPlaceholder}
-            aria-describedby={`${helperId}${error ? ` ${errorId}` : ''}`}
+            aria-describedby={`${helperId}${error ? ` ${errorId}` : ''}${alternative ? ` ${id}-recommendation` : ''}`}
             aria-invalid={Boolean(error)}
             className="border-input bg-background h-11 flex-1 px-4 shadow-none"
           />
@@ -363,6 +389,13 @@ export function PlaylistExtractionTool({
           {labels.inputHelper}
         </p>
 
+        {alternative && recommendationContent && (
+          <InputToolRecommendation
+            id={`${id}-recommendation`}
+            alternative={alternative}
+            content={recommendationContent}
+          />
+        )}
         <fieldset className="mt-6">
           <legend className="text-foreground text-sm font-medium">
             {labels.formatLegend}
@@ -390,7 +423,7 @@ export function PlaylistExtractionTool({
         </fieldset>
       </form>
 
-      {error ? (
+      {error && !unavailablePlaylist ? (
         <div
           id={errorId}
           role="alert"
@@ -401,6 +434,18 @@ export function PlaylistExtractionTool({
           <span>{error}</span>
         </div>
       ) : null}
+
+      {unavailablePlaylist && mutation.variables && backupContent && (
+        <ExportBackupCta
+          key={`private-${mutation.submittedAt}`}
+          content={backupContent}
+          playlistUrl={mutation.variables}
+          tool={`playlist_${mode}`}
+          privatePlaylist
+          errorId={errorId}
+          subscribed={access.data?.subscribed}
+        />
+      )}
 
       {downloaded && mutation.data && backupContent && (
         <ExportBackupCta

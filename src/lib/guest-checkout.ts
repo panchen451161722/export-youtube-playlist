@@ -12,6 +12,7 @@ export const guestBackupSchema = z
       .transform(playlistBackupUrl)
       .refine(Boolean)
       .transform((value) => value!),
+    source: z.enum(['playlist', 'private_playlist']).default('playlist'),
     planId: z.enum(['lite', 'pro', 'ultra']),
     frequency: z.enum(GUARD_FREQUENCIES),
     notifyMissing: z.boolean(),
@@ -40,6 +41,7 @@ export type GuestCheckoutStatus = {
   email: string;
   mailSent: boolean;
   backupSaved: boolean;
+  needsYoutubeConnection: boolean;
   lastError: string | null;
   rejectionReason: 'trial_used' | 'existing_subscription' | null;
   planId: GuardPlanId;

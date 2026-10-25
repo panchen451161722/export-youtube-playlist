@@ -23,6 +23,11 @@ import {
   type YouTubeExportFormat,
 } from '@/lib/youtube-export';
 import {
+  getYouTubeToolErrorMessage,
+  type YouTubeToolErrorMessages,
+} from '@/lib/youtube-tool-error';
+import { useToolInput } from '@/hooks/use-tool-input';
+import {
   ExportBackupCta,
   type ExportBackupContent,
 } from '@/components/export-backup-cta';
@@ -66,6 +71,7 @@ export type ChannelUtilityLabels = {
   submit: string;
   loading: string;
   error: string;
+  errors: YouTubeToolErrorMessages;
   results: string;
   copy: string;
   copied: string;
@@ -125,27 +131,6 @@ type Props = {
   mode: ChannelUtilityMode;
   labels: ChannelUtilityLabels;
 };
-
-function getErrorMessage(error: unknown, fallback: string) {
-  if (!(error instanceof Error)) return fallback;
-  if (error.message.startsWith('export_generation_failed:')) {
-    const formatKey = error.message.split(':')[1] as YouTubeExportFormat;
-    const format = YOUTUBE_EXPORT_FORMATS.find(
-      (item) => item.key === formatKey
-    );
-    return format ? `${fallback} (${format.label})` : fallback;
-  }
-  if (error.message.includes('youtube_api_key_missing')) {
-    return 'The YouTube API key is not configured yet.';
-  }
-  if (error.message.includes('quota_exceeded')) {
-    return 'The YouTube API quota is temporarily exhausted. Please try again later.';
-  }
-  if (error.message.includes('request_timeout')) {
-    return 'YouTube took too long to respond. Please try again.';
-  }
-  return fallback;
-}
 
 function number(value: string) {
   return /^\d+$/.test(value) ? Number(value) : 0;
@@ -225,7 +210,7 @@ function VideoRows({
 
 export function ChannelUtilityTool({ mode, labels, backupContent }: Props) {
   const [exportedPlaylist, setExportedPlaylist] = useState<string | null>(null);
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useToolInput();
   const [mediaType, setMediaType] = useState<ChannelMediaType>('all');
   const [sort, setSort] = useState<ChannelVideoSort>('original');
   const [query, setQuery] = useState('');
@@ -399,13 +384,13 @@ export function ChannelUtilityTool({ mode, labels, backupContent }: Props) {
         tool: 'channel_export',
         error_type: clarityErrorType(error),
       });
-      toast.error(getErrorMessage(error, labels.error));
+      toast.error(getYouTubeToolErrorMessage(error, labels.errors));
     } finally {
       setExportingFiles(false);
     }
   };
 
-  const error = getErrorMessage(mutation.error, labels.error);
+  const error = getYouTubeToolErrorMessage(mutation.error, labels.errors);
 
   return (
     <div className="space-y-6">

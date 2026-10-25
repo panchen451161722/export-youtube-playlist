@@ -116,6 +116,10 @@ export function GuestCheckoutResult({
     if (status.data?.backupSaved) clearBackupDraft();
   }, [status.data?.backupSaved]);
   const saved = status.data?.backupSaved;
+  const privateReady =
+    status.data?.needsYoutubeConnection &&
+    ['fulfilled', 'claimed'].includes(status.data.status);
+  const ready = saved || privateReady;
   const rejected = status.data?.status === 'trial_rejected';
   const cancelling = status.data?.status === 'trial_cancel_pending';
   const existing = status.data?.rejectionReason === 'existing_subscription';
@@ -150,8 +154,10 @@ export function GuestCheckoutResult({
   return (
     <CollectionDialog
       title={
-        saved
-          ? m['guestClaim.saved_title']()
+        ready
+          ? privateReady
+            ? m['privateCheckout.ready_title']()
+            : m['guestClaim.saved_title']()
           : m['guestClaim.processing_title']()
       }
       description={m['guestClaim.result_description']()}
@@ -160,17 +166,21 @@ export function GuestCheckoutResult({
       busy={recover.isPending || paidCheckout.isPending}
     >
       <div className="space-y-5 p-1" aria-live="polite">
-        {saved ? (
+        {ready ? (
           <CheckCircle2 className="size-10 text-emerald-600" />
         ) : (
           <Loader2 className="size-9 animate-spin" />
         )}
         <p className="text-sm leading-6">
-          {saved
-            ? m['guestClaim.saved_text']()
-            : m['guestClaim.processing_text']()}
+          {ready
+            ? privateReady
+              ? m['privateCheckout.ready_text']()
+              : m['guestClaim.saved_text']()
+            : status.data?.needsYoutubeConnection
+              ? m['privateCheckout.processing']()
+              : m['guestClaim.processing_text']()}
         </p>
-        {saved && (
+        {ready && (
           <div className="bg-secondary rounded-xl p-4 text-sm leading-6">
             <Mail className="mb-2 size-5" />
             {status.data?.mailSent
@@ -183,7 +193,7 @@ export function GuestCheckoutResult({
             {m['guestClaim.progress_error']()}
           </p>
         )}
-        {!saved && (
+        {!ready && (
           <Button
             variant="outline"
             disabled={recover.isPending}
@@ -193,8 +203,17 @@ export function GuestCheckoutResult({
           </Button>
         )}
         {status.data?.status === 'claimed' ? (
-          <Link href="/settings/collections" className={buttonVariants()}>
-            {m['guardPricing.nav_collections']()}
+          <Link
+            href={
+              privateReady
+                ? `/claim-backup?purchase=${encodeURIComponent(id)}`
+                : '/settings/collections'
+            }
+            className={buttonVariants()}
+          >
+            {privateReady
+              ? m['exportBackup.private.connected_action']()
+              : m['guardPricing.nav_collections']()}
           </Link>
         ) : (
           <details className="rounded-xl border p-4">

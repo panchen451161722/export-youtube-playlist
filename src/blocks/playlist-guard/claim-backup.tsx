@@ -6,7 +6,8 @@ import { z } from 'zod';
 import { useSession } from '@/core/auth/client';
 import { Link } from '@/core/i18n/navigation';
 import { apiPost } from '@/lib/api-client';
-import { guestPaths } from '@/lib/guest-checkout';
+import { writeBackupDraft } from '@/lib/backup-draft';
+import { guestPaths, type GuestCheckoutInput } from '@/lib/guest-checkout';
 import { m } from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
 import { ClaimEmailForm } from '@/blocks/playlist-guard/guest-checkout-status';
@@ -40,10 +41,23 @@ export function ClaimBackup() {
   }, []);
   const claim = useMutation({
     mutationFn: () =>
-      apiPost<{ claimed: boolean; paused: boolean }>(
-        '/api/payment/guest-checkout',
-        { action: 'claim', id: arrival!.id }
-      ),
+      apiPost<{
+        claimed: boolean;
+        paused: boolean;
+        privateBackup?: GuestCheckoutInput['backup'];
+      }>('/api/payment/guest-checkout', { action: 'claim', id: arrival!.id }),
+    onSuccess: (result) => {
+      if (result.privateBackup) {
+        const { url, source, ...preferences } = result.privateBackup;
+        writeBackupDraft({
+          url,
+          source,
+          preferences,
+          savedAt: Date.now(),
+          resume: 'entry',
+        });
+      }
+    },
   });
   useEffect(() => {
     if (
@@ -84,7 +98,9 @@ export function ClaimBackup() {
         </h1>
         <p className="text-muted-foreground text-sm leading-6">
           {claim.isSuccess
-            ? m['guestClaim.claimed_text']()
+            ? claim.data.privateBackup
+              ? m['privateCheckout.claimed']()
+              : m['guestClaim.claimed_text']()
             : m['guestClaim.description']()}
         </p>
         {claim.isSuccess ? (
@@ -95,10 +111,16 @@ export function ClaimBackup() {
               </p>
             )}
             <Link
-              href="/settings/collections"
+              href={
+                claim.data.privateBackup
+                  ? '/youtube-playlist-backup'
+                  : '/settings/collections'
+              }
               className={buttonVariants({ className: 'w-full' })}
             >
-              {m['guardPricing.nav_collections']()}
+              {claim.data.privateBackup
+                ? m['exportBackup.private.connected_action']()
+                : m['guardPricing.nav_collections']()}
             </Link>
             <Link
               href="/settings/billing"

@@ -156,3 +156,26 @@ test('storage restrictions do not prevent visiting the backup page', () => {
   assert.equal(readBackupDraft(), null);
   assert.doesNotThrow(clearBackupDraft);
 });
+
+test('private export handoff preserves its source through checkout and OAuth without public auto-creation', () => {
+  browser();
+  saveBackupDraft(url, 'private_playlist');
+  const arrival = backupArrival('');
+  assert.equal(arrival.open, true);
+  assert.equal(arrival.draft?.source, 'private_playlist');
+  assert.equal(arrival.draft?.url, url);
+  assert.equal(backupArrival('').open, false);
+  writeBackupDraft({
+    ...arrival.draft!,
+    resume: 'entry',
+    checkout: { userId: 'owner', returned: false },
+  });
+  const paid = backupArrival('?setup=success');
+  assert.equal(paid.draft?.source, 'private_playlist');
+  assert.equal(mayCompleteBackup(paid.draft, 'owner', 2), false);
+  writeBackupDraft({ ...paid.draft!, resume: 'entry', checkout: undefined });
+  const connected = backupArrival('?youtube=connected');
+  assert.equal(connected.open, true);
+  assert.equal(connected.draft?.source, 'private_playlist');
+  assert.equal(connected.draft?.url, url);
+});

@@ -26,11 +26,15 @@ import {
   YOUTUBE_EXPORT_FORMATS,
   type YouTubeExportFormat,
 } from '@/lib/youtube-export';
+import { getYouTubeInputAlternative } from '@/lib/youtube-input-alternative';
+import { isUnavailablePlaylistError } from '@/lib/youtube-playlist-error';
 import { m } from '@/paraglide/messages.js';
 import { usePlaylistExportAccess } from '@/hooks/use-playlist-export-access';
 import { exportBackupContent } from '@/blocks/export-backup-content';
+import { inputToolRecommendationContent } from '@/blocks/tools/input-tool-recommendation-content';
 import { ExportBackupCta } from '@/components/export-backup-cta';
 import { ExportFormatPicker } from '@/components/export-format-picker';
+import { InputToolRecommendation } from '@/components/tools/input-tool-recommendation';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -150,6 +154,7 @@ export function Hero({
   const [exportedPlaylist, setExportedPlaylist] = useState<string | null>(null);
   const [url, setUrl] = useState('');
   const [clientError, setClientError] = useState('');
+  const alternative = getYouTubeInputAlternative(url);
   const [formats, setFormats] = useState<YouTubeExportFormat[]>(() => [
     ...initialFormats,
   ]);
@@ -211,6 +216,7 @@ export function Hero({
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (alternative) return;
     if (!isValidPlaylistUrl(url)) {
       setExportedPlaylist(null);
       setClientError(m['landing.exporter.error.invalid']());
@@ -233,6 +239,12 @@ export function Hero({
     : mutation.error instanceof Error
       ? getErrorCopy(mutation.error.message)
       : '';
+
+  const unavailablePlaylist =
+    !clientError &&
+    mutation.isError &&
+    isUnavailablePlaylistError(mutation.error) &&
+    mutation.variables?.playlistUrl === url.trim();
 
   const isToolPage = variant === 'tool';
   const primaryExportFormat =
@@ -291,14 +303,18 @@ export function Hero({
         <Input
           id="playlist-url"
           name="playlist-url"
-          type="url"
+          type="text"
+          inputMode="url"
           value={url}
+          disabled={mutation.isPending}
           onChange={(event) => {
             setUrl(event.target.value);
             if (clientError) setClientError('');
+            mutation.reset();
+            setExportedPlaylist(null);
           }}
           placeholder={m['landing.exporter.placeholder']()}
-          aria-describedby="playlist-helper playlist-error"
+          aria-describedby={`playlist-helper playlist-error${alternative ? ' playlist-recommendation' : ''}`}
           aria-invalid={Boolean(error)}
           className="border-input bg-card focus-visible:ring-ring/25 mt-2 h-12 w-full rounded-lg px-4 shadow-none"
         />
@@ -312,6 +328,14 @@ export function Hero({
             })}
           </p>
         </div>
+
+        {alternative && (
+          <InputToolRecommendation
+            id="playlist-recommendation"
+            alternative={alternative}
+            content={inputToolRecommendationContent()}
+          />
+        )}
 
         <fieldset className="mt-6">
           <legend className="text-foreground text-sm font-medium">
@@ -398,7 +422,7 @@ export function Hero({
         </Button>
       </form>
 
-      {error ? (
+      {error && !unavailablePlaylist ? (
         <div
           id="playlist-error"
           role="alert"
@@ -408,6 +432,18 @@ export function Hero({
           <span>{error}</span>
         </div>
       ) : null}
+
+      {unavailablePlaylist && mutation.variables && (
+        <ExportBackupCta
+          key={`private-${mutation.submittedAt}`}
+          content={exportBackupContent()}
+          playlistUrl={mutation.variables.playlistUrl}
+          tool="playlist_export"
+          privatePlaylist
+          errorId="playlist-error"
+          subscribed={access.data?.subscribed}
+        />
+      )}
 
       {exportedPlaylist && mutation.data && (
         <ExportBackupCta

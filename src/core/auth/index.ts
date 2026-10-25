@@ -215,8 +215,14 @@ function getAuthPlugins(configs: Record<string, string> | undefined) {
         );
         link.hash = new URLSearchParams({ token }).toString();
         const name = all.app_name || envConfigs.app_name;
-        const subject = m['guestClaim.email_subject']({ name }, { locale });
-        const body = m['guestClaim.email_body']({}, { locale });
+        const privatePlaylist =
+          JSON.parse(purchase.backup).source === 'private_playlist';
+        const subject = privatePlaylist
+          ? m['privateCheckout.email_subject']({ name }, { locale })
+          : m['guestClaim.email_subject']({ name }, { locale });
+        const body = privatePlaylist
+          ? m['privateCheckout.email_body']({}, { locale })
+          : m['guestClaim.email_body']({}, { locale });
         const action = m['guestClaim.email_action']({}, { locale });
         const escape = (value: string) =>
           value.replace(
