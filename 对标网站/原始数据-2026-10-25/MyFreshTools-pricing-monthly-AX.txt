@@ -1,0 +1,592 @@
+Window: "YouTube Tools for Creators | MyFreshTools", App: Google Chrome.
+0 标准窗口 YouTube Tools for Creators | MyFreshTools - Google Chrome - Stepan, URL: …, Secondary Actions: Raise
+	1 container YouTube Tools for Creators | MyFreshTools - Google Chrome - Stepan, URL: …
+		2 container
+			3 工具栏
+				4 按钮 返回
+				5 按钮 (disabled) 前进
+				6 按钮 重新加载
+				7 container
+					8 弹出式按钮 查看网站信息
+					9 文本栏 (settable) 地址和搜索栏, Value: myfreshtools.com/pricing, Placeholder: 问问 Google 或输入网址
+					10 按钮 为此标签页添加书签
+				11 container
+					12 弹出式按钮 打开 SubYourURL
+想要访问此网站
+					13 弹出式按钮 扩展程序
+				14 按钮 Stepan
+				15 弹出式按钮 Chrome
+			16 工具栏 书签
+				17 工具栏 已保存的标签页分组
+					18 “已保存的标签页分组”按钮 “🔎 竞品调研”分组 - 已打开
+					19 “已保存的标签页分组”按钮 “☁️ Ozil 上线”分组 - 已关闭
+					20 按钮 标签页分组
+				21 分离器 分隔符
+				22 书签按钮 Google 趋势
+				23 书签按钮 smilarweb
+				24 书签按钮 Google Analytics | 首页
+				25 书签按钮 gsc
+				26 书签按钮 Microsoft Clarity - Free Heatmaps & Session Recordings
+				27 书签按钮 Bing Webmaster Tools
+				28 书签按钮 公众号
+				29 弹出式按钮 包含隐藏书签的菜单
+			30 container
+				31 滚动区
+					32 HTML 内容 YouTube Tools for Creators | MyFreshTools, URL: …
+						33 container
+							34 container
+								35 标题 MYFRESHTOOLS, Value: 5
+									36 文本 MYFRESHTOOLS
+								37 按钮 Search Tools
+								38 按钮 EXPLORE TOOLS
+								39 按钮 CONTACT US
+								40 按钮 PRICING
+								41 文本 50% OFF
+								42 按钮 SIGN IN
+								43 按钮 Try It Free
+							44 文本 TRANSPARENT PRICING
+							45 标题 Pricing that scales with you, Value: 1
+								46 文本 Pricing that scales with you
+							47 container
+								48 text Built for YouTube creators and channel managers. Save 10+ hours every week  on playlist exports, channel audits, and keyword research — with a free tier to get started.
+							49 文本 4.9/5
+							50 文本 from 1,500+ reviews
+							51 container
+								52 text 29,492 + active users
+							53 container
+								54 text 100+ countries
+							55 container
+								56 切换按钮 Monthly, Value: 1
+								57 切换按钮 Annual 2 months free, Value: 0
+									58 文本 Annual
+									59 文本 2 months free
+							60 container
+								61 文本 STARTER
+								62 文本 $5.99
+								63 文本 /mo
+								64 文本 Billed monthly
+								65 按钮 Choose Plan
+								66 text Cancel anytime · No card for free WHAT'S INCLUDED
+								67 内容列表
+									68 文本 100 Credits/mo
+									69 文本 Rank tracking: 30 keywords (1 credit / 10 keyword checks)
+									70 文本 Priority support
+									71 文本 Strictly No ads 🚫
+									72 文本 Basic analytics
+									73 文本 +15 Free tools
+							74 container
+								75 文本 GROWTH
+								76 文本 $9.99
+								77 文本 /mo
+								78 文本 Billed monthly
+								79 按钮 Choose Plan
+								80 text Cancel anytime · No card for free WHAT'S INCLUDED
+								81 内容列表
+									82 文本 200 Credits/mo
+									83 文本 Rank tracking: 100 keywords (1 credit / 10 keyword checks)
+									84 文本 All STARTER features
+									85 文本 Advanced analytics
+									86 文本 API access
+							87 container
+								88 text BEST VALUE ⭐ PRO
+								89 文本 $19.99
+								90 文本 /mo
+								91 文本 Billed monthly
+								92 按钮 Get PRO
+								93 text 🔥 Best value per dollar 4 × the credits for 3 × the price Cancel anytime · No card for free +2 AK MC JR 790+ creators picked Pro WHAT'S INCLUDED
+								94 内容列表
+									95 文本 400 Credits/mo
+									96 文本 Rank tracking: 300 keywords (1 credit / 10 keyword checks)
+									97 文本 All GROWTH features
+									98 文本 24/7 support
+							99 container
+								100 文本 BUSINESS
+								101 文本 $39.99
+								102 文本 /mo
+								103 文本 Billed monthly
+								104 按钮 Choose Plan
+								105 text Cancel anytime · No card for free WHAT'S INCLUDED
+								106 内容列表
+									107 文本 1000 Credits/mo
+									108 文本 Rank tracking: 750 keywords (1 credit / 10 keyword checks)
+									109 文本 Dedicated account manager
+									110 文本 Team management
+									111 文本 All PRO features
+							112 文本 Secured by Stripe
+							113 文本 PCI-DSS Level 1. We never see or store your card.
+							114 文本 Cancel anytime
+							115 文本 One-click cancel. No retention calls.
+							116 文本 No card to start
+							117 文本 Free tier is free forever. Upgrade only when ready.
+							118 文本 TRUSTED BY TEAMS AT
+							119 文本 NorthLoop
+							120 文本 PixelForge
+							121 文本 Brightline
+							122 文本 Acme Studio
+							123 文本 Lumen.ai
+							124 文本 OakCreative
+							125 标题 Loved by teams that ship, Value: 2
+								126 文本 Loved by teams that ship
+							127 文本 Real outcomes from creators, marketers, and growth teams using MyFreshTools every day.
+							128 图像 5 Stars
+							129 container
+								130 text " Cut my weekly research from 6 hours to under 30 minutes. The playlist + channel exports alone paid for the annual plan in the first week. "
+							131 文本 MC
+							132 文本 Marcus Chen
+							133 文本 Creator, 480k subs
+							134 图像 5 Stars
+							135 container
+								136 text " We replaced three separate scrapers and an analytics dashboard with MyFreshTools. Onboarding the team took ten minutes. No regrets. "
+							137 文本 PR
+							138 文本 Priya Raghavan
+							139 文本 Head of Growth, SaaS
+							140 图像 5 Stars
+							141 container
+								142 text " I've tried every tool in this space. This is the only one that doesn't feel bolted together. Clean exports, fair credits, instant support. "
+							143 文本 DO
+							144 文本 Daniel Ortiz
+							145 文本 YouTube Strategist
+							146 标题 Detailed plans comparison, Value: 4
+								147 文本 Detailed plans comparison
+							148 文本 Understand which tools are included in each plan and how many credits they consume.
+							149 表格
+								150 row
+									151 列标题
+										152 文本 Tool
+									153 列标题
+										154 文本 Free
+									155 列标题
+										156 文本 Paid plans
+									157 列标题
+										158 文本 Credits
+								159 row
+									160 单元格
+										161 link YouTube Comment Finder, Value: myfreshtools.com/youtube/comment-finder
+									162 单元格
+										163 文本 1
+										164 container 1 credit per search that finds matches (a search with no matches is free). Free accounts scan the newest 300 comments and see the first 5 matches; paid plans scan the whole video and export every match.
+								165 row
+									166 单元格
+										167 link YouTube Channel Tracker, Value: myfreshtools.com/youtube/channel-tracker
+									168 单元格
+										169 container Starter: 15 channels · 90 days, views & uploads · Growth: 40 channels · 180 days · Pro: 100 channels · 1 year · Business: 250 channels · 2 years
+											170 文本 Scales by plan
+									171 单元格
+										172 文本 1
+										173 container Adding channels and the daily snapshots are included in your plan. Only a full-history CSV export costs 1 credit, and export is part of the paid plans.
+								174 row
+									175 单元格
+										176 link YouTube Playlist Backup & Restore, Value: myfreshtools.com/youtube/playlist-backup
+									177 单元格
+										178 文本 1
+										179 container Analyzing and comparing are free. A backup costs 1 credit and a restore 1 credit per video added back. Free accounts keep 2 backups per playlist, download the first half of each, and restore 5 videos per playlist; paid plans have no such limits. Automatic backups cost 1 credit per changed run; free accounts can automate 1 playlist weekly or monthly, paid plans more, including daily.
+								180 row
+									181 单元格
+										182 link YouTube Playlist Duplicate Remover, Value: myfreshtools.com/youtube/playlist-duplicate-remover
+									183 单元格
+										184 文本 1
+										185 container Scanning for duplicates is always free. 1 credit per removal batch — Starter & above clear every duplicate in one go.
+								186 row
+									187 单元格
+										188 link YouTube Bulk Video Visibility Manager, Value: myfreshtools.com/youtube/bulk-video-visibility-manager
+									189 单元格
+										190 文本 1
+										191 container Analyzing, previewing and restoring are free. 1 credit per video whose visibility YouTube confirms as changed. Free accounts analyze the latest 100 videos with basic filters; paid plans analyze the whole channel, use advanced filters, export CSV and restore from history.
+								192 row
+									193 单元格
+										194 link YouTube Playlist Sorter, Value: myfreshtools.com/youtube/playlist-sorter
+									195 单元格
+										196 文本 1
+										197 container Analyzing and previewing are always free. Applying a sort costs 1 credit per video that has to move — only the videos out of place are updated, and failed changes are never charged. Your original order is saved so you can restore it.
+								198 row
+									199 单元格
+										200 link YouTube Music Playlist Splitter, Value: myfreshtools.com/youtube/music-playlist-splitter
+									201 单元格
+										202 文本 1
+										203 container Analyzing a playlist isn't charged — you just need credits in your balance (the free plan previews the first 10 videos). Creating the two YouTube playlists costs 1 credit per 2 videos actually added, on every plan — videos that fail to add are never charged.
+								204 row
+									205 单元格
+										206 link YouTube Music Playlist Bulk Like, Value: myfreshtools.com/youtube/youtube-music-playlist-bulk-like
+									207 单元格
+										208 文本 1
+										209 container Scanning a playlist and checking your Likes is always free. 1 credit per song we actually like, on every plan — already-liked or unavailable songs are never charged.
+								210 row
+									211 单元格
+										212 link YouTube Playlist Copier, Value: myfreshtools.com/youtube/copy-playlist
+									213 单元格
+										214 文本 1
+										215 container Previewing a playlist is free. 1 credit per 2 videos added to your account — only videos actually copied are charged.
+								216 row
+									217 单元格
+										218 link YouTube Playlist Builder, Value: myfreshtools.com/youtube/playlist-builder
+									219 单元格
+										220 文本 1
+										221 container Checking your pasted list is always free. 1 credit per 2 videos actually added — only videos that land are charged.
+								222 row
+									223 单元格
+										224 link YouTube Subscription Transfer, Value: myfreshtools.com/youtube/subscription-transfer
+									225 单元格
+										226 文本 1
+										227 container Reviewing your subscriptions and comparing accounts is free. 1 credit per 2 subscriptions actually transferred — channels the new account already follows and failures are never charged.
+								228 row
+									229 单元格
+										230 link YouTube Subscription Cleaner, Value: myfreshtools.com/youtube/subscription-cleaner
+									231 单元格
+										232 文本 1
+										233 container Loading and filtering your subscriptions is free. 1 credit per 5 unsubscribes actually completed — already-removed channels and failures are never charged. The optional activity check is 1 credit per scan.
+								234 row
+									235 单元格
+										236 link YouTube Subscription Backup, Value: myfreshtools.com/youtube/subscription-backup
+									237 单元格
+										238 文本 1
+										239 container Viewing your subscriptions is free. 1 credit per 10 channels backed up (rounded up).
+								240 row
+									241 单元格
+										242 link YouTube Subscription Restore, Value: myfreshtools.com/youtube/subscription-restore
+									243 单元格
+										244 文本 1
+										245 container Uploading and previewing a backup is free. 1 credit per 2 subscriptions actually added — already-subscribed, unavailable and failed channels are never charged.
+								246 row
+									247 单元格
+										248 link YouTube Subscription Analyzer, Value: myfreshtools.com/youtube/subscription-analyzer
+									249 单元格
+										250 文本 1
+										251 container The overview and age breakdown are free. The optional activity scan is 1 credit per scan, however many channels you have.
+								252 row
+									253 单元格
+										254 link YouTube Subscription Organizer, Value: myfreshtools.com/youtube/subscription-organizer
+									255 单元格
+										256 文本 1
+										257 container No credits used. Free plan: 3 categories and 50 channels, sorted by hand. Paid plans: unlimited categories, auto-sort by topic, tags and CSV export.
+								258 row
+									259 单元格
+										260 link YouTube Bulk Subscribe, Value: myfreshtools.com/youtube/bulk-subscribe
+									261 单元格
+										262 文本 1
+										263 container Checking your list is free. 1 credit per 2 channels actually subscribed — channels you already follow, missing channels and failures are never charged. Up to 500 new subscriptions per day.
+								264 row
+									265 单元格
+										266 link YouTube Playlist Transfer, Value: myfreshtools.com/youtube/transfer-playlist
+									267 单元格
+										268 文本 1
+										269 container Planning a transfer is free. 1 credit per 2 videos copied, plus 1 credit per 2 videos when you also delete the source. Free plan: 1 playlist of up to 10 videos, source deletion is paid-only.
+								270 row
+									271 单元格
+										272 link YouTube Playlist Export, Value: myfreshtools.com/youtube/playlistExport
+									273 单元格
+										274 文本 1
+										275 container Starter & above users can export the full playlist with 1 credit.
+								276 row
+									277 单元格
+										278 link YouTube Playlist Manager, Value: myfreshtools.com/youtube/playlist-manager
+									279 单元格
+										280 文本 1
+										281 container Analysis, duplicate & unavailable detection, duration, health score and playlist comparison are free on every plan, including signed out. Cleaning, sorting, merging, splitting, backing up, restoring and syncing cost 1 credit per item actually changed; copying a playlist costs 1 credit per 2 videos added.
+								282 row
+									283 单元格
+										284 link Bulk YouTube Playlist Export, Value: myfreshtools.com/bulk-youtube-playlist-export
+									285 单元格
+										286 文本 1
+										287 container 1 credit per successfully exported playlist. Failed playlists cost nothing.
+								288 row
+									289 单元格
+										290 link YouTube Music Playlist Export, Value: myfreshtools.com/youtube/music-playlist-export
+									291 单元格
+										292 文本 1
+										293 container 1 credit per export. Paid plans get every track, every insight, and the full unblurred preview.
+								294 row
+									295 单元格
+										296 link YouTube Channel Playlist Extractor, Value: myfreshtools.com/youtube/channel-playlist-extractor
+									297 单元格
+										298 文本 1
+										299 container 1 credit per channel, no matter how many playlists come back. Re-downloading the same results in another format is free.
+								300 row
+									301 单元格
+										302 link YouTube Playlist Length Calculator, Value: myfreshtools.com/youtube/playlist-length-calculator
+									303 单元格
+										304 文本 1
+										305 container 1 credit per playlist, no matter how many videos it has. Changing speed, excluding videos, and planning your schedule are all free afterwards.
+								306 row
+									307 单元格
+										308 link Find Deleted or Private Playlist Videos, Value: myfreshtools.com/youtube/deleted-video-finder
+									309 单元格
+										310 文本 1
+										311 container 1 credit per playlist scan. Free plans see the complete hidden-video list and one recovered title as a taste; paid plans reveal every recovered title and unlock CSV export.
+								312 row
+									313 单元格
+										314 link Find a Deleted or Private YouTube Video, Value: myfreshtools.com/youtube/find-deleted-video
+									315 单元格
+										316 文本 1
+										317 container Checking a still-live video is free. 1 credit per lookup of a deleted or private video; paid plans reveal the full recovered title, the channel and the archive-snapshot link, and unlock CSV export.
+								318 row
+									319 单元格
+										320 link YouTube Video Audit, Value: myfreshtools.com/youtube/video-audit
+									321 单元格
+										322 文本 1
+										323 container 1 credit per audit. Free plans see the score and the first 5 checks; paid plans unlock every check, the full prioritized fix list and CSV export.
+								324 row
+									325 单元格
+										326 link YouTube Broken Link Scanner, Value: myfreshtools.com/youtube/broken-link-scanner
+									327 单元格
+										328 文本 2
+										329 container 2 credits per video scanned. The free plan's 25-video sample scan costs 3 credits.
+								330 row
+									331 单元格
+										332 link YouTube Bulk Find & Replace, Value: myfreshtools.com/youtube/bulk-find-replace
+									333 单元格
+										334 文本 1
+										335 container Scanning and previewing is always free. 1 credit per video actually changed on apply, 1 credit per video on revert.
+								336 row
+									337 单元格
+										338 link Caption Manager, Value: myfreshtools.com/youtube/captions/manager
+									339 单元格
+										340 文本 1
+										341 container Browsing is free. Downloading a caption track costs 1 credit.
+								342 row
+									343 单元格
+										344 link Caption Availability Scanner, Value: myfreshtools.com/youtube/captions/scanner
+									345 单元格
+										346 文本 1
+										347 container The free plan's 25-video scan is free. Larger scans cost 1 credit per 50 videos.
+								348 row
+									349 单元格
+										350 link Bulk Caption Downloader, Value: myfreshtools.com/youtube/captions/bulk-download
+									351 单元格
+										352 文本 1
+										353 container 1 credit per caption downloaded.
+								354 row
+									355 单元格
+										356 link Bulk Caption Uploader, Value: myfreshtools.com/youtube/captions/upload
+									357 单元格
+										358 文本 1
+										359 container 1 credit per caption uploaded.
+								360 row
+									361 单元格
+										362 link Bulk Caption Replacer, Value: myfreshtools.com/youtube/captions/replace
+									363 单元格
+										364 文本 1
+										365 container 1 credit per caption replaced. The previous caption is backed up automatically.
+								366 row
+									367 单元格
+										368 link Caption Backup & Restore, Value: myfreshtools.com/youtube/captions/backup
+									369 单元格
+										370 文本 1
+										371 container Backup costs 1 credit per 10 captions; restore 1 credit per caption.
+								372 row
+									373 单元格
+										374 link Caption Language Manager, Value: myfreshtools.com/youtube/captions/languages
+									375 单元格
+										376 文本 Free
+										377 container Free once you have a scan.
+								378 row
+									379 单元格
+										380 link SRT to VTT Converter, Value: myfreshtools.com/youtube/captions/converter
+									381 单元格
+										382 文本 Free
+										383 container Free on every plan — 0 credits, just a free account.
+								384 row
+									385 单元格
+										386 link YouTube Pinned Comment Auditor, Value: myfreshtools.com/youtube/pinned-comment-auditor
+									387 单元格
+										388 文本 1
+										389 container 1 credit per video audited. The free plan's 30-video audit costs 3 credits.
+								390 row
+									391 单元格
+										392 link YouTube Tags Rank Checker, Value: myfreshtools.com/youtube/tags-rank-checker
+									393 单元格
+										394 文本 1
+								395 row
+									396 单元格
+										397 link YouTube Search Results Export, Value: myfreshtools.com/youtube/searchResultsExport
+									398 单元格
+										399 文本 1
+								400 row
+									401 单元格
+										402 link YouTube Tags Generator, Value: myfreshtools.com/youtube/tagGenerator
+									403 单元格
+										404 文本 1
+								405 row
+									406 单元格
+										407 link YouTube Titles Generator, Value: myfreshtools.com/youtube/video-title-generator
+									408 单元格
+										409 文本 1
+								410 row
+									411 单元格
+										412 link YouTube Channel BackUp, Value: myfreshtools.com/youtube/channelBackUp
+									413 单元格
+										414 文本 1
+								415 row
+									416 单元格
+										417 link YouTube Thumbnail Grabber, Value: myfreshtools.com/youtube/thumbnailDownloader
+									418 单元格
+										419 文本 1
+								420 row
+									421 单元格
+										422 link YouTube Video Rank Checker, Value: myfreshtools.com/youtube/video-rank-checker
+									423 单元格
+										424 文本 1
+								425 row
+									426 单元格
+										427 link YouTube Rank Tracker, Value: myfreshtools.com/youtube/rank-tracker
+									428 单元格
+										429 container Starter: 30 keywords · daily checks + alerts · Growth: 100 keywords · daily checks + alerts · Pro: 300 keywords · daily checks + alerts · Business: 750 keywords · daily checks + alerts
+											430 文本 Scales by plan
+									431 单元格
+										432 文本 1
+										433 container Tracking is light on credits — 1 credit per 10 keyword checks. Tracking pauses when you run out and resumes after you top up.
+								434 row
+									435 单元格
+										436 link YouTube Keyword Suggestion, Value: myfreshtools.com/youtube/keyword-auto-suggestion
+									437 单元格
+										438 文本 1
+								439 row
+									440 单元格
+										441 link YouTube Transcript Downloader, Value: myfreshtools.com/youtube-transcript-downloader
+									442 单元格
+										443 文本 1
+								444 row
+									445 单元格
+										446 link YouTube Timestamp Generator, Value: myfreshtools.com/youtube-timestamper-generator
+									447 单元格
+										448 文本 1
+								449 row
+									450 单元格
+										451 link YouTube Tag Extractor, Value: myfreshtools.com/youtube-tag-extractor
+									452 单元格
+										453 文本 1
+								454 row
+									455 单元格
+										456 link YouTube Description Extractor, Value: myfreshtools.com/youtube/description-extractor
+									457 单元格
+										458 文本 1
+							459 标题 Frequently Asked Questions, Value: 2
+								460 文本 Frequently Asked Questions
+							461 文本 Everything you need to know about plans, credits, and billing.
+							462 标题 Do I need to enter my credit card details to sign up?, Value: 3
+								463 按钮 Do I need to enter my credit card details to sign up?
+							464 标题 How do I get more credits?, Value: 3
+								465 按钮 How do I get more credits?
+							466 标题 What happens if I exceed the credit limit?, Value: 3
+								467 按钮 What happens if I exceed the credit limit?
+							468 标题 Will my credits reduce if the tool failed to do the job?, Value: 3
+								469 按钮 Will my credits reduce if the tool failed to do the job?
+							470 标题 Value: 3, How long does it take for my credits to get reflected on my dashboard after I purchase a subscription?
+								471 按钮 How long does it take for my credits to get reflected on my dashboard after I purchase a subscription?
+							472 标题 How can I check my available credits and consumed credits?, Value: 3
+								473 按钮 How can I check my available credits and consumed credits?
+							474 标题 How do we handle the payment?, Value: 3
+								475 按钮 How do we handle the payment?
+							476 标题 What payment methods do you accept?, Value: 3
+								477 按钮 What payment methods do you accept?
+							478 标题 Can I downgrade to Free plan from any of the paid plans?, Value: 3
+								479 按钮 Can I downgrade to Free plan from any of the paid plans?
+							480 标题 Will I lose my unused credits if I cancel my subscription?, Value: 3
+								481 按钮 Will I lose my unused credits if I cancel my subscription?
+							482 标题 Can I upgrade from a lower paid plan to a higher paid plan?, Value: 3
+								483 按钮 Can I upgrade from a lower paid plan to a higher paid plan?
+							484 标题 Do you offer a discount on an annual subscription?, Value: 3
+								485 按钮 Do you offer a discount on an annual subscription?
+							486 标题 I still have more questions about pricing. What should I do?, Value: 3
+								487 按钮 I still have more questions about pricing. What should I do?
+							488 container
+								489 文本 Still deciding? Talk to a human.
+								490 文本 Tell us your use case and we'll recommend the plan that fits — no upsell, no sales script. Most replies under 2 hours.
+								491 link Talk to our team, Value: myfreshtools.com/contact
+								492 文本 🔒 Secure checkout · ⚡ Instant activation
+							493 标题 MYFRESHTOOLS, Value: 6
+								494 文本 MYFRESHTOOLS
+							495 文本 MyFreshTools helps creators and marketers boost productivity with smart tools for YouTube playlists, channel audits, keyword research, and content creation — all in one place.
+							496 标题 POPULAR TOOLS, Value: 6
+								497 文本 POPULAR TOOLS
+							498 link Caption Manager, Value: myfreshtools.com/youtube/captions
+							499 link SRT to VTT Converter, Value: myfreshtools.com/youtube/captions/converter
+							500 link Playlist Manager, Value: myfreshtools.com/youtube/playlist-manager
+							501 link Playlist Backup & Restore, Value: myfreshtools.com/youtube/playlist-backup
+							502 link Playlist Copier, Value: myfreshtools.com/youtube/copy-playlist
+							503 link Playlist Builder, Value: myfreshtools.com/youtube/playlist-builder
+							504 link Playlist Sorter, Value: myfreshtools.com/youtube/playlist-sorter
+							505 link Bulk Video Visibility Manager, Value: myfreshtools.com/youtube/bulk-video-visibility-manager
+							506 link Playlist Transfer, Value: myfreshtools.com/youtube/transfer-playlist
+							507 link Subscription Manager, Value: myfreshtools.com/youtube/subscription-manager
+							508 link Subscription Cleaner, Value: myfreshtools.com/youtube/subscription-cleaner
+							509 link Subscription Backup, Value: myfreshtools.com/youtube/subscription-backup
+							510 link Subscription Restore, Value: myfreshtools.com/youtube/subscription-restore
+							511 link Subscription Analyzer, Value: myfreshtools.com/youtube/subscription-analyzer
+							512 link Subscription Organizer, Value: myfreshtools.com/youtube/subscription-organizer
+							513 link Bulk Subscribe, Value: myfreshtools.com/youtube/bulk-subscribe
+							514 link Subscription Transfer, Value: myfreshtools.com/youtube/subscription-transfer
+							515 link Playlist Export, Value: myfreshtools.com/youtube/playlistExport
+							516 link Find a Deleted YouTube Video, Value: myfreshtools.com/youtube/find-deleted-video
+							517 link YouTube Video Audit, Value: myfreshtools.com/youtube/video-audit
+							518 link Bulk Playlist Export, Value: myfreshtools.com/bulk-youtube-playlist-export
+							519 link YouTube Music Playlist Export, Value: myfreshtools.com/youtube/music-playlist-export
+							520 link YouTube Music Playlist Bulk Like, Value: myfreshtools.com/youtube/youtube-music-playlist-bulk-like
+							521 link YouTube Music Playlist Splitter, Value: myfreshtools.com/youtube/music-playlist-splitter
+							522 link Thumbnail Downloader, Value: myfreshtools.com/youtube/thumbnailDownloader
+							523 link Export Search Results, Value: myfreshtools.com/youtube/searchResultsExport
+							524 link Video Tag Generator, Value: myfreshtools.com/youtube/tagGenerator
+							525 link Channel Backup, Value: myfreshtools.com/youtube/channelBackUp
+							526 link Channel Playlist Extractor, Value: myfreshtools.com/youtube/channel-playlist-extractor
+							527 link Playlist Length Calculator, Value: myfreshtools.com/youtube/playlist-length-calculator
+							528 link Comment Exporter, Value: myfreshtools.com/youtube/comment-exporter
+							529 link Comment Finder, Value: myfreshtools.com/youtube/comment-finder
+							530 link Channel Tracker, Value: myfreshtools.com/youtube/channel-tracker
+							531 link Tags Rank Checker, Value: myfreshtools.com/youtube/tags-rank-checker
+							532 link YouTube Rank Tracker, Value: myfreshtools.com/youtube/rank-tracker
+							533 标题 USEFUL LINKS, Value: 6
+								534 文本 USEFUL LINKS
+							535 link Blog, Value: myfreshtools.com/blog
+							536 link Free YouTube Tools, Value: myfreshtools.com/free-tools
+							537 link Creator Directory, Value: myfreshtools.com/creators
+							538 link Checklists & Templates, Value: myfreshtools.com/resources
+							539 link Privacy Policy, Value: myfreshtools.com/privacy-policy
+							540 link Terms of Use, Value: myfreshtools.com/terms-of-use
+							541 link Affiliates(50%💰), Value: app.getreditus.com/marketplace/myfreshtools
+							542 标题 CONTACT, Value: 6
+								543 文本 CONTACT
+							544 link Contact Us, Value: myfreshtools.com/contact
+							545 文本 Share the tools you ❤️
+							546 link Share on WhatsApp, Value: …
+							547 link Share on Twitter, Value: …
+							548 link Share on Facebook, Value: …
+							549 link Share on LinkedIn, Value: …
+							550 link Share on Telegram, Value: …
+							551 link Share on Pinterest, Value: …
+							552 link Share via Email, Value: …
+							553 container
+								554 text Copyright ©  2026
+								555 link myfreshtools.com, Value: …
+			556 container 信息栏容器
+				557 container 信息栏
+					558 container
+						559 文本 “ChatGPT”已开始调试此浏览器
+						560 按钮 取消
+					561 按钮 关闭
+			562 弹出式按钮 标签页搜索
+			563 container
+				564 标签组
+					565 标签 (settable, boolean) Home - Bing Webmaster Tools, Value: off
+					566 标签组 分组“🔎 竞品调研”- 1 个标签页•  Wiedergabelisten zwischen Musikdiensten übertr… - 已展开
+					567 标签 (settable, boolean) Wiedergabelisten zwischen Musikdiensten übertragen | Tune My Music - 属于“🔎 竞品调研”群组, Value: off
+					568 标签 (settable, boolean) Wiedergabelisten zwischen Musikdiensten übertragen | Tune My Music, Value: off
+					569 标签 (settable, boolean) Export YouTube Playlist to CSV | Free Playlist Exporter, Value: off
+					570 标签 (selected, settable, boolean) YouTube Tools for Creators | MyFreshTools, Value: on
+						571 按钮 关闭
+			572 按钮 新标签页
+			573 按钮 打开 Chrome 中的 Gemini
+	574 关闭按钮
+	575 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	576 最小化按钮
+577 menu bar
+	578 Chrome
+	579 文件
+	580 编辑
+	581 显示
+	582 历史记录
+	583 书签
+	584 个人资料
+	585 标签页
+	586 窗口
+	587 帮助
+
+The focused UI element is 32 HTML 内容 YouTube Tools for Creators | MyFreshTools, URL: …

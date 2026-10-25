@@ -1,0 +1,146 @@
+The following is a diff from the previous accessibility tree for Window: "Tune My Music Pläne" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 426-466, 468-472
+~396 标准窗口 Tune My Music Pläne - Google Chrome - Stepan, URL: tunemymusic.com/de/plans, Secondary Actions: Raise
+~	397 container Tune My Music Pläne - Google Chrome - Stepan, URL: tunemymusic.com/de/plans
+~				400 按钮 返回
++					488 按钮 翻译
++					489 按钮 安装“Tune My Music”
++					490 按钮 为此标签页添加书签
+~					407 弹出式按钮 打开 SubYourURL
+想要访问此网站
++				491 滚动区
++					492 HTML 内容 Tune My Music Pläne, URL: tunemymusic.com/de/plans
++						493 container
++							494 link Tune My Music, Value: tunemymusic.com/de
++							495 container
++								496 按钮 Schnelle Aktionen
++								497 link Abo-Pläne, Value: tunemymusic.com/de/plans
++								498 link Hilfe, Value: tunemymusic.com/de/help
++								499 按钮 Einloggen
++								500 按钮 Select language
++							501 按钮 Thomas video thumbnail
++							502 标题 Wie Tune My Music ihr Musikerlebnis verändert hat, Value: 1
++								503 文本 Wie Tune My Music ihr Musikerlebnis verändert hat
++							504 标题 Value: 2, Wir verbessern Tune My Music ständig mit dem Feedback der Nutzer. Sieh dir Highlights von Nutzern an, die ihre Erfahrungen teilen
++								505 文本 Wir verbessern Tune My Music ständig mit dem Feedback der Nutzer. Sieh dir Highlights von Nutzern an, die ihre Erfahrungen teilen
++							506 link Ansehen, Value: youtube.com/watch?v=a1cwyJ3klr0
++							507 标题 Deine Musik wird immer bei dir sein, Value: 2
++								508 文本 Deine Musik wird immer bei dir sein
++							509 标题 Value: 3, Übertrage deine Musik, synchronisiere automatisch deine Playlists, teile Musik über verschiedene Plattformen - wir haben alles abgedeckt
++								510 文本 Übertrage deine Musik, synchronisiere automatisch deine Playlists, teile Musik über verschiedene Plattformen - wir haben alles abgedeckt
++							511 文本 KOSTENLOSE TESTVERSION
++							512 text Übertrage bis zu 500 Songs kostenlos Musik über alle Musikplattformen teilen Bis zu 20 automatische tägliche Synchronisierungen über Musikplattformen Sichere deine Musik in unserer Cloud Tune My Music Wasserzeichen entfernen
++							513 link Teste es kostenlos, Value: tunemymusic.com/de/transfer
++							514 未加标签的图片 icon. 要获取缺失的图片说明，请打开上下文菜单。
++							515 文本 PREMIUM
++							516 text Unbegrenzter Musiktransfer Musik über alle Musikplattformen teilen Bis zu 20 automatische tägliche Synchronisierungen über Musikplattformen Sichere deine Musik in unserer Cloud Tune My Music Wasserzeichen entfernen
++							517 按钮 Jährlich
++							518 切换 off
++								519 复选框 0
++							520 按钮 Monatlich
++							521 按钮 $2 / Monat Jährliche Abrechnung
++							522 文本 Jederzeit kündbar
++							523 文本 SYNC PRO
++							524 text Beinhaltet alle  Premium -Funktionen 150 tägliche Auto-Syncs  über Musikplattformen
++							525 按钮 Jährlich
++							526 切换 off
++								527 复选框 0
++							528 按钮 Monatlich
++							529 按钮 $6.25 / Monat Jährliche Abrechnung
++							530 文本 Jederzeit kündbar
++							531 标题 In Premium enthalten, Value: 2
++								532 文本 In Premium enthalten
++							533 container
++								534 container
++									535 图像 Unbegrenzter Musiktransfer
++									536 标题 Unbegrenzter Musiktransfer, Value: 2
++										537 文本 Unbegrenzter Musiktransfer
++									538 标题 Übertrage deine gesamte Musik auf eine andere Plattform, Value: 3
++										539 文本 Übertrage deine gesamte Musik auf eine andere Plattform
++									540 text Bewege alle deine Playlists und Favoriten zwischen Musikdiensten. Kein Aufwand, keine Sorgen. Wir stellen sicher, dass du deine Musik überallhin mitnehmen kannst. Unterstützt Spotify, TIDAL, Apple Music, YouTube, Amazon Music, Deezer und viele mehr
++								541 container
++									542 图像 Plattformübergreifend teilen
++									543 标题 Plattformübergreifend teilen, Value: 2
++										544 文本 Plattformübergreifend teilen
++									545 标题 Teile Musik mit Freunden auf jedem Musikdienst, Value: 3
++										546 文本 Teile Musik mit Freunden auf jedem Musikdienst
++									547 text Deine Freunde nutzen kein Apple Music? Kein Problem! Sie können jetzt deine Playlist oder sogar deine gesamte Musikbibliothek anhören. Unterstützt Spotify, TIDAL, Apple Music, YouTube, Amazon Music, Deezer und viele mehr
++								548 container
++									549 图像 Auto-Sync deine Musik
++									550 标题 Auto-Sync deine Musik, Value: 2
++										551 文本 Auto-Sync deine Musik
++									552 标题 Tägliche Überwachung von Änderungen zwischen zwei Plattformen, Value: 3
++										553 文本 Tägliche Überwachung von Änderungen zwischen zwei Plattformen
++									554 text Setze eine tägliche Synchronisierung, die alle Änderungen an deinem Apple Music überwacht und automatisch mit anderen Musikplattformen synchronisiert. Unterstützt Spotify, TIDAL, Apple Music, YouTube, Amazon Music, Deezer und viele mehr
++								555 container
++									556 图像 Sichere deine Musik
++									557 标题 Sichere deine Musik, Value: 2
++										558 文本 Sichere deine Musik
++									559 标题 Sichere deine gesamte Musikbibliothek, Value: 3
++										560 文本 Sichere deine gesamte Musikbibliothek
++									561 text Wir wissen, wie wichtig dir deine Musikbibliothek ist. Schütze diese unersetzlichen Erinnerungen und halte deine Sammlung sicher und geschützt. Unterstützt Spotify, TIDAL, Apple Music, YouTube, Amazon Music, Deezer und viele mehr
++								562 container
++									563 图像 AI Playlist Generator
++									564 标题 AI Playlist Generator, Value: 2
++										565 文本 AI Playlist Generator
++									566 标题 Erstelle die perfekte Playlist in Sekunden, Value: 3
++										567 文本 Erstelle die perfekte Playlist in Sekunden
++									568 text Lass unsere KI die perfekte Playlist für dich basierend auf deinen Lieblingssongs, Künstlern oder durch freies Eingeben erstellen. Unterstützt Spotify, TIDAL, Apple Music, YouTube, Amazon Music, Deezer und viele mehr
++								569 按钮 (disabled) Vorherige Folie
++								570 按钮 Nächste Folie
++							571 图像 white diamond icon
++							572 标题 Werde PREMIUM, Value: 1
++								573 文本 Werde PREMIUM
++							574 文本 Übertrage all deine Musik mit einem einfachen Klick
++							575 按钮 Jährlich
++							576 切换 off
++								577 复选框 0
++							578 按钮 Monatlich
++							579 按钮 $2 / Monat Jährliche Abrechnung
++							580 文本 Sichere Zahlung
++							581 图像 lock icon
++							582 文本 Jederzeit kündbar
++							583 图像
++							584 标题 Immer glücklich zu helfen., Value: 3
++								585 文本 Immer glücklich zu helfen.
++							586 文本 Stellen Sie uns Ihre Fragen
++							587 link FAQ, Value: tunemymusic.com/de/help
++							588 link KONTAKTIEREN SIE UNS, Value: tunemymusic.com/de/contact-us
++							589 内容列表
++								590 container
++									591 文本 Tune My Music
++									592 link Startseite, Value: tunemymusic.com/de
++									593 link Einloggen, Value: tunemymusic.com/de/plans#
++									594 link Meine Einstellungen, Value: tunemymusic.com/de/settings
++									595 link Blog, Value: blog.tunemymusic.com/de/
++									596 link Abo-Pläne, Value: tunemymusic.com/de/plans
++									597 link Playlist-Generator, Value: tunemymusic.com/de/features/playlist-generator
++									598 link Wiedergabelisten-Organizer, Value: tunemymusic.com/de/features/playlist-organizer
++								599 container
++									600 文本 Hilfe
++									601 link FAQ, Value: tunemymusic.com/de/help
++									602 link KONTAKTIEREN SIE UNS, Value: tunemymusic.com/de/contact-us
++								603 container
++									604 文本 Rechtlich
++									605 link Nutzungsbedingungen, Value: tunemymusic.com/de/terms-of-use
++									606 link Datenschutz-Bestimmungen, Value: tunemymusic.com/de/privacy-policy
++							607 link Facebook, Value: facebook.com/TuneMyMusic
++							608 link X, Value: x.com/TuneMyMusic
++							609 container
++								610 text ©  2026  Tune My Music
++							611 图像
++				612 container 信息栏
++					613 container
++						614 文本 “ChatGPT”已开始调试此浏览器
++						615 按钮 取消
++					616 按钮 关闭
+~					481 标签 (selected, settable, boolean) Tune My Music Pläne, Value: on
++		617 container 翻译此页？
++			618 container
++				619 container
++					620 标签组 德语
++						621 标签 (selected, settable, boolean) 德语, Value: on
++						622 标签 (settable, boolean) 中文（简体）, Value: off
++					623 按钮 翻译选项
++					624 按钮 关闭
+The focused UI element is 492 HTML 内容 Tune My Music Pläne, URL: tunemymusic.com/de/plans

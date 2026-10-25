@@ -1,0 +1,134 @@
+The following is a diff from the previous accessibility tree for Window: "YouTube Tools for Creators | MyFreshTools" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 32-35, 38-48, 50-107, 109, 111, 113, 115, 117-168, 170-174, 276-306
+~0 标准窗口 YouTube Tools for Creators | MyFreshTools - Google Chrome - Stepan, URL: myfreshtools.com/welcome/signup, Secondary Actions: Raise
+~	1 container YouTube Tools for Creators | MyFreshTools - Google Chrome - Stepan, URL: myfreshtools.com/welcome/signup
+~					9 文本栏 (settable) 地址和搜索栏, Placeholder: 问问 Google 或输入网址, Value: myfreshtools.com/welcome/signup?from=playlistExport&playlistUrl=https%3A%2F%2Fwww.youtube.com%2Fplaylist%3Flist%3DPLe_F6wC3FvdoolDo98wv-9e9ddBdGDT9X&title=MyFreshTools+Tutorial&channel=Amarindaz&videoCount=5&thumbnail=https%3A%2F%2Fi.ytimg.com%2Fvi%2FFMEX15InOoI%2Fhqdefault.jpg
++				276 滚动区
++					277 HTML 内容 YouTube Tools for Creators | MyFreshTools, URL: myfreshtools.com/welcome/signup
++						278 container
++							279 container
++								280 标题 MYFRESHTOOLS, Value: 5
++									281 文本 MYFRESHTOOLS
++								282 按钮 Search Tools
++								283 按钮 EXPLORE TOOLS
++								284 按钮 CONTACT US
++								285 按钮 PRICING
++								286 文本 50% OFF
++								287 按钮 SIGN IN
++								288 按钮 Try It Free
++							289 标题 Almost there — sign up to export 🎬, Value: 5
++								290 文本 Almost there — sign up to export 🎬
++							291 text Free account · No card required · Export in seconds Trusted by  29,492 +  creators worldwide 🌍
++							292 按钮 Sign up with Google
++							293 文本 ⚡ Takes less than 2 seconds — no password needed
++							294 container
++								295 文本 Email address
++								296 邮箱 (settable) Email address
++							297 container
++								298 文本 Password
++								299 安全文本栏 (settable) Password
++								300 按钮 Show password
++							301 按钮 Create Free Account
++							302 文本 No card needed. Cancel anytime.
++							303 按钮 Already have an account? Login
++							304 文本 We respect your privacy. No spam ever.
++							305 文本 ✨ PLAYLIST DETECTED — SIGN UP TO CONTINUE
++							306 图像 playlist
++							307 文本 MyFreshTools Tutorial
++							308 图像 Amarindaz
++							309 container
++								310 text Amarindaz ·  13K  subs
++							311 container
++								312 text 📅 Created  2021年10月
++							313 text “ This playlist is all about how to effectively use https://www.myfreshtools.com/ ”
++							314 文本 🎬
++							315 文本 5 videos ready to export
++							316 文本 Titles, descriptions, tags, views, durations & more
++							317 图像 [Free] YouTube Tags Generator Online To Optimize YouTube Video To Get More Traffic
++							318 图像 Export YouTube Search Results to CSV in Less than 10 Seconds
++							319 图像 YouTube Thumbnail Grabber tool to download YouTube thumbnail in less than 10 seconds
++							320 text + 2 Unlock the full picture after signup
++							321 container
++								322 text 👁️ 12,584 Total views
++							323 container
++								324 text ⏱️ 47h 12m Watch time
++							325 container
++								326 text 🏆 8 videos Top performers
++							327 container
++								328 text 📊 3.8% Avg engagement
++							329 container
++								330 text 🏷️ 42% miss SEO gaps
++							331 container
++								332 text 📺 12 shorts Short-form mix
++							333 container
++								334 text 👈  Create your free account to export this playlist
++							335 标题 MYFRESHTOOLS, Value: 6
++								336 文本 MYFRESHTOOLS
++							337 文本 MyFreshTools helps creators and marketers boost productivity with smart tools for YouTube playlists, channel audits, keyword research, and content creation — all in one place.
++							338 标题 POPULAR TOOLS, Value: 6
++								339 文本 POPULAR TOOLS
++							340 link Caption Manager, Value: myfreshtools.com/youtube/captions
++							341 link SRT to VTT Converter, Value: myfreshtools.com/youtube/captions/converter
++							342 link Playlist Manager, Value: myfreshtools.com/youtube/playlist-manager
++							343 link Playlist Backup & Restore, Value: myfreshtools.com/youtube/playlist-backup
++							344 link Playlist Copier, Value: myfreshtools.com/youtube/copy-playlist
++							345 link Playlist Builder, Value: myfreshtools.com/youtube/playlist-builder
++							346 link Playlist Sorter, Value: myfreshtools.com/youtube/playlist-sorter
++							347 link Bulk Video Visibility Manager, Value: myfreshtools.com/youtube/bulk-video-visibility-manager
++							348 link Playlist Transfer, Value: myfreshtools.com/youtube/transfer-playlist
++							349 link Subscription Manager, Value: myfreshtools.com/youtube/subscription-manager
++							350 link Subscription Cleaner, Value: myfreshtools.com/youtube/subscription-cleaner
++							351 link Subscription Backup, Value: myfreshtools.com/youtube/subscription-backup
++							352 link Subscription Restore, Value: myfreshtools.com/youtube/subscription-restore
++							353 link Subscription Analyzer, Value: myfreshtools.com/youtube/subscription-analyzer
++							354 link Subscription Organizer, Value: myfreshtools.com/youtube/subscription-organizer
++							355 link Bulk Subscribe, Value: myfreshtools.com/youtube/bulk-subscribe
++							356 link Subscription Transfer, Value: myfreshtools.com/youtube/subscription-transfer
++							357 link Playlist Export, Value: myfreshtools.com/youtube/playlistExport
++							358 link Find a Deleted YouTube Video, Value: myfreshtools.com/youtube/find-deleted-video
++							359 link YouTube Video Audit, Value: myfreshtools.com/youtube/video-audit
++							360 link Bulk Playlist Export, Value: myfreshtools.com/bulk-youtube-playlist-export
++							361 link YouTube Music Playlist Export, Value: myfreshtools.com/youtube/music-playlist-export
++							362 link YouTube Music Playlist Bulk Like, Value: myfreshtools.com/youtube/youtube-music-playlist-bulk-like
++							363 link YouTube Music Playlist Splitter, Value: myfreshtools.com/youtube/music-playlist-splitter
++							364 link Thumbnail Downloader, Value: myfreshtools.com/youtube/thumbnailDownloader
++							365 link Export Search Results, Value: myfreshtools.com/youtube/searchResultsExport
++							366 link Video Tag Generator, Value: myfreshtools.com/youtube/tagGenerator
++							367 link Channel Backup, Value: myfreshtools.com/youtube/channelBackUp
++							368 link Channel Playlist Extractor, Value: myfreshtools.com/youtube/channel-playlist-extractor
++							369 link Playlist Length Calculator, Value: myfreshtools.com/youtube/playlist-length-calculator
++							370 link Comment Exporter, Value: myfreshtools.com/youtube/comment-exporter
++							371 link Comment Finder, Value: myfreshtools.com/youtube/comment-finder
++							372 link Channel Tracker, Value: myfreshtools.com/youtube/channel-tracker
++							373 link Tags Rank Checker, Value: myfreshtools.com/youtube/tags-rank-checker
++							374 link YouTube Rank Tracker, Value: myfreshtools.com/youtube/rank-tracker
++							375 标题 USEFUL LINKS, Value: 6
++								376 文本 USEFUL LINKS
++							377 link Blog, Value: myfreshtools.com/blog
++							378 link Free YouTube Tools, Value: myfreshtools.com/free-tools
++							379 link Creator Directory, Value: myfreshtools.com/creators
++							380 link Checklists & Templates, Value: myfreshtools.com/resources
++							381 link Privacy Policy, Value: myfreshtools.com/privacy-policy
++							382 link Terms of Use, Value: myfreshtools.com/terms-of-use
++							383 link Affiliates(50%💰), Value: app.getreditus.com/marketplace/myfreshtools
++							384 标题 CONTACT, Value: 6
++								385 文本 CONTACT
++							386 link Contact Us, Value: myfreshtools.com/contact
++							387 文本 Share the tools you ❤️
++							388 link Share on WhatsApp, Value: api.whatsapp.com/send
++							389 link Share on Twitter, Value: twitter.com/intent/tweet
++							390 link Share on Facebook, Value: facebook.com/sharer/sharer.php
++							391 link Share on LinkedIn, Value: linkedin.com/shareArticle
++							392 link Share on Telegram, Value: t.me/share/url
++							393 link Share on Pinterest, Value: pinterest.com/pin/create/button/
++							394 link Share via Email, Value: mailto:
++							395 container
++								396 text Copyright ©  2026
++								397 link myfreshtools.com, Value: myfreshtools.com/
++				398 container 信息栏
++					399 container
++						400 文本 “ChatGPT”已开始调试此浏览器
++						401 按钮 取消
++					402 按钮 关闭
+~					258 标签 (selected, settable, boolean) YouTube Tools for Creators | MyFreshTools, Value: on
+The focused UI element is 277 HTML 内容 YouTube Tools for Creators | MyFreshTools, URL: myfreshtools.com/welcome/signup

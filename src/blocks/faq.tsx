@@ -25,6 +25,10 @@ const faqItems = [
     question: () => m['landing.faq.quota.question'](),
     answer: () => m['landing.faq.quota.answer'](),
   },
+  {
+    question: () => m['landing.faq.media.question'](),
+    answer: () => m['landing.faq.media.answer'](),
+  },
 ] as const;
 
 export function FAQ() {

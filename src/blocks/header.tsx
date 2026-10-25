@@ -237,8 +237,8 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-2 xl:flex">
-          <LocaleSelector />
-          <ThemeToggle />
+          <LocaleSelector label={m['localizedHome.language']()} />
+          <ThemeToggle label={m['landing.nav.toggle_theme']()} />
           {user ? (
             <Suspense fallback={null}>
               <SiteUserMenu
@@ -278,8 +278,8 @@ export function Header() {
             <ToolsMenu mobile onNavigate={() => setOpen(false)} />
             {navItems.slice(1).map((item) => renderNavItem(item, true))}
             <div className="mt-2 flex items-center gap-2 border-t border-[#18213b]/8 pt-3 dark:border-white/10">
-              <LocaleSelector />
-              <ThemeToggle />
+              <LocaleSelector label={m['localizedHome.language']()} />
+              <ThemeToggle label={m['landing.nav.toggle_theme']()} />
               {user ? (
                 <Suspense fallback={null}>
                   <SiteUserMenu

@@ -68,6 +68,8 @@ test('private routes and locale variants cannot load optional third-party script
   for (const path of [
     '/settings/collections',
     '/zh/settings/profile',
+    '/de/settings/profile',
+    '/de/sign-in',
     '/admin',
     '/dev/guest-trial',
     '/zh/dev/guest-trial',

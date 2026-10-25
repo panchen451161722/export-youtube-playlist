@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import { envConfigs } from '@/config';
+import { pageLocales } from '@/config/locale';
 import { isIndexablePath } from '@/lib/seo';
 import { baseLocale, locales, localizeUrl } from '@/paraglide/runtime.js';
 import { PUBLIC_TOOL_DEFINITIONS } from '@/components/tools/public-tool-definitions';
@@ -47,7 +48,7 @@ function escapeXml(value: string): string {
 }
 
 function entryXml(e: Entry, primaryLocale: string): string {
-  const entryLocales = e.availableLocales ?? locales;
+  const entryLocales = e.availableLocales ?? pageLocales(e.path);
   const defaultLocale = entryLocales.includes(baseLocale)
     ? baseLocale
     : entryLocales[0];
@@ -129,7 +130,7 @@ export const Route = createFileRoute('/sitemap.xml')({
           '<?xml version="1.0" encoding="UTF-8"?>',
           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
           ...entries.flatMap((entry) =>
-            (entry.availableLocales ?? locales).map((locale) =>
+            (entry.availableLocales ?? pageLocales(entry.path)).map((locale) =>
               entryXml(entry, locale)
             )
           ),

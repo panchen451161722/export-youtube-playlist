@@ -1,0 +1,400 @@
+Window: "Exportieren Sie Ihre YouTube Wi…en in einer CSV und Text-Datei!", App: Google Chrome.
+0 标准窗口 URL: tunemymusic.com/de/transfer/youtube-to-file, Secondary Actions: Raise, Exportieren Sie Ihre YouTube Wiedergabelisten in einer CSV und Text-Datei! - 属于“🔎 竞品调研”群组 - Google Chrome - Stepan
+	1 container URL: tunemymusic.com/de/transfer/youtube-to-file, Exportieren Sie Ihre YouTube Wiedergabelisten in einer CSV und Text-Datei! - 属于“🔎 竞品调研”群组 - Google Chrome - Stepan
+		2 container
+			3 工具栏
+				4 按钮 返回
+				5 按钮 (disabled) 前进
+				6 按钮 重新加载
+				7 container
+					8 弹出式按钮 查看网站信息
+					9 文本栏 (settable) 地址和搜索栏, Value: tunemymusic.com/de/transfer/youtube-to-file, Placeholder: 问问 Google 或输入网址
+					10 按钮 安装“Tune My Music”
+					11 按钮 翻译
+					12 按钮 为此标签页添加书签
+				13 container
+					14 弹出式按钮 打开 SubYourURL
+想要访问此网站
+					15 弹出式按钮 扩展程序
+					16 按钮 关闭侧边栏
+				17 按钮 Stepan
+				18 弹出式按钮 Chrome
+			19 工具栏 书签
+				20 工具栏 已保存的标签页分组
+					21 “已保存的标签页分组”按钮 “🔎 竞品调研”分组 - 已打开
+					22 “已保存的标签页分组”按钮 “☁️ Ozil 上线”分组 - 已关闭
+					23 按钮 标签页分组
+				24 分离器 分隔符
+				25 书签按钮 Google 趋势
+				26 书签按钮 smilarweb
+				27 书签按钮 Google Analytics | 首页
+				28 书签按钮 gsc
+				29 书签按钮 Microsoft Clarity - Free Heatmaps & Session Recordings
+				30 书签按钮 Bing Webmaster Tools
+				31 书签按钮 公众号
+				32 弹出式按钮 包含隐藏书签的菜单
+			33 container
+				34 滚动区
+					35 HTML 内容 Exportieren Sie Ihre YouTube Wiedergabelisten in einer CSV und Text-Datei!, URL: tunemymusic.com/de/transfer/youtube-to-file
+						36 container
+							37 link Tune My Music, Value: tunemymusic.com/de
+							38 container
+								39 按钮 Select language
+								40 按钮 Select language
+								41 按钮 Navigation Menu
+							42 container
+								43 container
+									44 图像
+									45 图像 arrow
+									46 图像
+									47 标题 Export von YouTube als CSV oder Text-Datei, Value: 1
+										48 文本 Export von YouTube als CSV oder Text-Datei
+									49 文本 Exportieren Sie Ihre YouTube Musikbibliothek als CSV- oder TXT-Datei.
+									50 按钮 Lass uns starten
+									51 图像 Trustpilot
+									52 container Customer reviews powered by Trustpilot
+										53 HTML 内容 Trustpilot Custom Widget, URL: widget.trustpilot.com/trustboxes/5419b6ffb0d04a076446a9af/index.html?templateId=5419b6ffb0d04a076446a9af&businessunitId=60ac08af06952a0001120f16#locale=en-US&styleHeight=20px&styleWidth=100%25&token=71d6a56e-c468-47d7-b566-e1b009d32704&theme=dark
+											54 container
+												55 link Trustpilot reviews, Value: trustpilot.com/review/www.tunemymusic.com?utm_medium=trustbox&utm_source=MicroCombo
+												56 文本 Rated Excellent. 4.5 out of 5. 631 reviews on Trustpilot
+												57 文本 Click to view the company's Trustpilot profile
+								58 标题 Unterstützung für alle Musikplattformen, Value: 2
+									59 文本 Unterstützung für alle Musikplattformen
+								60 文本 Wähle eine Quellplattform, um den Transfer zu starten
+								61 container
+									62 文本栏 (settable) Plattform suchen
+									63 图像
+								64 按钮 YouTube
+								65 按钮 Spotify
+								66 按钮 Apple Music
+								67 按钮 YouTube Music
+								68 按钮 Deezer
+								69 按钮 TIDAL
+								70 按钮 Amazon Music
+								71 按钮 SoundCloud
+								72 按钮 Yandex Music
+								73 按钮 Qobuz
+								74 按钮 Beatport
+								75 按钮 iTunes
+								76 按钮 Pandora
+								77 按钮 Anghami
+								78 按钮 KKBOX
+								79 按钮 last.fm
+								80 按钮 SoundMachine
+								81 按钮 Boomplay
+								82 按钮 Audiomack
+								83 按钮 Text
+								84 按钮 Datei
+								85 按钮 URL
+								86 标题 Wie exportiere ich eine YouTube-Wiedergabeliste in eine CSV- oder TXT-Datei?, Value: 2
+									87 文本 Wie exportiere ich eine YouTube-Wiedergabeliste in eine CSV- oder TXT-Datei?
+								88 container
+									89 弹出式按钮 Quelle YouTube
+									90 图像
+									91 弹出式按钮 Ziel Export to file
+								92 container
+									93 text Tune My Music  liest deine YouTube-Bibliothek Dann sammelt er jedes passende Lied in einer herunterladbaren Datei, die du behalten oder überall hin verschieben kannst.
+								94 container
+									95 图像
+									96 文本 Verbunden
+									97 图像
+									98 文本 Verbunden
+									99 标题 Schritt 1 - Verbinde deine Konten, Value: 3
+										100 文本 Schritt 1 - Verbinde deine Konten
+									101 文本 Melde dich bei YouTube als deine Quelle an. Tune My Music liest deine Bibliothek und exportiert sie in eine Datei – kein Zielkonto erforderlich.
+									102 图像
+									103 标题 Schritt 2 - Wähle aus, was übertragen werden soll, Value: 3
+										104 文本 Schritt 2 - Wähle aus, was übertragen werden soll
+									105 文本 Wähle die Wiedergabelisten, Lieblingssongs, Alben oder Künstler, die du verschieben möchtest. Übertrage deine gesamte Bibliothek auf einmal oder nur einige Wiedergabelisten.
+									106 图像
+									107 图像
+									108 图像
+									109 标题 Schritt 3 - Wir passen an und exportieren, Value: 3
+										110 文本 Schritt 3 - Wir passen an und exportieren
+									111 文本 Tune My Music sammelt deine Songs und exportiert sie in eine herunterladbare Datei. Die Fortschrittsanzeige füllt sich, während jeder Song hinzugefügt wird.
+									112 图像
+									113 图像
+									114 图像
+									115 标题 Exportiere vollständigen Bericht, Value: 3
+										116 文本 Exportiere vollständigen Bericht
+									117 文本 Erhalte einen vollständigen Bericht über das, was exportiert wurde. Lade deine Datei herunter, um sie als Backup zu behalten oder sie später in jeden Dienst hochzuladen.
+								118 图像
+								119 图像 arrow
+								120 图像
+								121 标题 Wichtige Informationen zum Transfer von YouTube zu Export to file, Value: 2
+									122 文本 Wichtige Informationen zum Transfer von YouTube zu Export to file
+								123 文本 Jede Musikplattform unterstützt über ihre API leicht unterschiedliche Funktionen. Hier sind die kleinen Dinge, die für diesen Transfer zu beachten sind
+								124 标题 Wird von YouTube nach Export to file übertragen:, Value: 4
+									125 图像
+									126 文本 Wird von YouTube nach Export to file übertragen:
+								127 container
+									128 图像 Playlists
+								129 文本 Playlists
+								130 container
+									131 图像 Lieblingslieder
+								132 文本 Lieblingslieder
+								133 container
+									134 图像 Lieblingskünstler
+								135 文本 Lieblingskünstler
+								136 container
+									137 标题 Entdecke die Funktionen von Tune My Music, Value: 3
+										138 文本 Entdecke die Funktionen von Tune My Music
+									139 文本 Übertrage deine Musik, synchronisiere automatisch deine Wiedergabelisten und teile Musik über verschiedene Plattformen – wir haben alles für dich!
+									140 link Übertragen Kopiere Wiedergabeliste und Musikbibliothek zwischen Musikdiensten, Value: tunemymusic.com/de/features/transfer
+									141 link Synchronisierung Halte 2 Wiedergabelisten von 2 Musikdiensten immer synchronisiert, Value: tunemymusic.com/de/features/sync
+									142 link Teilen Teile deine Musik mit Freunden, die andere Musikdienste nutzen., Value: tunemymusic.com/de/features/share
+									143 link Generieren Erstelle die perfekte Wiedergabeliste in Sekunden, Value: tunemymusic.com/de/features/playlist-generator
+									144 link Organisieren Behebe Duplikate, verwende Massenaktionen und arrangiere Wiedergabelisten in Minuten, Value: tunemymusic.com/de/features/playlist-organizer
+									145 link Backup Backup deiner gesamten Musikbibliothek, Value: tunemymusic.com/de/features/backup
+							146 container
+								147 图像 Conversation Table Background
+								148 标题 Beliebte Konvertierungen, Value: 3
+									149 text Beliebte Konvertierungen
+								150 link YouTube Spotify Transfer from YouTube to Spotify, Value: tunemymusic.com/de/transfer/youtube-to-spotify
+								151 link YouTube Apple Migrate your YouTube playlists to Apple Music, Value: tunemymusic.com/de/transfer/youtube-to-apple-music
+								152 link YouTube YouTubeMediaConnect Move your YouTube music library to YouTube Music, Value: tunemymusic.com/de/transfer/youtube-to-youtube-music
+								153 link YouTube Pandora Transfer from YouTube to Pandora, Value: tunemymusic.com/de/transfer/youtube-to-pandora
+								154 link YouTube Yandex Move your YouTube music library to Yandex Music, Value: tunemymusic.com/de/transfer/youtube-to-yandex-music
+								155 link YouTube KKBOX Switch from YouTube to KKBOX, Value: tunemymusic.com/de/transfer/youtube-to-kkbox
+								156 link Spotify ToFile Transfer from Spotify to Datei, Value: tunemymusic.com/de/transfer/spotify-to-file
+								157 link Apple ToFile Transfer from Apple Music to Datei, Value: tunemymusic.com/de/transfer/apple-music-to-file
+								158 link YouTubeMediaConnect ToFile Transfer from YouTube Music to Datei, Value: tunemymusic.com/de/transfer/youtube-music-to-file
+								159 link Pandora ToFile Transfer from Pandora to Datei, Value: tunemymusic.com/de/transfer/pandora-to-file
+								160 link Yandex ToFile Transfer from Yandex Music to Datei, Value: tunemymusic.com/de/transfer/yandex-music-to-file
+								161 link KKBOX ToFile Transfer from KKBOX to Datei, Value: tunemymusic.com/de/transfer/kkbox-to-file
+							162 图像
+							163 标题 Immer glücklich zu helfen., Value: 3
+								164 文本 Immer glücklich zu helfen.
+							165 文本 Stellen Sie uns Ihre Fragen
+							166 link FAQ, Value: tunemymusic.com/de/help
+							167 link KONTAKTIEREN SIE UNS, Value: tunemymusic.com/de/contact-us
+							168 内容列表
+								169 container
+									170 文本 Tune My Music
+									171 link Startseite, Value: tunemymusic.com/de
+									172 link Einloggen, Value: tunemymusic.com/de/transfer/youtube-to-file#
+									173 link Meine Einstellungen, Value: tunemymusic.com/de/settings
+									174 link Blog, Value: blog.tunemymusic.com/de/
+									175 link Abo-Pläne, Value: tunemymusic.com/de/plans
+									176 link Playlist-Generator, Value: tunemymusic.com/de/features/playlist-generator
+									177 link Wiedergabelisten-Organizer, Value: tunemymusic.com/de/features/playlist-organizer
+								178 container
+									179 文本 Hilfe
+									180 link FAQ, Value: tunemymusic.com/de/help
+									181 link KONTAKTIEREN SIE UNS, Value: tunemymusic.com/de/contact-us
+								182 container
+									183 文本 Rechtlich
+									184 link Nutzungsbedingungen, Value: tunemymusic.com/de/terms-of-use
+									185 link Datenschutz-Bestimmungen, Value: tunemymusic.com/de/privacy-policy
+							186 link Facebook, Value: facebook.com/TuneMyMusic
+							187 link X, Value: x.com/TuneMyMusic
+							188 container
+								189 text ©  2026  Tune My Music
+							190 图像
+			191 container 信息栏容器
+				192 container 信息栏
+					193 container
+						194 文本 “ChatGPT”已开始调试此浏览器
+						195 按钮 取消
+					196 按钮 关闭
+			197 滚动区
+				198 HTML 内容 __MSG_name__, URL: chrome-extension://hhfkpjffbhledfpkhhcoidplcebgdgbk/sidepanel.html
+					199 container
+						200 HTML 内容 AITDK SEO Extension, URL: extension.aitdk.com/?panel=sidePanel&v=3.0.0
+							201 container
+								202 按钮
+								203 按钮 Refresh report
+								204 按钮 Switch to overlay
+								205 按钮 Hide panel (Alt + D)
+								206 标题 AITDK, Value: 1
+									207 link AITDK, Value: aitdk.com/?utm_source=extension
+								208 标题 www.tunemymusic.com, Value: 2
+									209 文本 www.tunemymusic.com
+								210 标签组
+									211 标签 (selected) Overview, Value: 1
+										212 图像
+										213 文本 Overview
+									214 标签 (settable, integer) Traffic, Value: 0
+										215 图像
+										216 文本 Traffic
+									217 标签 (settable, integer) Backlinks, Value: 0
+										218 图像
+										219 文本 Backlinks
+									220 标签 (settable, integer) Adsense, Value: 0
+										221 图像
+										222 文本 Adsense
+									223 标签 (settable, integer) Issues, Value: 0
+										224 图像
+										225 文本 Issues
+									226 标签 (settable, integer) GEO, Value: 0
+										227 图像
+										228 文本 GEO
+									229 标签 (settable, integer) SERP, Value: 0
+										230 图像
+										231 文本 SERP
+									232 标签 (settable, integer) Density, Value: 0
+										233 图像
+										234 文本 Density
+									235 标签 (settable, integer) Headings, Value: 0
+										236 图像
+										237 文本 Headings
+									238 标签 (settable, integer) Images, Value: 0
+										239 图像
+										240 文本 Images
+									241 标签 (settable, integer) Links, Value: 0
+										242 图像
+										243 文本 Links
+									244 标签 (settable, integer) Social, Value: 0
+										245 图像
+										246 文本 Social
+									247 标签 (settable, integer) Hreflangs, Value: 0
+										248 图像
+										249 文本 Hreflangs
+									250 标签 (settable, integer) Structured, Value: 0
+										251 图像
+										252 文本 Structured
+									253 标签 (settable, integer) Whois, Value: 0
+										254 图像
+										255 文本 Whois
+									256 标签 (settable, integer) Settings, Value: 0
+										257 图像
+										258 文本 Settings
+									259 link Archive, Value: web.archive.org/web/www.tunemymusic.com
+									260 link Similarweb, Value: similarweb.com/website/www.tunemymusic.com
+									261 link Semrush, Value: semrush.com/analytics/overview/?searchType=domain&q=https://www.tunemymusic.com/de/transfer/youtube-to-file
+									262 link Ahrefs, Value: app.ahrefs.com/site-explorer/overview/v2/subdomains/live?target=www.tunemymusic.com
+									263 link PageSpeed, Value: pagespeed.web.dev/analysis?url=https://www.tunemymusic.com/de/transfer/youtube-to-file
+									264 link Twitter, Value: twitter.com/blankwebdev
+								265 link Submit Your Product to 100+ Directories, Help: Save 40 hours · Submit Your Product to 100+ Directories, Value: submitdirs.com/?utm_source=aitdk-seo-extension-s1#pricing
+								266 container Overview (showing 0-100 of 101 items)
+									267 文本 Title
+									268 按钮 Title Tag
+									269 文本 74
+									270 文本 /
+									271 文本 60
+									272 文本 Exportieren Sie Ihre YouTube Wiedergabelisten in einer CSV und Text-Datei!
+									273 文本 Description
+									274 按钮 Meta Description
+									275 文本 72
+									276 文本 /
+									277 文本 160
+									278 文本 Übertragen Sie Ihre YouTube-Lieblingsmusik zu Ihrem Export to file-Konto
+									279 文本 Keywords
+									280 按钮 Meta Keywords
+									281 文本 74
+									282 文本 /
+									283 文本 100
+									284 文本 Exportieren Sie Ihre YouTube Wiedergabelisten in einer CSV und Text-Datei!
+									285 文本 URL
+									286 按钮 Page URL
+									287 文本 https://
+									288 文本 www.tunemymusic.com/
+									289 文本 de/
+									290 文本 transfer/
+									291 文本 youtube-to-file
+									292 文本 Canonical
+									293 按钮 Canonical URL
+									294 图像
+									295 文本 Missing
+									296 文本 Domain Creation
+									297 按钮 Domain Creation Date
+									298 文本 2017-12-28 09:01:17 UTC
+									299 文本 Domain Expiration
+									300 按钮 Domain Expiration Date
+									301 文本 2026-12-28 09:01:17 UTC
+									302 文本 Favicon
+									303 按钮 Favicon
+									304 文本 SSR Check
+									305 按钮 Server-Side Rendering Check
+									306 图像 favicon
+									307 切换 off
+									308 文本 Robots Tag
+									309 按钮 Meta Robots Tag
+									310 文本 X-Robots-Tag
+									311 按钮 X-Robots-Tag Header
+									312 文本 N/A
+									313 文本 N/A
+									314 link robots.txt, Value: tunemymusic.com/robots.txt
+									315 按钮 robots.txt
+									316 link sitemap.xml, Value: tunemymusic.com/sitemap.xml
+									317 按钮 XML Sitemap
+									318 图像
+									319 文本 Available
+									320 图像
+									321 文本 Available
+									322 文本 Google Analytics
+									323 按钮 Google Analytics
+									324 文本 Google AdSense
+									325 按钮 Google AdSense
+									326 图像
+									327 文本 Available
+									328 图像
+									329 文本 Missing
+									330 文本 Word Count
+									331 按钮 Word Count
+									332 文本 Lang
+									333 按钮 HTML Lang Attribute
+									334 文本 424
+									335 文本 de
+									336 图像
+									337 文本 1
+									338 图像
+									339 文本 3
+									340 图像
+									341 文本 13
+									342 图像
+									343 文本 1
+									344 图像
+									345 文本 0
+									346 图像
+									347 文本 0
+									348 文本 Images
+									349 文本 10
+									350 文本 Unique
+									351 文本 9
+									352 文本 Without Alt
+									353 文本 3
+									354 文本 Without Title
+									355 文本 10
+									356 文本 Links
+									357 文本 35
+									358 文本 Unique
+									359 文本 29
+									360 文本 Internal
+									361 文本 32
+									362 文本 External
+									363 文本 3
+									364 文本 Dofollow
+									365 文本 35
+									366 文本 Nofollow
+			367 滑块 侧边栏大小调整手柄（可拖动）, Secondary Actions: Decrement, Increment
+			368 container
+				369 文本 AITDK SEO Extension - 流量/关键词/Whois/SEO分析器
+				370 复选框 固定到工具栏, Value: 0
+				371 按钮 关闭侧边栏
+			372 弹出式按钮 标签页搜索
+			373 container
+				374 标签组
+					375 标签 (settable, boolean) Home - Bing Webmaster Tools, Value: off
+						376 按钮 关闭
+					377 标签组 分组“🔎 竞品调研”- 1 个标签页•  Exportieren Sie Ihre YouTube Wiedergabelisten… - 已展开
+					378 标签 (selected, settable, boolean) Exportieren Sie Ihre YouTube Wiedergabelisten in einer CSV und Text-Datei! - 属于“🔎 竞品调研”群组, Value: on
+						379 按钮 关闭
+			380 按钮 新标签页
+			381 按钮 打开 Chrome 中的 Gemini
+	382 关闭按钮
+	383 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	384 最小化按钮
+385 menu bar
+	386 Chrome
+	387 文件
+	388 编辑
+	389 显示
+	390 历史记录
+	391 书签
+	392 个人资料
+	393 标签页
+	394 窗口
+	395 帮助
+
+The focused UI element is 211 标签 (selected) Overview, Value: 1

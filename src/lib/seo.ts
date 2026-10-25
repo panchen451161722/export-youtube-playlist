@@ -1,4 +1,5 @@
 import { envConfigs } from '@/config';
+import { hasGermanContent, pageLocales } from '@/config/locale';
 import { baseLocale, locales, localizeUrl } from '@/paraglide/runtime.js';
 
 type AppLocale = (typeof locales)[number];
@@ -65,7 +66,9 @@ export function absoluteUrl(path: string): string {
 
 export function localizedPageUrl(path: string, locale: string): string {
   return localizeUrl(absoluteUrl(path || '/'), {
-    locale: locale as AppLocale,
+    locale: (locale === 'de' && !hasGermanContent(path)
+      ? 'en'
+      : locale) as AppLocale,
   }).href;
 }
 
@@ -80,7 +83,7 @@ export function publicPageSeo({
   description,
   path,
   locale,
-  availableLocales = locales,
+  availableLocales = pageLocales(path),
   type = 'website',
   image = '/apple-touch-icon.png',
   imageAlt = title,
@@ -92,7 +95,8 @@ export function publicPageSeo({
 }: PublicSeoOptions) {
   const canonical = localizedPageUrl(path, locale);
   const socialImage = absoluteUrl(image);
-  const ogLocale = locale === 'zh' ? 'zh_CN' : 'en_US';
+  const ogLocale =
+    locale === 'zh' ? 'zh_CN' : locale === 'de' ? 'de_DE' : 'en_US';
   const defaultLocale = availableLocales.includes(baseLocale)
     ? baseLocale
     : availableLocales[0];

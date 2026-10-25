@@ -1,0 +1,85 @@
+The following is a diff from the previous accessibility tree for Window: "Export YouTube Playlist to CSV | Free Playlist Exporter" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 249-349
+~							50 text ★ ★ ★ ★ ★ 4.9 / 5 · 200+ exports " Clean UI, fast export. Exactly what I needed. " —  Nadia S. Ensure your playlist is public or unlisted. If its private, make it public and try again. Need help?
+~									194 标签 (settable, integer) Overview, Value: 0
+~									218 标签 (selected) Headings, Value: 1
++								383 container Headings
++									384 按钮 All 34
++									385 按钮 1
++									386 按钮 2
++									387 按钮 0
++									388 按钮 1
++									389 按钮 10
++									390 按钮 20
++									391 搜索文本字段 (settable) Search heading text...
++									392 按钮 Copy
++									393 container
++										394 图像
++										395 文本 MYFRESHTOOLS
++										396 图像
++										397 文本 Export YouTube Playlist to CSV
++										398 图像
++										399 文本 Convert Your Playlist to Excel – Fast, Secure & EasyNow export to JSON, Markdown, HTML, XML, TXT, SQL & Notion-ready formats
++										400 图像
++										401 文本 Export YouTube Playlist to CSV, Excel & More — in Seconds
++										402 图像
++										403 文本 The Fastest Way to Organize, Analyze & Back Up Your YouTube Content
++										404 图像
++										405 文本 Why Export Your YouTube Playlist?
++										406 图像
++										407 文本 Export Formats Supported
++										408 图像
++										409 文本 What Data Gets Exported
++										410 图像
++										411 文本 Free Playlist Insights — Included With Every Export
++										412 图像
++										413 文本 Weekly Auto Backup — Never Lose Your Playlist Data
++										414 图像
++										415 文本 How to Export a YouTube Playlist
++										416 图像
++										417 文本 Frequently Asked Questions (FAQs)
++										418 图像
++										419 文本 🔗 Explore Related Tools
++										420 图像
++										421 文本 Popular playlist-export guides
++										422 图像
++										423 文本 Join the Conversation
++										424 图像
++										425 文本 Sebastian Müller
++										426 图像
++										427 文本 Rajan Elangovan From Myfreshtools
++										428 图像
++										429 文本 generalmail
++										430 图像
++										431 文本 Rajan Elangovan From Myfreshtools
++										432 图像
++										433 文本 alkreias
++										434 图像
++										435 文本 Rajan Elangovan From Myfreshtools
++										436 图像
++										437 文本 Sergei
++										438 图像
++										439 文本 ming wai chong
++										440 图像
++										441 文本 Rajan Elangovan From Myfreshtools
++										442 图像
++										443 文本 Andre Kellermann
++										444 图像
++										445 文本 Rajan Elangovan From Myfreshtools
++										446 图像
++										447 文本 Bill Jelen
++										448 图像
++										449 文本 Rajan Elangovan From Myfreshtools
++										450 图像
++										451 文本 Reto Wahli
++										452 图像
++										453 文本 Rajan From Myfreshtools ✅
++										454 图像
++										455 文本 MYFRESHTOOLS
++										456 图像
++										457 文本 POPULAR TOOLS
++										458 图像
++										459 文本 USEFUL LINKS
++										460 图像
++										461 文本 CONTACT
+The focused UI element is 218 标签 (selected) Headings, Value: 1

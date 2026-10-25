@@ -1,0 +1,9 @@
+The following is a diff from the previous accessibility tree for Window: "Tune My Music Pläne" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 617-624
+~							518 切换 on
+~								519 复选框 1
+~							521 按钮 $5.5 / Monat Monatliche Abrechnung
+~							526 切换 on
+~								527 复选框 1
+~							529 按钮 $9.99 / Monat Monatliche Abrechnung
+The focused UI element is 528 按钮 Monatlich

@@ -8,7 +8,7 @@ type Props = {
   selected: YouTubeExportFormat[];
   onChange: (formats: YouTubeExportFormat[]) => void;
   disabled?: boolean;
-  formats?: readonly (typeof YOUTUBE_EXPORT_FORMATS)[number][];
+  formats?: readonly { key: YouTubeExportFormat; label: string }[];
 };
 
 export function ExportFormatPicker({

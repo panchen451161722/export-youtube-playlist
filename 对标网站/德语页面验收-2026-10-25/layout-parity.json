@@ -1,0 +1,51 @@
+{
+  "viewport": {
+    "width": 1440,
+    "height": 1000
+  },
+  "sameLayout": true,
+  "german": {
+    "footer": "border-border bg-background text-foreground border-t",
+    "header": "sticky top-0 z-50 border-b border-[#18213b]/8 bg-[#f7f5ef]/90 backdrop-blur-xl dark:border-white/10 dark:bg-[#111827]/90",
+    "headerHeight": 73,
+    "sections": [
+      [
+        "SECTION",
+        "exporter",
+        "bg-background scroll-mt-14 px-5 py-14 sm:px-8 sm:py-24"
+      ],
+      ["SECTION", "", "bg-background px-5 pb-12 sm:px-8 sm:pb-16"],
+      ["SECTION", "features", "scroll-mt-20 px-5 py-24 sm:px-8"],
+      [
+        "SECTION",
+        "how-it-works",
+        "bg-background scroll-mt-20 px-5 py-24 sm:px-8"
+      ],
+      ["SECTION", "pricing", "scroll-mt-20 px-5 py-16 sm:px-8 sm:py-24"],
+      ["SECTION", "faq", "bg-background scroll-mt-20 px-5 py-24 sm:px-8"],
+      ["SECTION", "", "px-5 py-24 sm:px-8"]
+    ]
+  },
+  "english": {
+    "footer": "border-border bg-background text-foreground border-t",
+    "header": "sticky top-0 z-50 border-b border-[#18213b]/8 bg-[#f7f5ef]/90 backdrop-blur-xl dark:border-white/10 dark:bg-[#111827]/90",
+    "headerHeight": 73,
+    "sections": [
+      [
+        "SECTION",
+        "exporter",
+        "bg-background scroll-mt-14 px-5 py-14 sm:px-8 sm:py-24"
+      ],
+      ["SECTION", "", "bg-background px-5 pb-12 sm:px-8 sm:pb-16"],
+      ["SECTION", "features", "scroll-mt-20 px-5 py-24 sm:px-8"],
+      [
+        "SECTION",
+        "how-it-works",
+        "bg-background scroll-mt-20 px-5 py-24 sm:px-8"
+      ],
+      ["SECTION", "pricing", "scroll-mt-20 px-5 py-16 sm:px-8 sm:py-24"],
+      ["SECTION", "faq", "bg-background scroll-mt-20 px-5 py-24 sm:px-8"],
+      ["SECTION", "", "px-5 py-24 sm:px-8"]
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+The following is a diff from the previous accessibility tree for Window: "Wiedergabelisten zwischen Musi…en übertragen | Tune My Music" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 402-426
+~								400 标题 Übertragen Sie Ihre Musik von YouTube, Value: 2
++									428 text Übertragen Sie Ihre Musik von  YouTube
++								429 按钮 back
+~								401 text SCHRITT 2 / 4
++							430 container
++								431 按钮 Von YouTube-Konto laden
++								432 文本 Oder
++								433 文本 Kopieren Sie die URL der YouTube-Wiedergabeliste und fügen Sie sie hier ein:
++								434 文本栏 (settable) Kopieren Sie die URL der YouTube-Wiedergabeliste und fügen Sie sie hier ein:, Placeholder: URL der YouTube-Wiedergabeliste hier einfügen
++								435 按钮 (disabled) Von URL laden
+The focused UI element is 35 HTML 内容 Wiedergabelisten zwischen Musikdiensten übertragen | Tune My Music, URL: tunemymusic.com/de/transfer

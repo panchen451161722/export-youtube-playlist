@@ -1,0 +1,383 @@
+Window: "Export YouTube Playlist to CSV | Free Playlist Exporter", App: Google Chrome.
+0 标准窗口 Export YouTube Playlist to CSV | Free Playlist Exporter - Google Chrome - Stepan, URL: myfreshtools.com/youtube/playlistExport, Secondary Actions: Raise
+	1 container Export YouTube Playlist to CSV | Free Playlist Exporter - Google Chrome - Stepan, URL: myfreshtools.com/youtube/playlistExport
+		2 container
+			3 工具栏
+				4 按钮 返回
+				5 按钮 (disabled) 前进
+				6 按钮 重新加载
+				7 container
+					8 弹出式按钮 查看网站信息
+					9 文本栏 (settable) 地址和搜索栏, Value: myfreshtools.com/youtube/playlistExport, Placeholder: 问问 Google 或输入网址
+					10 按钮 为此标签页添加书签
+				11 container
+					12 弹出式按钮 打开 SubYourURL
+想要访问此网站
+					13 弹出式按钮 扩展程序
+					14 按钮 关闭侧边栏
+				15 按钮 Stepan
+				16 弹出式按钮 Chrome
+			17 工具栏 书签
+				18 工具栏 已保存的标签页分组
+					19 “已保存的标签页分组”按钮 “🔎 竞品调研”分组 - 已打开
+					20 “已保存的标签页分组”按钮 “☁️ Ozil 上线”分组 - 已关闭
+					21 按钮 标签页分组
+				22 分离器 分隔符
+				23 书签按钮 Google 趋势
+				24 书签按钮 smilarweb
+				25 书签按钮 Google Analytics | 首页
+				26 书签按钮 gsc
+				27 书签按钮 Microsoft Clarity - Free Heatmaps & Session Recordings
+				28 书签按钮 Bing Webmaster Tools
+				29 书签按钮 公众号
+				30 弹出式按钮 包含隐藏书签的菜单
+			31 container
+				32 滚动区
+					33 HTML 内容 Export YouTube Playlist to CSV | Free Playlist Exporter, URL: myfreshtools.com/youtube/playlistExport
+						34 container (showing 0-100 of 218 items)
+							35 container
+								36 按钮 menu
+								37 按钮
+							38 标题 Export YouTube Playlist to CSV, Value: 1
+								39 文本 Export YouTube Playlist to CSV
+							40 标题 Value: 2, Convert Your Playlist to Excel – Fast, Secure & Easy Now export to JSON, Markdown, HTML, XML, TXT, SQL & Notion-ready formats
+								41 text Convert Your Playlist to Excel – Fast, Secure & Easy Now export to JSON, Markdown, HTML, XML, TXT, SQL & Notion-ready formats
+							42 link NEW Try Bulk Export — up to 200 playlists at once →, Value: myfreshtools.com/bulk-youtube-playlist-export?utm_source=app&utm_medium=playlist_export_hero_pill&utm_campaign=single_to_bulk
+							43 text 🎉 Over  20,268  Playlists Successfully Exported (and Counting)! Start Yours Now.
+							44 container
+								45 文本 Paste Your YouTube Playlist URL
+								46 文本栏 (settable) Paste Your YouTube Playlist URL, Placeholder: https://www.youtube.com/watch?v=VIDEO_ID&list=PLAYLIST_ID or https://youtu.be/VIDEO_ID?list=PLAYLIST_ID
+							47 text ✅  One-click Export = One Credit ⏱️ Large playlists? We'll email you the file automatically.
+							48 按钮 EXPORT PLAYLIST NOW
+							49 按钮 ✨ No link handy? Try it with a sample playlist →
+							50 text ★ ★ ★ ★ ★ 4.9 / 5 · 200+ exports " Got my 500-video playlist in seconds. " —  Priya M. Ensure your playlist is public or unlisted. If its private, make it public and try again. Need help?
+							51 link Contact Support, Value: myfreshtools.com/contact
+							52 container Export YouTube Playlist to CSV
+								53 HTML 内容 www.google.com, URL: chrome-error://chromewebdata/
+									54 container
+										55 图像
+										56 文本 www.google.com
+										57 文本  将您重定向的次数过多。
+							58 标题 Export YouTube Playlist to CSV, Excel & More — in Seconds, Value: 4
+								59 文本 Export YouTube Playlist to CSV, Excel & More — in Seconds
+							60 标题 The Fastest Way to Organize, Analyze & Back Up Your YouTube Content, Value: 5
+								61 文本 The Fastest Way to Organize, Analyze & Back Up Your YouTube Content
+							62 text Managing YouTube playlists can be overwhelming—especially when they grow too large. Whether you're an educator, researcher, content creator, or developer, manually copying video details is frustrating and time-consuming. Our YouTube Playlist Export Tool makes it effortless. With one click, export your entire playlist as
+							63 文本 CSV, Excel (XLSX), JSON, Markdown, HTML, XML, TXT, SQL
+							64 文本 , or grab everything at once in a ZIP bundle—complete with titles, descriptions, URLs, thumbnails, view counts, likes, durations, tags, and more.
+							65 标题 Why Export Your YouTube Playlist?, Value: 5
+								66 文本 Why Export Your YouTube Playlist?
+							67 内容列表
+								68 文本 🚀 Instantly export YouTube playlists — no more manual work!
+								69 文本 📊 Download video data in CSV, Excel, JSON, XML, HTML, TXT, SQL & Markdown.
+								70 文本 📈 Get instant playlist insights: total views, duration, engagement rate & top videos.
+								71 文本 🕒 Save hours and avoid errors with automated metadata extraction.
+								72 文本 📧 Large playlists? We'll email your file automatically.
+								73 container
+									74 text 📦 Want to export multiple playlists at once?
+									75 link Try our Bulk YouTube Playlist Export tool →, Value: myfreshtools.com/bulk-youtube-playlist-export?utm_source=app&utm_medium=playlist_export_content_cross_sell&utm_campaign=single_to_bulk
+								76 文本 🔄 Weekly Auto Backup — get your playlist CSV delivered to your inbox every week on a schedule you set.
+								77 文本 🔒 Secure, fast, and no software installation needed.
+							78 标题 Export Formats Supported, Value: 5
+								79 文本 Export Formats Supported
+							80 文本 Every export format is generated entirely in your browser from the fetched metadata — no extra processing required. Choose the format that fits your workflow:
+							81 container
+								82 text 📄 CSV  — Classic spreadsheet format, opens directly in Excel or Google Sheets. Perfect for sorting, filtering, and bulk data analysis. 📊 Excel (XLSX)  — Native Excel workbook with all playlist fields formatted and ready for pivot tables or dashboards. 🔵 JSON  — Structured data with enriched, typed fields. Ideal for developers, APIs, and automation pipelines. 📝 Markdown  — Clean table format for documentation, wikis, GitHub READMEs, and Notion pages. 🌐 HTML  — A fully self-contained interactive page with search, sort, and filter — share it as a standalone file. 📃 TXT  — Simple plain-text list of titles and URLs, great for quick sharing or printing. 🗂️ XML  — Structured markup format for legacy systems, integrations, and data interchange. 🗄️ SQL  — Ready-to-run INSERT statements for importing playlist data directly into any SQL database. 📦 Download All (ZIP)  — Get every format above in a single ZIP file with one click.
+							83 标题 What Data Gets Exported, Value: 5
+								84 文本 What Data Gets Exported
+							85 文本 Our YouTube Playlist Export Tool extracts comprehensive metadata for every video in your playlist — giving you all the context you need for research, reporting, or automation.
+							86 container
+								87 text ✔️ Video Details:  Title, Description, Video ID, Video URL, Published Date, Added to Playlist Date. ✔️ Thumbnails:  Thumbnail URL (standard quality), HD Thumbnail URL (high-resolution). ✔️ Channel Info:  Video Owner Name, Video Owner Channel ID, Playlist Hosted Channel Name, Playlist ID. ✔️ Metadata & Tags:  Video Tags, Category ID, Default Audio Language. ✔️ Performance Metrics:  View Count, Like Count, Favorite Count, Comment Count. ✔️ Duration:  Video Duration in seconds and readable format. Shorts are auto-flagged. ✔️ Computed Fields (JSON/XLSX/HTML):  Channel URL, isShort flag, enriched typed numbers for direct analysis.
+							88 标题 Free Playlist Insights — Included With Every Export, Value: 5
+								89 文本 Free Playlist Insights — Included With Every Export
+							90 文本 Every export also unlocks an instant analytics snapshot of your playlist — no extra steps required:
+							91 内容列表
+								92 文本 📊 Total playlist duration and average video length
+								93 文本 👁️ Total view count across all videos
+								94 文本 💬 Average engagement rate (likes ÷ views)
+								95 文本 🎬 Count of YouTube Shorts in the playlist
+								96 文本 🏆 Top 3 most-viewed videos
+								97 文本 📉 Bottom 3 lowest-performing videos
+								98 文本 🏷️ Missing tags percentage — useful for SEO audits
+							99 标题 Weekly Auto Backup — Never Lose Your Playlist Data, Value: 5
+								100 文本 Weekly Auto Backup — Never Lose Your Playlist Data
+							101 文本 Paid plan users can schedule a weekly auto-backup of any YouTube playlist. Set it once and receive the latest playlist CSV directly in your inbox every week — no manual exports needed.
+							102 内容列表
+								103 文本 📅 Choose your preferred day of the week for delivery (Sunday through Saturday)
+								104 文本 📧 Receive a fresh playlist CSV by email automatically each week
+								105 文本 ⚡ Uses 1 credit per weekly backup run
+								106 文本 🔄 Manage, pause, or delete your backup schedule anytime from the tool
+								107 文本 📋 Each email includes video count, playlist link, and the attached CSV file
+								108 文本 🔒 Available on paid plans — free users can upgrade to enable this feature
+							109 标题 How to Export a YouTube Playlist, Value: 5
+								110 文本 How to Export a YouTube Playlist
+							111 内容列表
+								112 container
+									113 text 1 Copy the YouTube playlist URL from your browser or the YouTube app.
+								114 container
+									115 text 2 Log in to MyFreshTools and go to the YouTube Playlist Export tool.
+								116 container
+									117 text 3 Paste the URL and click  Export Playlist Now .
+								118 container
+									119 text 4 Once exported, choose your download format: CSV, Excel, JSON, Markdown, HTML, XML, TXT, SQL, or ZIP.
+								120 container
+									121 text 5 Large playlists (2000+ videos)? We'll email the file to you automatically.
+							122 标题 Frequently Asked Questions (FAQs), Value: 5
+								123 文本 Frequently Asked Questions (FAQs)
+							124 text 📊 What export formats are supported? You can export your YouTube playlist as CSV, Excel (XLSX), JSON, Markdown, HTML, TXT, XML, and SQL. You can also download all formats at once in a single ZIP file — perfect if you need the data in multiple places. 📝 Can I export my playlist to Notion? Yes! Export as Markdown — the table format is directly compatible with Notion's Markdown import. Paste it in and your playlist data appears as a structured Notion table instantly. 📄 How do I export a YouTube playlist to CSV or Excel? Our YouTube playlist exporter lets you export your playlist to a CSV or native Excel (XLSX) file. Paste the playlist URL, click Export, and choose CSV or Excel from the download buttons. The file opens directly in Excel or Google Sheets for sorting, filtering, and analysis. 🔵 Can I export playlist data as JSON? Yes. The JSON export includes enriched, typed fields — view counts and like counts as numbers, duration in seconds, a computed isShort flag, and a tags array. Ideal for developers building automation or integrations on top of YouTube data. 🗄️ Can I import the playlist into a SQL database? The SQL export generates ready-to-run INSERT statements with a CREATE TABLE definition. Copy and paste it into any SQL client (PostgreSQL, MySQL, SQLite) to have your playlist data in a database instantly. 📈 What playlist insights are included? Every export automatically shows playlist analytics: total duration, average video length, total view count, average engagement rate, YouTube Shorts count, top 3 and bottom 3 videos by views, and a missing tags percentage — useful for content audits and SEO reviews. ⏳ How long does the export take? Typically under a minute for most playlists. If your playlist has 2,000+ videos, we'll automatically email the file to you rather than making you wait. 💰 Free vs Paid Account? Free accounts export 50% of the playlist. Paid accounts export 100% with no limits. All export formats (CSV, Excel, JSON, Markdown, HTML, XML, TXT, SQL, ZIP) are available on both plans. 🎵 Can I export YouTube Music playlists? Yes! Our tool supports YouTube Music playlists. Paste the playlist URL and export track titles, channel names, durations, and all available metadata in any supported format. 🔁 How do I back up or transfer my YouTube playlists? Export your playlist to CSV or JSON using our tool — this creates a complete, portable backup of all video details. Use the video URLs to recreate the playlist on another account or platform. For ongoing protection, use the Weekly Auto Backup feature to receive an updated CSV in your inbox every week automatically. 🔄 Can I set up automatic weekly backups of my YouTube playlist? Yes! Paid plan users can set up a weekly auto-backup schedule directly from the export tool. Pick a day of the week, and we'll automatically export your playlist and deliver the CSV to your email inbox every week. You can manage, update, or remove backup schedules at any time — no manual exports needed. 🔗 How can I extract all video URLs from a YouTube playlist? Our YouTube playlist URL extractor pulls all video URLs from your playlist into the CSV or TXT export. Paste the playlist link, click Export, and get a complete list of video links in seconds. 🖼️ Can I download YouTube playlist thumbnails? Yes! Both the standard thumbnail URL and HD thumbnail URL are included in every export format. The HTML export even renders thumbnail images directly in the table. 📱 Can I export a playlist from my Android or iOS device? Yes, just copy the playlist URL from the YouTube app and paste it into our tool on your mobile browser — no PC or software installation needed. ⏱️ How can I find out the total length of a YouTube playlist? Our tool shows total playlist duration and average video length automatically after every export — no need to sum durations manually in Excel. You can also use the duration column in the CSV or Excel export. 📑 Can I scrape YouTube playlist data or extract video titles? Our YouTube playlist scraper extracts video titles, URLs, descriptions, tags, view counts, and more into any format you choose. It's perfect for content audits, competitive analysis, or building datasets. 🌐 Is this tool available online without any installation? Yes — it's 100% online. Paste a playlist URL, click Export, and download your file. No browser extension, no desktop app, no API key needed. 📋 How do I convert a YouTube playlist to a text file? Use the TXT export option — it generates a clean plain-text file with video titles and URLs, one video per entry. Great for quick sharing, printing, or pasting into other tools. 🌍 Does the tool support playlists in other languages? Our tool supports playlists in any language. Paste the playlist URL and all metadata — titles, descriptions, tags — is exported exactly as it appears on YouTube, regardless of language or character set. 🔗 What is the YouTube playlist URL format? YouTube playlist URLs look like
+							125 文本 https://www.youtube.com/playlist?list=ID
+							126 text  or
+							127 文本 https://www.youtube.com/watch?v=VIDEO_ID&list=PLxxxxxxxxx
+							128 text . Copy either format from your browser or the YouTube app and paste it directly into our tool. 🛠️ What is the best YouTube playlist export tool? MyFreshTools is a top choice for exporting YouTube playlists — offering the widest format support (CSV, Excel, JSON, Markdown, HTML, XML, TXT, SQL, ZIP), built-in playlist analytics, and a fast one-click workflow accessible from any device. 🔄 Can I export a YouTube playlist to another account or platform? Export your playlist to CSV or JSON, then use the video URLs to recreate the playlist in another YouTube account manually or with a playlist importer tool. The HTML export is also shareable as a standalone file.
+							129 按钮 Start Exporting Now
+							130 container Related tools
+								131 标题 🔗 Explore Related Tools, Value: 5
+									132 文本 🔗 Explore Related Tools
+								133 文本 More tools that pair well with this one.
+								134 内容列表
+									135 link Bulk Playlist Export, Value: myfreshtools.com/bulk-youtube-playlist-export
+									136 link YouTube Music Playlist Export, Value: myfreshtools.com/youtube/music-playlist-export
+									137 link Playlist Sorter, Value: myfreshtools.com/youtube/playlist-sorter
+									138 link Playlist Manager, Value: myfreshtools.com/youtube/playlist-manager
+									139 link Playlist Backup & Restore, Value: myfreshtools.com/youtube/playlist-backup
+							140 container Popular playlist-export guides
+								141 标题 Popular playlist-export guides, Value: 6
+									142 文本 Popular playlist-export guides
+								143 内容列表
+									144 container
+										145 AXListMarker •
+										146 link How to export a YouTube playlist to CSV, Value: myfreshtools.com/blog/how-to-export-youtube-playlist-to-csv
+									147 container
+										148 AXListMarker •
+										149 link How to export a YouTube playlist to Excel, Value: myfreshtools.com/blog/how-to-export-youtube-playlist-to-excel
+									150 container
+										151 AXListMarker •
+										152 link How to export a YouTube playlist to text, Value: myfreshtools.com/blog/how-to-export-youtube-playlist-to-text
+									153 container
+										154 AXListMarker •
+										155 link Export a YouTube Music playlist to CSV, Value: myfreshtools.com/blog/export-youtube-music-playlist-to-csv-online
+									156 container
+										157 AXListMarker •
+										158 link Export a private YouTube playlist to CSV, Value: myfreshtools.com/blog/export-private-youtube-playlist-to-csv
+									159 container
+										160 AXListMarker •
+										161 link Export a YouTube playlist to Google Sheets, Value: myfreshtools.com/blog/export-youtube-playlist-to-google-sheets
+									162 container
+										163 AXListMarker •
+										164 link Export multiple YouTube playlists in bulk, Value: myfreshtools.com/bulk-youtube-playlist-export
+							165 container Notifications Alt+T
+							166 标题 Join the Conversation, Value: 2
+								167 文本 Join the Conversation
+							168 文本输入区 (settable) Sign in to leave a comment
+							169 按钮 (disabled) POST COMMENT
+							170 图像 Sebastian Müller
+							171 标题 Sebastian Müller, Value: 6
+								172 文本 Sebastian Müller
+							173 text •  2 months ago Dankeschön
+			174 container 信息栏容器
+				175 container 信息栏
+					176 container
+						177 文本 “ChatGPT”已开始调试此浏览器
+						178 按钮 取消
+					179 按钮 关闭
+			180 滚动区
+				181 HTML 内容 __MSG_name__, URL: chrome-extension://hhfkpjffbhledfpkhhcoidplcebgdgbk/sidepanel.html
+					182 container
+						183 HTML 内容 AITDK SEO Extension, URL: extension.aitdk.com/?panel=sidePanel&v=3.0.0
+							184 container
+								185 按钮
+								186 按钮 Refresh report
+								187 按钮 Switch to overlay
+								188 按钮 Hide panel (Alt + D)
+								189 标题 AITDK, Value: 1
+									190 link AITDK, Value: aitdk.com/?utm_source=extension
+								191 标题 www.myfreshtools.com, Value: 2
+									192 文本 www.myfreshtools.com
+								193 标签组
+									194 标签 (settable, integer) Overview, Value: 0
+										195 图像
+										196 文本 Overview
+									197 标签 (settable, integer) Traffic, Value: 0
+										198 图像
+										199 文本 Traffic
+									200 标签 (settable, integer) Backlinks, Value: 0
+										201 图像
+										202 文本 Backlinks
+									203 标签 (settable, integer) Adsense, Value: 0
+										204 图像
+										205 文本 Adsense
+									206 标签 (settable, integer) Issues, Value: 0
+										207 图像
+										208 文本 Issues
+									209 标签 (settable, integer) GEO, Value: 0
+										210 图像
+										211 文本 GEO
+									212 标签 (settable, integer) SERP, Value: 0
+										213 图像
+										214 文本 SERP
+									215 标签 (selected) Density, Value: 1
+										216 图像
+										217 文本 Density
+									218 标签 (settable, integer) Headings, Value: 0
+										219 图像
+										220 文本 Headings
+									221 标签 (settable, integer) Images, Value: 0
+										222 图像
+										223 文本 Images
+									224 标签 (settable, integer) Links, Value: 0
+										225 图像
+										226 文本 Links
+									227 标签 (settable, integer) Social, Value: 0
+										228 图像
+										229 文本 Social
+									230 标签 (settable, integer) Hreflangs, Value: 0
+										231 图像
+										232 文本 Hreflangs
+									233 标签 (settable, integer) Structured, Value: 0
+										234 图像
+										235 文本 Structured
+									236 标签 (settable, integer) Whois, Value: 0
+										237 图像
+										238 文本 Whois
+									239 标签 (settable, integer) Settings, Value: 0
+										240 图像
+										241 文本 Settings
+									242 link Archive, Value: web.archive.org/web/www.myfreshtools.com
+									243 link Similarweb, Value: similarweb.com/website/www.myfreshtools.com
+									244 link Semrush, Value: semrush.com/analytics/overview/?searchType=domain&q=https://www.myfreshtools.com/
+									245 link Ahrefs, Value: app.ahrefs.com/site-explorer/overview/v2/subdomains/live?target=www.myfreshtools.com
+									246 link PageSpeed, Value: pagespeed.web.dev/analysis?url=https://www.myfreshtools.com/
+									247 link Twitter, Value: twitter.com/blankwebdev
+								248 link Get Traffic, Backlinks & SERPs via API, Help: TabAPI.com · Get Traffic, Backlinks & SERPs via API, Value: tabapi.com/?utm_source=aitdk&utm_medium=extension&utm_content=sponsor
+								249 container Density (showing 0-100 of 347 items)
+									250 按钮 1 word 108
+									251 按钮 2 words 70
+									252 按钮 3 words 64
+									253 按钮 4 words 42
+									254 按钮 5 words 28
+									255 按钮 N-gram Phrase Length
+									256 搜索文本字段 (settable) Search keyword...
+									257 按钮 Copy 64
+									258 文本 Density = count ÷
+									259 文本 370
+									260 文本  words
+									261 按钮 Word Count
+									262 文本 Keyword
+									263 文本 Found in
+									264 按钮 Found In
+									265 文本 Count
+									266 文本 Density
+									267 文本 find missing videos
+									268 文本 Not in the title, meta description or H1
+									269 文本 2
+									270 文本 0.54
+									271 文本 %
+									272 文本 playlist to csv
+									273 文本 Not in the title, meta description or H1
+									274 文本 2
+									275 文本 0.54
+									276 文本 %
+									277 文本 how to export
+									278 文本 Not in the title, meta description or H1
+									279 文本 2
+									280 文本 0.54
+									281 文本 %
+									282 文本 home all tools
+									283 文本 Not in the title, meta description or H1
+									284 文本 1
+									285 文本 0.27
+									286 文本 %
+									287 文本 tools categories blog
+									288 文本 Not in the title, meta description or H1
+									289 文本 1
+									290 文本 0.27
+									291 文本 %
+									292 文本 categories blog pricing
+									293 文本 Not in the title, meta description or H1
+									294 文本 1
+									295 文本 0.27
+									296 文本 %
+									297 文本 started free start
+									298 文本 Not in the title, meta description or H1
+									299 文本 1
+									300 文本 0.27
+									301 文本 %
+									302 文本 free start free
+									303 文本 Not in the title, meta description or H1
+									304 文本 1
+									305 文本 0.27
+									306 文本 %
+									307 文本 powerful youtube tools
+									308 文本 H1
+									309 文本 H1
+									310 文本 1
+									311 文本 0.27
+									312 文本 %
+									313 文本 tools for creators
+									314 文本 T
+									315 文本 H1
+									316 文本 T H1
+									317 文本 1
+									318 文本 0.27
+									319 文本 %
+									320 文本 organize your youtube
+									321 文本 Not in the title, meta description or H1
+									322 文本 1
+									323 文本 0.27
+									324 文本 %
+									325 文本 tools by youtube
+									326 文本 Not in the title, meta description or H1
+									327 文本 1
+									328 文本 0.27
+									329 文本 %
+									330 文本 view all tools
+									331 文本 Not in the title, meta description or H1
+									332 文本 1
+									333 文本 0.27
+									334 文本 %
+									335 文本 youtube playlist exporter
+									336 文本 Not in the title, meta description or H1
+									337 文本 1
+									338 文本 0.27
+									339 文本 %
+									340 文本 export any playlist
+									341 文本 Not in the title, meta description or H1
+									342 文本 1
+									343 文本 0.27
+									344 文本 %
+									345 文本 playlist duplicate remover
+			346 滑块 侧边栏大小调整手柄（可拖动）, Secondary Actions: Decrement, Increment
+			347 container
+				348 文本 AITDK SEO Extension - 流量/关键词/Whois/SEO分析器
+				349 复选框 固定到工具栏, Value: 0
+				350 按钮 关闭侧边栏
+			351 弹出式按钮 标签页搜索
+			352 container
+				353 标签组
+					354 标签 (settable, boolean) Home - Bing Webmaster Tools, Value: off
+						355 按钮 关闭
+					356 标签组 分组“🔎 竞品调研”- 1 个标签页•  Wiedergabelisten zwischen Musikdiensten übertr… - 已展开
+					357 标签 (settable, boolean) Wiedergabelisten zwischen Musikdiensten übertragen | Tune My Music - 属于“🔎 竞品调研”群组, Value: off
+						358 按钮 关闭
+					359 标签 (settable, boolean) Wiedergabelisten zwischen Musikdiensten übertragen | Tune My Music, Value: off
+						360 按钮 关闭
+					361 标签 (selected, settable, boolean) Export YouTube Playlist to CSV | Free Playlist Exporter, Value: on
+						362 按钮 关闭
+			363 按钮 新标签页
+			364 按钮 打开 Chrome 中的 Gemini
+	365 关闭按钮
+	366 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	367 最小化按钮
+368 menu bar
+	369 Chrome
+	370 文件
+	371 编辑
+	372 显示
+	373 历史记录
+	374 书签
+	375 个人资料
+	376 标签页
+	377 窗口
+	378 帮助
+
+The focused UI element is 33 HTML 内容 Export YouTube Playlist to CSV | Free Playlist Exporter, URL: myfreshtools.com/youtube/playlistExport

@@ -1,0 +1,364 @@
+Window: "YouTube Tools for Creators | MyFreshTools", App: Google Chrome.
+0 标准窗口 YouTube Tools for Creators | MyFreshTools - Google Chrome - Stepan, URL: myfreshtools.com/, Secondary Actions: Raise
+	1 container YouTube Tools for Creators | MyFreshTools - Google Chrome - Stepan, URL: myfreshtools.com/
+		2 container
+			3 工具栏
+				4 按钮 返回
+				5 按钮 (disabled) 前进
+				6 按钮 重新加载
+				7 container
+					8 弹出式按钮 查看网站信息
+					9 文本栏 (settable) 地址和搜索栏, Value: myfreshtools.com, Placeholder: 问问 Google 或输入网址
+					10 按钮 为此标签页添加书签
+				11 container
+					12 弹出式按钮 打开 SubYourURL
+想要访问此网站
+					13 弹出式按钮 扩展程序
+					14 按钮 关闭侧边栏
+				15 按钮 Stepan
+				16 弹出式按钮 Chrome
+			17 工具栏 书签
+				18 工具栏 已保存的标签页分组
+					19 “已保存的标签页分组”按钮 “🔎 竞品调研”分组 - 已打开
+					20 “已保存的标签页分组”按钮 “☁️ Ozil 上线”分组 - 已关闭
+					21 按钮 标签页分组
+				22 分离器 分隔符
+				23 书签按钮 Google 趋势
+				24 书签按钮 smilarweb
+				25 书签按钮 Google Analytics | 首页
+				26 书签按钮 gsc
+				27 书签按钮 Microsoft Clarity - Free Heatmaps & Session Recordings
+				28 书签按钮 Bing Webmaster Tools
+				29 书签按钮 公众号
+				30 弹出式按钮 包含隐藏书签的菜单
+			31 container
+				32 滚动区
+					33 HTML 内容 YouTube Tools for Creators | MyFreshTools, URL: myfreshtools.com/
+						34 container
+							35 link MyFreshTools home, Value: myfreshtools.com/
+							36 按钮 Search tools
+							37 link Sign In, Value: myfreshtools.com/welcome/login
+							38 link Get Started Free, Value: myfreshtools.com/welcome/signup
+							39 按钮 Open menu
+							40 text Trusted by  29,492 + Users
+							41 标题 Powerful YouTube tools for creators, by creators., Value: 1
+								42 text Powerful YouTube tools for creators, by creators.
+							43 文本 Export playlists, find missing videos, remove duplicates, and organize your YouTube library — all in one place.
+							44 container
+								45 组合框 (settable) Search for a tool, Placeholder: Search for a tool (e.g. playlist export, duplicate remover...)
+								46 按钮 Search tools
+							47 内容列表
+								48 文本 Free to try
+								49 文本 No installation
+								50 文本 Works in your browser
+							51 container Popular Tools
+								52 标题 Popular Tools, Value: 2
+									53 文本 Popular Tools
+								54 文本 The most used tools by YouTube creators.
+								55 link View all tools, Value: myfreshtools.com/tools
+								56 link Value: myfreshtools.com/youtube/playlistExport, YouTube Playlist Exporter Export any playlist to CSV, Excel-compatible files, JSON and more. Free preview
+								57 link Playlist Duplicate Remover Clean up repeated videos in your playlists. Free preview, Value: myfreshtools.com/youtube/playlist-duplicate-remover
+								58 link Playlist Backup & Restore Save your playlists and restore them when needed. Free to try, Value: myfreshtools.com/youtube/playlist-backup
+								59 link Find Deleted Videos Recover the titles of missing or private videos in a playlist. Free preview, Value: myfreshtools.com/youtube/deleted-video-finder
+							60 container Browse by category
+								61 标题 Browse by category, Value: 2
+									62 文本 Browse by category
+								63 文本 Find the right tool for your needs.
+								64 link Playlist Tools, Value: myfreshtools.com/tools?category=playlist-tools
+								65 link Music Tools, Value: myfreshtools.com/tools?category=music-tools
+								66 link Video Research, Value: myfreshtools.com/tools?category=video-research
+								67 link Subscription Tools, Value: myfreshtools.com/tools?category=subscription-tools
+								68 link Developer Tools, Value: myfreshtools.com/tools?category=developer-tools
+								69 link More Tools, Value: myfreshtools.com/tools?category=more-tools
+							70 container How it works
+								71 标题 How it works, Value: 2
+									72 文本 How it works
+								73 文本 Get results in just 3 simple steps.
+								74 内容列表
+									75 container
+										76 标题 1. Choose a tool, Value: 3
+											77 text 1 .  Choose a tool
+										78 文本 Find the tool you need from the collection or search above.
+									79 container
+										80 标题 2. Provide input, Value: 3
+											81 text 2 .  Provide input
+										82 文本 Paste a YouTube URL or enter details as required.
+									83 container
+										84 标题 3. Get your results, Value: 3
+											85 text .  Get your results
+										86 文本 Download your files or view the results instantly.
+							87 container Why creators trust MyFreshTools
+								88 标题 Why creators trust MyFreshTools, Value: 2
+									89 文本 Why creators trust MyFreshTools
+								90 文本 Built for YouTube creators who manage large libraries.
+								91 文本 29,492+
+								92 文本 Registered users
+								93 文本 53
+								94 文本 YouTube tools
+								95 文本 122
+								96 文本 Free tools, no sign-up*
+								97 文本 5
+								98 文本 Free credits, no card
+							99 container Try it free. Upgrade when you need more.
+								100 标题 Try it free. Upgrade when you need more., Value: 2
+									101 文本 Try it free. Upgrade when you need more.
+								102 文本 Preview supported tools for free, then upgrade for full results, more credits and advanced features.
+								103 link View Pricing, Value: myfreshtools.com/pricing?utm_source=mft&utm_medium=home_pricing_cta&utm_campaign=upgrade_flow
+								104 link Starter $5.99/mo 100 credits, Value: myfreshtools.com/pricing?utm_source=mft&utm_medium=home_plan_starter&utm_campaign=upgrade_flow
+								105 link Most popular Growth $9.99/mo 200 credits, Value: myfreshtools.com/pricing?utm_source=mft&utm_medium=home_plan_growth&utm_campaign=upgrade_flow
+								106 link Pro $19.99/mo 400 credits, Value: myfreshtools.com/pricing?utm_source=mft&utm_medium=home_plan_pro&utm_campaign=upgrade_flow
+								107 link Business $39.99/mo 1000 credits, Value: myfreshtools.com/pricing?utm_source=mft&utm_medium=home_plan_business&utm_campaign=upgrade_flow
+							108 container Helpful guides & blog
+								109 标题 Helpful guides & blog, Value: 2
+									110 文本 Helpful guides & blog
+								111 文本 Tips, tutorials and guides for YouTube playlists and our tools.
+								112 link View all articles, Value: myfreshtools.com/blog
+								113 link How to Export YouTube Playlist to CSV How to Export YouTube Playlist to CSV, Value: myfreshtools.com/blog/how-to-export-youtube-playlist-to-csv
+								114 link Value: myfreshtools.com/blog/how-to-find-deleted-or-private-youtube-playlist-videos, How to Find Deleted or Private YouTube Playlist Videos How to Find Deleted or Private YouTube Playlist Videos
+								115 link Value: myfreshtools.com/blog/find-duplicate-videos-in-youtube-playlist, YouTube Playlist Duplicate Videos: Find and Remove Them YouTube Playlist Duplicate Videos: Find and Remove Them
+								116 link How to Export a YouTube Music Playlist How to Export a YouTube Music Playlist, Value: myfreshtools.com/blog/how-to-export-youtube-music-playlist
+							117 container FEATURED ON
+								118 标题 FEATURED ON, Value: 2
+									119 文本 FEATURED ON
+								120 container
+									121 link Featured on DivvLaunches, Value: divvlaunches.com/
+									122 link Verified DR - Verified Domain Rating for myfreshtools.com, Value: verifieddr.com/website/myfreshtools-com
+									123 link Featured on toolfame.com, Value: toolfame.com/item/myfreshtools
+									124 link Featured on saasfame.com, Value: saasfame.com/item/myfreshtools
+									125 link Featured on ProductFame, Value: productfame.com/
+									126 link Featured on Findly.tools, Value: findly.tools/myfreshtools?utm_source=myfreshtools
+									127 link Find us on Indie.Deals, Value: indie.deals/?ref=https%3A%2F%2Fwww.myfreshtools.com
+									128 link Featured on Twelve Tools, Value: twelve.tools/
+									129 link MyFreshTools - Featured on Startup Fame, Value: startupfa.me/s/myfreshtools?utm_source=www.myfreshtools.com
+									130 link Launched on StartupBase, Value: startupbase.io/products/myfreshtools?utm_source=startupbase&utm_medium=badge&utm_campaign=launch-badge-light
+									131 link MyFreshTools on Nick Launches, Value: nicklaunches.com/products/myfreshtools/
+									132 link Featured on DodoDirectory, Value: dododirectory.com/
+									133 link Featured on ShipBoost, Value: shipboost.io/tools/myfreshtools
+									134 link Featured on DeepLaunch.io, Value: deeplaunch.io/
+									135 link Listed on Needle Directory, Value: useneedle.net/directory/myfreshtools
+									136 link Featured on ufind.best, Value: ufind.best/products/myfreshtools
+							137 link MyFreshTools home, Value: myfreshtools.com/
+							138 文本 Better tools for your YouTube library — playlists, music, research and more.
+							139 container Tools
+								140 标题 Tools, Value: 2
+									141 文本 Tools
+								142 link All Tools, Value: myfreshtools.com/tools
+								143 link Categories, Value: myfreshtools.com/tools#categories
+								144 link Free Tools, Value: myfreshtools.com/free-tools
+								145 link Pricing, Value: myfreshtools.com/pricing?utm_source=mft&utm_medium=home_footer&utm_campaign=upgrade_flow
+								146 link Blog, Value: myfreshtools.com/blog
+							147 container Support
+								148 标题 Support, Value: 2
+									149 文本 Support
+								150 link Contact Us, Value: myfreshtools.com/contact
+								151 link Checklists & Templates, Value: myfreshtools.com/resources
+								152 link Privacy Policy, Value: myfreshtools.com/privacy-policy
+								153 link Terms of Use, Value: myfreshtools.com/terms-of-use
+							154 container
+								155 text ©  2026  MyFreshTools. All rights reserved.
+			156 container 信息栏容器
+				157 container 信息栏
+					158 container
+						159 文本 “ChatGPT”已开始调试此浏览器
+						160 按钮 取消
+					161 按钮 关闭
+			162 滚动区
+				163 HTML 内容 __MSG_name__, URL: chrome-extension://hhfkpjffbhledfpkhhcoidplcebgdgbk/sidepanel.html
+					164 container
+						165 HTML 内容 AITDK SEO Extension, URL: extension.aitdk.com/?panel=sidePanel&v=3.0.0
+							166 container
+								167 按钮
+								168 按钮 Refresh report
+								169 按钮 Switch to overlay
+								170 按钮 Hide panel (Alt + D)
+								171 标题 AITDK, Value: 1
+									172 link AITDK, Value: aitdk.com/?utm_source=extension
+								173 标题 www.myfreshtools.com, Value: 2
+									174 文本 www.myfreshtools.com
+								175 标签组
+									176 标签 (selected) Overview, Value: 1
+										177 图像
+										178 文本 Overview
+									179 标签 (settable, integer) Traffic, Value: 0
+										180 图像
+										181 文本 Traffic
+									182 标签 (settable, integer) Backlinks, Value: 0
+										183 图像
+										184 文本 Backlinks
+									185 标签 (settable, integer) Adsense, Value: 0
+										186 图像
+										187 文本 Adsense
+									188 标签 (settable, integer) Issues, Value: 0
+										189 图像
+										190 文本 Issues
+									191 标签 (settable, integer) GEO, Value: 0
+										192 图像
+										193 文本 GEO
+									194 标签 (settable, integer) SERP, Value: 0
+										195 图像
+										196 文本 SERP
+									197 标签 (settable, integer) Density, Value: 0
+										198 图像
+										199 文本 Density
+									200 标签 (settable, integer) Headings, Value: 0
+										201 图像
+										202 文本 Headings
+									203 标签 (settable, integer) Images, Value: 0
+										204 图像
+										205 文本 Images
+									206 标签 (settable, integer) Links, Value: 0
+										207 图像
+										208 文本 Links
+									209 标签 (settable, integer) Social, Value: 0
+										210 图像
+										211 文本 Social
+									212 标签 (settable, integer) Hreflangs, Value: 0
+										213 图像
+										214 文本 Hreflangs
+									215 标签 (settable, integer) Structured, Value: 0
+										216 图像
+										217 文本 Structured
+									218 标签 (settable, integer) Whois, Value: 0
+										219 图像
+										220 文本 Whois
+									221 标签 (settable, integer) Settings, Value: 0
+										222 图像
+										223 文本 Settings
+									224 link Archive, Value: web.archive.org/web/www.myfreshtools.com
+									225 link Similarweb, Value: similarweb.com/website/www.myfreshtools.com
+									226 link Semrush, Value: semrush.com/analytics/overview/?searchType=domain&q=https://www.myfreshtools.com/
+									227 link Ahrefs, Value: app.ahrefs.com/site-explorer/overview/v2/subdomains/live?target=www.myfreshtools.com
+									228 link PageSpeed, Value: pagespeed.web.dev/analysis?url=https://www.myfreshtools.com/
+									229 link Twitter, Value: twitter.com/blankwebdev
+								230 link Launch your AI product in one hour, Help: Save $80 · Launch your AI product in one hour, Value: shipany.ai/?ivt=blank&utm_source=aitdk-seo-extension
+								231 container Overview
+									232 文本 Title
+									233 按钮 Title Tag
+									234 文本 41
+									235 文本 /
+									236 文本 60
+									237 文本 YouTube Tools for Creators | MyFreshTools
+									238 文本 Description
+									239 按钮 Meta Description
+									240 文本 148
+									241 文本 /
+									242 文本 160
+									243 文本 Export playlists, find deleted videos, remove duplicates and back up your YouTube library with 53 browser-based tools. Free to try, no installation.
+									244 文本 Keywords
+									245 按钮 Meta Keywords
+									246 文本 N/A
+									247 文本 URL
+									248 按钮 Page URL
+									249 文本 https://
+									250 文本 www.myfreshtools.com/
+									251 文本 Canonical
+									252 按钮 Canonical URL
+									253 文本 https://
+									254 文本 www.myfreshtools.com/
+									255 文本 Domain Creation
+									256 按钮 Domain Creation Date
+									257 文本 2021-08-15 04:54:48 UTC
+									258 文本 Domain Expiration
+									259 按钮 Domain Expiration Date
+									260 文本 2027-08-15 04:54:48 UTC
+									261 文本 Favicon
+									262 按钮 Favicon
+									263 文本 SSR Check
+									264 按钮 Server-Side Rendering Check
+									265 图像 favicon
+									266 切换 off
+									267 文本 Robots Tag
+									268 按钮 Meta Robots Tag
+									269 文本 X-Robots-Tag
+									270 按钮 X-Robots-Tag Header
+									271 文本 N/A
+									272 文本 N/A
+									273 link robots.txt, Value: myfreshtools.com/robots.txt
+									274 按钮 robots.txt
+									275 link sitemap.xml, Value: myfreshtools.com/sitemap.xml
+									276 按钮 XML Sitemap
+									277 图像
+									278 文本 Available
+									279 图像
+									280 文本 Available
+									281 文本 Google Analytics
+									282 按钮 Google Analytics
+									283 文本 Google AdSense
+									284 按钮 Google AdSense
+									285 图像
+									286 文本 Missing
+									287 图像
+									288 文本 Missing
+									289 文本 Word Count
+									290 按钮 Word Count
+									291 文本 Lang
+									292 按钮 HTML Lang Attribute
+									293 文本 370
+									294 文本 en
+									295 图像
+									296 文本 1
+									297 图像
+									298 文本 9
+									299 图像
+									300 文本 11
+									301 图像
+									302 文本 0
+									303 图像
+									304 文本 1
+									305 图像
+									306 文本 0
+									307 文本 Images
+									308 文本 34
+									309 文本 Unique
+									310 文本 19
+									311 文本 Without Alt
+									312 文本 0
+									313 文本 Without Title
+									314 文本 34
+									315 文本 Links
+									316 文本 71
+									317 文本 Unique
+									318 文本 49
+									319 文本 Internal
+									320 文本 39
+									321 文本 External
+									322 文本 32
+									323 文本 Dofollow
+									324 文本 71
+									325 文本 Nofollow
+									326 文本 0
+			327 滑块 侧边栏大小调整手柄（可拖动）, Secondary Actions: Decrement, Increment
+			328 container
+				329 文本 AITDK SEO Extension - 流量/关键词/Whois/SEO分析器
+				330 复选框 固定到工具栏, Value: 0
+				331 按钮 关闭侧边栏
+			332 弹出式按钮 标签页搜索
+			333 container
+				334 标签组
+					335 标签 (settable, boolean) Home - Bing Webmaster Tools, Value: off
+						336 按钮 关闭
+					337 标签组 分组“🔎 竞品调研”- 1 个标签页•  Wiedergabelisten zwischen Musikdiensten übertr… - 已展开
+					338 标签 (settable, boolean) Wiedergabelisten zwischen Musikdiensten übertragen | Tune My Music - 属于“🔎 竞品调研”群组, Value: off
+						339 按钮 关闭
+					340 标签 (settable, boolean) Wiedergabelisten zwischen Musikdiensten übertragen | Tune My Music, Value: off
+						341 按钮 关闭
+					342 标签 (selected, settable, boolean) YouTube Tools for Creators | MyFreshTools, Value: on
+						343 按钮 关闭
+			344 按钮 新标签页
+			345 按钮 打开 Chrome 中的 Gemini
+	346 关闭按钮
+	347 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	348 最小化按钮
+349 menu bar
+	350 Chrome
+	351 文件
+	352 编辑
+	353 显示
+	354 历史记录
+	355 书签
+	356 个人资料
+	357 标签页
+	358 窗口
+	359 帮助
+
+The focused UI element is 163 HTML 内容 __MSG_name__, URL: chrome-extension://hhfkpjffbhledfpkhhcoidplcebgdgbk/sidepanel.html

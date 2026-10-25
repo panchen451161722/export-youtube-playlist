@@ -1,6 +1,7 @@
 import { createRouter } from '@tanstack/react-router';
 
-import { deLocalizeUrl, localizeUrl } from '@/paraglide/runtime.js';
+import { hasGermanContent } from '@/config/locale';
+import { deLocalizeUrl, getLocale, localizeUrl } from '@/paraglide/runtime.js';
 
 import { routeTree } from './routeTree.gen';
 
@@ -13,7 +14,13 @@ export function getRouter() {
     // matching (routes are locale-free), outgoing hrefs get re-localized.
     rewrite: {
       input: ({ url }) => deLocalizeUrl(url),
-      output: ({ url }) => localizeUrl(url),
+      output: ({ url }) =>
+        localizeUrl(url, {
+          locale:
+            getLocale() === 'de' && !hasGermanContent(url.pathname)
+              ? 'en'
+              : getLocale(),
+        }),
     },
   });
   return router;

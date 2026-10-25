@@ -1,0 +1,74 @@
+{
+  "pages": [
+    {
+      "url": "/",
+      "lang": "en",
+      "h1": 1,
+      "title": "Export YouTube Playlist to CSV, Excel & 11 More Formats",
+      "canonical": "http://127.0.0.1:3000/"
+    },
+    {
+      "url": "/tools/export-youtube-playlist-to-csv",
+      "lang": "en",
+      "h1": 1,
+      "title": "Export YouTube Playlist to CSV Online | Playlist Expoter",
+      "canonical": "http://127.0.0.1:3000/tools/export-youtube-playlist-to-csv"
+    },
+    {
+      "url": "/tools/export-youtube-playlist-to-excel",
+      "lang": "en",
+      "h1": 1,
+      "title": "Export YouTube Playlist to Excel Online | Playlist Expoter",
+      "canonical": "http://127.0.0.1:3000/tools/export-youtube-playlist-to-excel"
+    },
+    {
+      "url": "/zh",
+      "lang": "zh",
+      "h1": 1,
+      "title": "在线将 YouTube 播放列表导出为 CSV、Excel 等 13 种格式",
+      "canonical": "http://127.0.0.1:3000/zh"
+    },
+    {
+      "url": "/zh/tools/export-youtube-playlist-to-csv",
+      "lang": "zh",
+      "h1": 1,
+      "title": "在线将 YouTube 播放列表导出为 CSV | Playlist Expoter",
+      "canonical": "http://127.0.0.1:3000/zh/tools/export-youtube-playlist-to-csv"
+    },
+    {
+      "url": "/zh/tools/export-youtube-playlist-to-excel",
+      "lang": "zh",
+      "h1": 1,
+      "title": "在线将 YouTube 播放列表导出为 Excel | Playlist Expoter",
+      "canonical": "http://127.0.0.1:3000/zh/tools/export-youtube-playlist-to-excel"
+    },
+    {
+      "url": "/de",
+      "lang": "de",
+      "h1": 1,
+      "title": "YouTube-Playlist exportieren – CSV, Excel & mehr",
+      "canonical": "http://127.0.0.1:3000/de"
+    },
+    {
+      "url": "/de/tools/export-youtube-playlist-to-csv",
+      "lang": "de",
+      "h1": 1,
+      "title": "YouTube-Playlist als CSV exportieren – kostenlos",
+      "canonical": "http://127.0.0.1:3000/de/tools/export-youtube-playlist-to-csv"
+    },
+    {
+      "url": "/de/tools/export-youtube-playlist-to-excel",
+      "lang": "de",
+      "h1": 1,
+      "title": "YouTube-Playlist als Excel exportieren – kostenlos",
+      "canonical": "http://127.0.0.1:3000/de/tools/export-youtube-playlist-to-excel"
+    }
+  ],
+  "german_sitemap_urls": [
+    "http://127.0.0.1:3000/de",
+    "http://127.0.0.1:3000/de/tools/export-youtube-playlist-to-csv",
+    "http://127.0.0.1:3000/de/tools/export-youtube-playlist-to-excel"
+  ],
+  "fallbacks": "4 English redirects passed",
+  "samples": "CSV and XLSX both available"
+}

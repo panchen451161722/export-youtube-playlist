@@ -5,6 +5,7 @@ import {
   useRouter as useTanStackRouter,
 } from '@tanstack/react-router';
 
+import { hasGermanContent } from '@/config/locale';
 import { getLocale } from '@/paraglide/runtime.js';
 
 // Locale-aware navigation. Locale prefixes are handled entirely by the
@@ -23,6 +24,14 @@ type LinkProps = Omit<ComponentProps<'a'>, 'href'> & {
 };
 
 export function Link({ href, locale, prefetch, ...rest }: LinkProps) {
+  // Leaving translated coverage reloads the English document and locale.
+  if (
+    getLocale() === 'de' &&
+    href.startsWith('/') &&
+    !hasGermanContent(href.split(/[?#]/)[0])
+  ) {
+    return <a href={href} {...rest} />;
+  }
   if (/^(https?:|mailto:|tel:|#)/.test(href)) {
     return <a href={href} {...rest} />;
   }

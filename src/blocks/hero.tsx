@@ -246,11 +246,18 @@ export function Hero({
     isUnavailablePlaylistError(mutation.error) &&
     mutation.variables?.playlistUrl === url.trim();
 
+  const localizedFormats = YOUTUBE_EXPORT_FORMATS.map((format) => ({
+    ...format,
+    label:
+      format.key === 'bookmark'
+        ? m['landing.exporter.bookmark_label']()
+        : format.label,
+  }));
   const isToolPage = variant === 'tool';
   const primaryExportFormat =
     YOUTUBE_EXPORT_FORMATS.find((format) => format.key === primaryFormatKey) ??
     YOUTUBE_EXPORT_FORMATS[0];
-  const additionalFormats = YOUTUBE_EXPORT_FORMATS.filter(
+  const additionalFormats = localizedFormats.filter(
     (format) => format.key !== primaryExportFormat.key
   );
 
@@ -285,7 +292,9 @@ export function Hero({
           <span className="border-border bg-background text-muted-foreground rounded-sm border px-2 py-1 font-mono text-[10px] font-medium tracking-wide">
             {isToolPage
               ? primaryExportFormat.extension.toUpperCase()
-              : `${YOUTUBE_EXPORT_FORMATS.length} formats`}
+              : m['landing.exporter.format_count']({
+                  count: YOUTUBE_EXPORT_FORMATS.length,
+                })}
           </span>
           <span className="border-border bg-background text-muted-foreground rounded-sm border px-2 py-1 font-mono text-[10px] font-medium tracking-wide">
             {isToolPage ? primaryExportFormat.label : 'ZIP'}
@@ -390,6 +399,7 @@ export function Hero({
             <>
               <div className="mt-3">
                 <ExportFormatPicker
+                  formats={localizedFormats}
                   selected={formats}
                   onChange={setFormats}
                   disabled={mutation.isPending}

@@ -1,0 +1,441 @@
+The following is a diff from the previous accessibility tree for Window: "Wiedergabelisten zwischen Musi…en übertragen | Tune My Music" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 500, 502-505, 507-508, 510, 519, 527, 533-616
+~396 标准窗口 Wiedergabelisten zwischen Musikdiensten übertragen | Tune My Music - Google Chrome - Stepan, URL: tunemymusic.com/de, Secondary Actions: Raise
+~	397 container Wiedergabelisten zwischen Musikdiensten übertragen | Tune My Music - Google Chrome - Stepan, URL: tunemymusic.com/de
+~					492 HTML 内容 Wiedergabelisten zwischen Musikdiensten übertragen | Tune My Music, URL: tunemymusic.com/de
+~								497 link Hilfe, Value: tunemymusic.com/de/help
+~								498 按钮 Einloggen
+~								499 按钮 Select language
++							500 图像 Sleek Landing Page Header
+~							501 container
++								502 标题 Playlists zwischen Musikdiensten übertragen, Value: 1
++									503 文本 Playlists zwischen Musikdiensten übertragen
++								504 标题 Value: 2, Übertragen Sie Ihre Musikbibliothek von einem beliebigen Musikdienst auf einen beliebigen anderen! Unterstützt Spotify, TIDAL, Apple Music, YouTube, Amazon Music, Deezer und viele mehr
++									505 文本 Übertragen Sie Ihre Musikbibliothek von einem beliebigen Musikdienst auf einen beliebigen anderen! Unterstützt Spotify, TIDAL, Apple Music, YouTube, Amazon Music, Deezer und viele mehr
+~							506 container
++								507 文本栏 (settable) Plattform suchen
++								508 图像
+~							509 按钮 Spotify
++							510 按钮 Apple Music
+~							511 按钮 YouTube Music
+~							512 按钮 YouTube
+~							513 按钮 Deezer
+~							514 按钮 TIDAL
+~							515 按钮 Amazon Music
+~							516 按钮 SoundCloud
+~							517 按钮 Yandex Music
+~							518 按钮 Qobuz
++							519 按钮 Beatport
+~							520 按钮 iTunes
+~							521 按钮 Pandora
+~							522 按钮 Anghami
+~							523 按钮 KKBOX
+~							524 按钮 last.fm
+~							525 按钮 SoundMachine
+~							526 按钮 Boomplay
++							527 按钮 Audiomack
+~							528 按钮 Text
+~							529 按钮 Datei
+~							530 按钮 URL
+~							531 container
+~								532 图像 A man in a white crew neck t-shirt wearing a black cap
++								533 文本 0M
++								534 文本 TRACKS
++								535 text Übertragen jede Woche
++								536 文本 VON MILLIONEN MENSCHEN GESCHÄTZT
++								537 文本 „Ich habe gerade all meine Inhalte von Spotify zu Apple Music übertragen, das hat mir Stunden gespart!“
++								538 文本 Menschen auf der ganzen Welt empfehlen Tune My Music.
++								539 图像 A DJ mixing music in front of a crowd of people
++							540 container
++								541 文本 “
++								542 文本 Tune My Music ist mit Abstand die beste Möglichkeit, meine Wiedergabelisten zu übertragen, ich nutze es schon seit Jahren.
++								543 图像 Daniele
++								544 标题 Daniele, Value: 3
++									545 文本 Daniele
++								546 标题 Marketing Consultant, Value: 4
++									547 文本 Marketing Consultant
++								548 图像 Apple
++								549 文本 “
++								550 文本 Ich habe es endlich geschafft, meine gesamte Musikbibliothek von Tidal zu Spotify zu übertragen, ohne einen einzigen Song zu verlieren. Wahnsinn!
++								551 图像 Hannah
++								552 标题 Hannah, Value: 3
++									553 文本 Hannah
++								554 标题 Data Analyst, Value: 4
++									555 文本 Data Analyst
++								556 图像 Spotify
++								557 文本 “
++								558 文本 Die Synchronisierung von Spotify und Tidal – der Traum eines jeden DJs.
++								559 图像 Kevin
++								560 标题 Kevin, Value: 3
++									561 文本 Kevin
++								562 标题 Professional DJ, Value: 4
++									563 文本 Professional DJ
++								564 图像 Tidal
++								565 文本 “
++								566 文本 Tune My Music hat mir beim Wechsel von Deezer zu Apple Music stundenlange Arbeit erspart. Absolut empfehlenswert.
++								567 图像 Peter
++								568 标题 Peter, Value: 3
++									569 文本 Peter
++								570 标题 Professional DJ, Value: 4
++									571 文本 Professional DJ
++								572 图像 Deezer
++								573 文本 “
++								574 文本 Ich habe andere Tools ausprobiert, aber dieses ist mit Abstand das schnellste und zuverlässigste.
++								575 图像 Grace
++								576 标题 Grace, Value: 3
++									577 文本 Grace
++								578 标题 Music Blogger, Value: 4
++									579 文本 Music Blogger
++								580 图像 Amazon
++								581 文本 “
++								582 文本 Die Synchronisierung zwischen Spotify und YouTube Music funktioniert jeden Tag reibungslos.
++								583 图像 Bobby
++								584 标题 Bobby, Value: 3
++									585 文本 Bobby
++								586 标题 College Student, Value: 4
++									587 文本 College Student
++								588 图像 YouTubeMusic
++								589 文本 “
++								590 文本 Ich finde es super, dass ich meine Playlists in Dateien sichern kann. Das beruhigt mich.
++								591 图像 Omar
++								592 标题 Omar, Value: 3
++									593 文本 Omar
++								594 标题 University Lecturer, Value: 4
++									595 文本 University Lecturer
++								596 图像 Apple
++								597 文本 “
++								598 文本 Ich habe STUNDEN gebraucht, um die Lieder manuell zu kopieren, dann habe ich Tune My Music gefunden und damit ging es in Minuten...
++								599 图像 Daniel
++								600 标题 Daniel, Value: 3
++									601 文本 Daniel
++								602 标题 Student, Value: 4
++									603 文本 Student
++								604 图像 Spotify
++								605 文本 “
++								606 文本 Wirkt wie von Zauberhand!
++								607 图像 Liam
++								608 标题 Liam, Value: 3
++									609 文本 Liam
++								610 标题 Sound Engineer, Value: 4
++									611 文本 Sound Engineer
++								612 图像 Tidal
++								613 文本 “
++								614 文本 Ich finde es toll, dass ich meine Playlists mit Freunden teilen kann, egal welche Musikplattform sie benutzen.
++								615 图像 Alex
++								616 标题 Alex, Value: 3
++									617 文本 Alex
++								618 标题 Event Organizer, Value: 4
++									619 文本 Event Organizer
++								620 图像 Deezer
++								621 文本 “
++								622 文本 Ich wollte Spotify schon immer mal ausprobieren und habe gerade jahrelange Musik zu Spotify übertragen – ich bin so froh, dass es das gibt!
++								623 图像 Jason
++								624 标题 Jason, Value: 3
++									625 文本 Jason
++								626 标题 Software Developer, Value: 4
++									627 文本 Software Developer
++								628 图像 Spotify
++								629 文本 “
++								630 文本 Ich habe meine gesamte Musik auf YouTube verschoben. Tschüss Spotify!
++								631 图像 Sophie
++								632 标题 Sophie, Value: 3
++									633 文本 Sophie
++								634 标题 Music Lover, Value: 4
++									635 文本 Music Lover
++								636 图像 YouTubeMusic
++								637 文本 “
++								638 文本 Tune My Music ist mit Abstand die beste Möglichkeit, meine Wiedergabelisten zu übertragen, ich nutze es schon seit Jahren.
++								639 图像 Daniele
++								640 标题 Daniele, Value: 3
++									641 文本 Daniele
++								642 标题 Marketing Consultant, Value: 4
++									643 文本 Marketing Consultant
++								644 图像 Apple
++								645 文本 “
++								646 文本 Ich habe es endlich geschafft, meine gesamte Musikbibliothek von Tidal zu Spotify zu übertragen, ohne einen einzigen Song zu verlieren. Wahnsinn!
++								647 图像 Hannah
++								648 标题 Hannah, Value: 3
++									649 文本 Hannah
++								650 标题 Data Analyst, Value: 4
++									651 文本 Data Analyst
++								652 图像 Spotify
++								653 文本 “
++								654 文本 Die Synchronisierung von Spotify und Tidal – der Traum eines jeden DJs.
++								655 图像 Kevin
++								656 标题 Kevin, Value: 3
++									657 文本 Kevin
++								658 标题 Professional DJ, Value: 4
++									659 文本 Professional DJ
++								660 图像 Tidal
++								661 文本 “
++								662 文本 Tune My Music hat mir beim Wechsel von Deezer zu Apple Music stundenlange Arbeit erspart. Absolut empfehlenswert.
++								663 图像 Peter
++								664 标题 Peter, Value: 3
++									665 文本 Peter
++								666 标题 Professional DJ, Value: 4
++									667 文本 Professional DJ
++								668 图像 Deezer
++								669 文本 “
++								670 文本 Ich habe andere Tools ausprobiert, aber dieses ist mit Abstand das schnellste und zuverlässigste.
++								671 图像 Grace
++								672 标题 Grace, Value: 3
++									673 文本 Grace
++								674 标题 Music Blogger, Value: 4
++									675 文本 Music Blogger
++								676 图像 Amazon
++								677 文本 “
++								678 文本 Die Synchronisierung zwischen Spotify und YouTube Music funktioniert jeden Tag reibungslos.
++								679 图像 Bobby
++								680 标题 Bobby, Value: 3
++									681 文本 Bobby
++								682 标题 College Student, Value: 4
++									683 文本 College Student
++								684 图像 YouTubeMusic
++								685 文本 “
++								686 文本 Ich finde es super, dass ich meine Playlists in Dateien sichern kann. Das beruhigt mich.
++								687 图像 Omar
++								688 标题 Omar, Value: 3
++									689 文本 Omar
++								690 标题 University Lecturer, Value: 4
++									691 文本 University Lecturer
++								692 图像 Apple
++								693 文本 “
++								694 文本 Ich habe STUNDEN gebraucht, um die Lieder manuell zu kopieren, dann habe ich Tune My Music gefunden und damit ging es in Minuten...
++								695 图像 Daniel
++								696 标题 Daniel, Value: 3
++									697 文本 Daniel
++								698 标题 Student, Value: 4
++									699 文本 Student
++								700 图像 Spotify
++								701 文本 “
++								702 文本 Wirkt wie von Zauberhand!
++								703 图像 Liam
++								704 标题 Liam, Value: 3
++									705 文本 Liam
++								706 标题 Sound Engineer, Value: 4
++									707 文本 Sound Engineer
++								708 图像 Tidal
++								709 文本 “
++								710 文本 Ich finde es toll, dass ich meine Playlists mit Freunden teilen kann, egal welche Musikplattform sie benutzen.
++								711 图像 Alex
++								712 标题 Alex, Value: 3
++									713 文本 Alex
++								714 标题 Event Organizer, Value: 4
++									715 文本 Event Organizer
++								716 图像 Deezer
++								717 文本 “
++								718 文本 Ich wollte Spotify schon immer mal ausprobieren und habe gerade jahrelange Musik zu Spotify übertragen – ich bin so froh, dass es das gibt!
++								719 图像 Jason
++								720 标题 Jason, Value: 3
++									721 文本 Jason
++								722 标题 Software Developer, Value: 4
++									723 文本 Software Developer
++								724 图像 Spotify
++								725 文本 “
++								726 文本 Ich habe meine gesamte Musik auf YouTube verschoben. Tschüss Spotify!
++								727 图像 Sophie
++								728 标题 Sophie, Value: 3
++									729 文本 Sophie
++								730 标题 Music Lover, Value: 4
++									731 文本 Music Lover
++								732 图像 YouTubeMusic
++							733 container
++								734 标题 MUSIK PLATTFORMÜBERGREIFEND ÜBERTRAGEN, Value: 4
++									735 文本 MUSIK PLATTFORMÜBERGREIFEND ÜBERTRAGEN
++								736 标题 Wie funktioniert die Musikübertragung?, Value: 2
++									737 文本 Wie funktioniert die Musikübertragung?
++								738 container
++									739 按钮 Auswahl einer Quellplattform
++									740 按钮 Wählen Sie die Musik aus, die übertragen werden soll.
++									741 按钮 Auswahl einer Zielplattform
++								742 container
++									743 按钮 Auswahl einer Quellplattform
++									744 按钮 Wählen Sie die Musik aus, die übertragen werden soll.
++									745 按钮 Auswahl einer Zielplattform
++								746 内容列表
++									747 container
++										748 按钮 1 Auswahl einer Quellplattform
++										749 text Plattformen: Falls Sie eine Playlist oder Ihre gesamte Musikbibliothek verschieben möchten, wählen Sie Ihre Quellplattform wie Spotify, YouTube Music, Apple Music oder TIDAL aus. Weitere Überweisungsmöglichkeiten: Sie können Musik auch einfach übertragen, indem Sie einen Freitext schreiben, eine Datei hochladen oder eine Playlist-URL einfügen.
++									750 container
++										751 按钮 2 Wählen Sie die Musik aus, die übertragen werden soll.
++										752 文本 Wählen Sie aus, was von Ihrer Quellplattform auf Ihre Zielplattform übertragen werden soll. Sie können:
++										753 内容列表
++											754 container
++												755 AXListMarker •
++												756 文本 Übertragen Sie Ihre gesamte Musikbibliothek
++											757 container
++												758 AXListMarker •
++												759 文本 Wähle bestimmte Wiedergabelisten, Lieblingstitel, Künstler oder Alben aus.
++											760 container
++												761 AXListMarker •
++												762 文本 Einzelne Titel auswählen
++									763 container
++										764 按钮 3 Auswahl einer Zielplattform
++										765 container
++											766 text Plattformen: Wähle die Musikplattform aus, auf die deine Musik übertragen werden soll. Aktie:  Alternativ können Sie die Option „Teilen“ auswählen und eine spezielle URL für Ihre Musik erstellen, die von jedem Musikdienst aus geöffnet werden kann, sodass jeder sie anhören kann, auch wenn er einen anderen Streaming-Dienst verwendet.
++								767 图像 Auswahl einer Quellplattform
++								768 图像 official APIs and secure data practices
++								769 文本 Tune My Music nutzt offizielle APIs und sichere Datenverarbeitungsmethoden für die Musikübertragung und gewährleistet so eine schnelle, zuverlässige und sichere Musikmigration.
++							770 container
++								771 标题 TRANSFER-DASHBOARD, Value: 3
++									772 文本 TRANSFER-DASHBOARD
++								773 标题 Ihr Musikübertragungs-Dashboard, Value: 2
++									774 文本 Ihr Musikübertragungs-Dashboard
++								775 text Sieh dir all deine Playlists  an einem Ort  an, verfolge jeden Schritt und erhalte sofortige Benachrichtigungen bei Änderungen.
++								776 图像 Tune My Music Transfer Dashboard
++							777 container
++								778 图像
++								779 图像
++								780 标题 Musikliebhaber. Wir hören euch., Value: 2
++									781 文本 Musikliebhaber. Wir hören euch.
++								782 文本 Du hast Playlists erstellt, Erinnerungen gesammelt, deinen eigenen Stil gefunden. Das ist nicht einfach nur Musik – es ist der Soundtrack deines Lebens, und wir sorgen dafür, dass das auch so bleibt! Deine Musik begleitet dich sicher und geborgen, wohin auch immer du gehst.
++								783 container
++									784 text - Team Tune My Music
++							785 container
++								786 container
++									787 图像
++									788 文本 ZERTIFIZIERT
++								789 标题 Value: 3, Tune My Music ist die offizielle Musikübertragungslösung, der die größten Marken der Branche vertrauen.
++									790 文本 Tune My Music ist die offizielle Musikübertragungslösung, der die größten Marken der Branche vertrauen.
++								791 内容列表
++									792 图像 Spotify
++									793 图像 YouTubeMusic
++									794 图像 Amazon
++									795 图像 Tidal
++									796 图像 beatport
++									797 图像 Deezer
++							798 container
++								799 container
++									800 图像 Teile Musik mit allen Icon
++									801 标题 Teile Musik mit allen, Value: 3
++										802 文本 Teile Musik mit allen
++									803 文本 Erstelle einen Link, der auf allen Plattformen funktioniert, und teile deine Musik überall dort, wo sie gehört wird.
++									804 link Playlist teilen, Value: tunemymusic.com/de/features/share
++								805 图像 Teile Musik mit allen
++							806 container
++								807 container
++									808 图像 KI-gestützte Wiedergabelistengenerierung Icon
++									809 标题 KI-gestützte Wiedergabelistengenerierung, Value: 3
++										810 文本 KI-gestützte Wiedergabelistengenerierung
++									811 文本 Lassen Sie unsere KI die perfekte Playlist für Sie erstellen, basierend auf Ihren Lieblingskünstlern, Genres oder Stimmungen.
++									812 link Wiedergabeliste generieren, Value: tunemymusic.com/de/features/playlist-generator
++								813 图像 KI-gestützte Wiedergabelistengenerierung
++							814 container
++								815 container
++									816 图像 Halte deine Musik synchron Icon
++									817 标题 Halte deine Musik synchron, Value: 3
++										818 文本 Halte deine Musik synchron
++									819 文本 Halten Sie Ihre Wiedergabelisten dank nahtloser Synchronisierung automatisch auf allen Plattformen auf dem neuesten Stand.
++									820 link Automatische Synchronisierung einrichten, Value: tunemymusic.com/de/features/sync
++								821 图像 Halte deine Musik synchron
++							822 container
++								823 container
++									824 标题 Sichern Sie Ihre Musik, Value: 3
++										825 文本 Sichern Sie Ihre Musik
++									826 文本 Sichern Sie Ihre Musikbibliothek ganz einfach, um Ihre Wiedergabelisten sicher und jederzeit zugänglich zu halten.
++									827 link Sichern Sie Ihre Musik, Value: tunemymusic.com/de/features/backup
++								828 图像 Sichern Sie Ihre Musik
++							829 container
++								830 图像
++								831 标题 Häufig gestellte Fragen, Value: 2
++									832 文本 Häufig gestellte Fragen
++								833 文本 Hast du Fragen zum Verschieben deiner Musik, zum Speichern deiner Playlists oder zum Synchronisieren zwischen verschiedenen Plattformen? Dann bist du hier genau richtig. Hier findest du alles, was du vor dem Start wissen solltest.
++								834 开合三角标记 Was ist Tune My Music?
++									835 文本 Was ist Tune My Music?
++									836 图像
++								837 开合三角标记 Wie funktioniert die Tune My Music-Überweisung?
++									838 文本 Wie funktioniert die Tune My Music-Überweisung?
++									839 图像
++								840 开合三角标记 Wie gewährleistet Tune My Music Sicherheit und Datenschutz?
++									841 文本 Wie gewährleistet Tune My Music Sicherheit und Datenschutz?
++									842 图像
++								843 开合三角标记 Kann Tune My Music Wiedergabelisten automatisch aktualisieren?
++									844 文本 Kann Tune My Music Wiedergabelisten automatisch aktualisieren?
++									845 图像
++								846 开合三角标记 Was passiert, wenn einige Lieder nicht zugeordnet werden können?
++									847 文本 Was passiert, wenn einige Lieder nicht zugeordnet werden können?
++									848 图像
++								849 开合三角标记 Wie schnell sind Wiedergabelistenübertragungen mit Tune My Music?
++									850 文本 Wie schnell sind Wiedergabelistenübertragungen mit Tune My Music?
++									851 图像
++								852 开合三角标记 Kann Tune My Music alles übertragen – Wiedergabelisten, Alben, Lieblingssongs und Interpreten?
++									853 文本 Kann Tune My Music alles übertragen – Wiedergabelisten, Alben, Lieblingssongs und Interpreten?
++									854 图像
++								855 开合三角标记 Warum ist Musikübertragung nicht kostenlos?
++									856 文本 Warum ist Musikübertragung nicht kostenlos?
++									857 图像
++								858 开合三角标记 Was kann ich sonst noch mit Tune My Music machen?
++									859 文本 Was kann ich sonst noch mit Tune My Music machen?
++									860 图像
++								861 开合三角标记 Welche Plattformen werden von Tune My Music unterstützt?
++									862 文本 Welche Plattformen werden von Tune My Music unterstützt?
++									863 图像
++							864 container
++								865 文本 WAS EXPERTEN SAGEN
++								866 图像 5 Stars
++								867 标题 Tune My Music Rezensionen, Value: 2
++									868 文本 Tune My Music Rezensionen
++								869 文本 Hier ist, was einige der weltweit führenden Musiktechnologie-Experten über Tune My Music sagen (Und ja, sie lieben es).
++								870 内容列表
++									871 link Beatport Beatport Beatport 593K subscribers Uhrenrezension, Value: youtube.com/shorts/lDk_g0tLaGY
++									872 link The Sound Guys The Sound Guys The Sound Guys 287K Subscribers Uhrenrezension, Value: youtube.com/shorts/RAZ9nJ04cdc
++									873 link Nikias Molina Nikias Molina Nikias Molina 367K Subscribers Uhrenrezension, Value: youtube.com/watch?v=7gVLz1hoves
++									874 link YouTube Viewers YouTube Viewers YouTube Viewers 12.8M subscribers Uhrenrezension, Value: youtube.com/shorts/wkyEgG8EPdE
++									875 link 6 Months Later 6 Months Later 6 Months Later 273K Subscribers Uhrenrezension, Value: youtube.com/watch?v=Ulipm6IckyE
++									876 link Daniel About Tech Daniel About Tech Daniel About Tech 527K subscribers Uhrenrezension, Value: youtube.com/watch?v=MgHgLA4hVSA
++									877 link Forty Frames Learning Forty Frames Learning Forty Frames Learning 7.34K subscribers Uhrenrezension, Value: youtube.com/watch?v=UI8ku_nREyc
++									878 link Jay Brannan Jay Brannan Jay Brannan 4.71K subscribers Uhrenrezension, Value: youtube.com/watch?v=7G6Gse6WOsg
++								879 按钮 Scroll Left
++								880 按钮 Scroll Right
++							881 container
++								882 图像 Conversation Table Background
++								883 标题 Beliebte Konvertierungen, Value: 3
++									884 text Beliebte Konvertierungen
++								885 link Spotify YouTubeMediaConnect Convert Spotify playlists to YouTube Music, Value: tunemymusic.com/de/transfer/spotify-to-youtube-music
++								886 link Spotify Amazon Sync Spotify with Amazon Music, Value: tunemymusic.com/de/transfer/spotify-to-amazon-music
++								887 link Spotify Tidal Switch from Spotify to TIDAL, Value: tunemymusic.com/de/transfer/spotify-to-tidal
++								888 link Spotify Deezer Sync Spotify with Deezer, Value: tunemymusic.com/de/transfer/spotify-to-deezer
++								889 link Spotify YouTube Transfer Spotify playlists to YouTube, Value: tunemymusic.com/de/transfer/spotify-to-youtube
++								890 link Spotify Qobuz Sync Spotify with Qobuz, Value: tunemymusic.com/de/transfer/spotify-to-qobuz
++								891 link YouTubeMediaConnect Apple Transfer YouTube Music playlists to Apple Music, Value: tunemymusic.com/de/transfer/youtube-music-to-apple-music
++								892 link Amazon Apple Transfer from Amazon Music to Apple Music, Value: tunemymusic.com/de/transfer/amazon-music-to-apple-music
++								893 link Tidal Apple Migrate your TIDAL playlists to Apple Music, Value: tunemymusic.com/de/transfer/tidal-to-apple-music
++								894 link Deezer Apple Switch from Deezer to Apple Music, Value: tunemymusic.com/de/transfer/deezer-to-apple-music
++								895 link YouTube Apple Migrate your YouTube playlists to Apple Music, Value: tunemymusic.com/de/transfer/youtube-to-apple-music
++								896 link Qobuz Apple Transfer from Qobuz to Apple Music, Value: tunemymusic.com/de/transfer/qobuz-to-apple-music
++							897 图像
++							898 标题 Immer glücklich zu helfen., Value: 3
++								899 文本 Immer glücklich zu helfen.
++							900 文本 Stellen Sie uns Ihre Fragen
++							901 link FAQ, Value: tunemymusic.com/de/help
++							902 link KONTAKTIEREN SIE UNS, Value: tunemymusic.com/de/contact-us
++							903 内容列表
++								904 container
++									905 文本 Tune My Music
++									906 link Startseite, Value: tunemymusic.com/de
++									907 link Einloggen, Value: tunemymusic.com/de#
++									908 link Meine Einstellungen, Value: tunemymusic.com/de/settings
++									909 link Blog, Value: blog.tunemymusic.com/de/
++									910 link Abo-Pläne, Value: tunemymusic.com/de/plans
++									911 link Playlist-Generator, Value: tunemymusic.com/de/features/playlist-generator
++									912 link Wiedergabelisten-Organizer, Value: tunemymusic.com/de/features/playlist-organizer
++								913 container
++									914 文本 Hilfe
++									915 link FAQ, Value: tunemymusic.com/de/help
++									916 link KONTAKTIEREN SIE UNS, Value: tunemymusic.com/de/contact-us
++								917 container
++									918 文本 Rechtlich
++									919 link Nutzungsbedingungen, Value: tunemymusic.com/de/terms-of-use
++									920 link Datenschutz-Bestimmungen, Value: tunemymusic.com/de/privacy-policy
++							921 link Facebook, Value: facebook.com/TuneMyMusic
++							922 link X, Value: x.com/TuneMyMusic
++							923 container
++								924 text ©  2026  Tune My Music
++							925 图像
++				926 container 信息栏
++					927 container
++						928 文本 “ChatGPT”已开始调试此浏览器
++						929 按钮 取消
++					930 按钮 关闭
+~					481 标签 (selected, settable, boolean) Wiedergabelisten zwischen Musikdiensten übertragen | Tune My Music, Value: on
+The focused UI element is 492 HTML 内容 Wiedergabelisten zwischen Musikdiensten übertragen | Tune My Music, URL: tunemymusic.com/de

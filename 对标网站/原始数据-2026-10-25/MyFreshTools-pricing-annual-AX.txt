@@ -1,0 +1,20 @@
+The following is a diff from the previous accessibility tree for Window: "YouTube Tools for Creators | MyFreshTools" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~								56 切换按钮 Monthly, Value: 0
+~								57 切换按钮 Annual 2 months free, Value: 1
+~								62 文本 $59.99
+~								63 文本 /yr
+~								64 text Billed annually $5.00 /mo vs  $5.99 /mo
+~									68 文本 1.2k Credits/yr
+~								76 文本 $99.99
+~								77 文本 /yr
+~								78 text Billed annually $8.33 /mo vs  $9.99 /mo
+~									82 文本 2.4k Credits/yr
+~								89 文本 $199.99
+~								90 文本 /yr
+~								91 text Billed annually $16.67 /mo vs  $19.99 /mo
+~									95 文本 4.8k Credits/yr
+~								101 文本 $399.99
+~								102 文本 /yr
+~								103 text Billed annually $33.33 /mo vs  $39.99 /mo
+~									107 文本 12k Credits/yr
+The focused UI element is 57 切换按钮 Annual 2 months free, Value: 1

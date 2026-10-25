@@ -5,6 +5,7 @@ import { localizedPageUrl, publicPageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
 import { Footer } from '@/blocks/footer';
+import { GermanExportPage } from '@/blocks/german-export-page';
 import { Header } from '@/blocks/header';
 import { PlaylistCsvExporter } from '@/blocks/tools/playlist-csv-exporter';
 
@@ -23,7 +24,10 @@ export const Route = createFileRoute('/tools/export-youtube-playlist-to-csv')({
   },
   head: ({ loaderData }) => {
     if (!loaderData) return {};
-    const title = `${loaderData.title} | ${envConfigs.app_name}`;
+    const title =
+      loaderData.locale === 'de'
+        ? loaderData.title
+        : `${loaderData.title} | ${envConfigs.app_name}`;
 
     return publicPageSeo({
       title,
@@ -68,7 +72,11 @@ export const Route = createFileRoute('/tools/export-youtube-playlist-to-csv')({
                 name: loaderData.toolName,
                 item: localizedPageUrl(PATH, loaderData.locale),
               },
-            ],
+            ]
+              .filter(
+                (item) => loaderData.locale !== 'de' || item.position !== 2
+              )
+              .map((item, index) => ({ ...item, position: index + 1 })),
           },
         ],
       },
@@ -78,6 +86,7 @@ export const Route = createFileRoute('/tools/export-youtube-playlist-to-csv')({
 });
 
 function CsvExportPage() {
+  if (getLocale() === 'de') return <GermanExportPage kind="csv" />;
   return (
     <div className="marketing-shell bg-background text-foreground min-h-screen">
       <Header />

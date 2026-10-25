@@ -1,0 +1,53 @@
+The following is a diff from the previous accessibility tree for Window: "Exportieren Sie Ihre YouTube Wi…en in einer CSV und Text-Datei!" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 266-366
+~									211 标签 (settable, integer) Overview, Value: 0
+~									235 标签 (selected) Headings, Value: 1
+~								265 link Get Traffic, Backlinks & SERPs via API, Help: TabAPI.com · Get Traffic, Backlinks & SERPs via API, Value: tabapi.com/?utm_source=aitdk&utm_medium=extension&utm_content=sponsor
++								396 container Headings
++									397 按钮 All 18
++									398 按钮 1
++									399 按钮 3
++									400 按钮 13
++									401 按钮 1
++									402 按钮 0
++									403 按钮 0
++									404 搜索文本字段 (settable) Search heading text...
++									405 按钮 Copy
++									406 container
++										407 图像
++										408 文本 Export von YouTube als CSV oder Text-Datei
++										409 图像
++										410 文本 Unterstützung für alle Musikplattformen
++										411 图像
++										412 文本 Wie exportiere ich eine YouTube-Wiedergabeliste in eine CSV- oder TXT-Datei?
++										413 图像
++										414 文本 Schritt 1 - Verbinde deine Konten
++										415 图像
++										416 文本 Schritt 2 - Wähle aus, was übertragen werden soll
++										417 图像
++										418 文本 Schritt 3 - Wir passen an und exportieren
++										419 图像
++										420 文本 Exportiere vollständigen Bericht
++										421 图像
++										422 文本 Wichtige Informationen zum Transfer von YouTube zu Export to file
++										423 图像
++										424 文本 Wird von YouTube nach Export to file übertragen:
++										425 图像
++										426 文本 Entdecke die Funktionen von Tune My Music
++										427 图像
++										428 文本 Übertragen
++										429 图像
++										430 文本 Synchronisierung
++										431 图像
++										432 文本 Teilen
++										433 图像
++										434 文本 Generieren
++										435 图像
++										436 文本 Organisieren
++										437 图像
++										438 文本 Backup
++										439 图像
++										440 文本 Beliebte Konvertierungen
++										441 图像
++										442 文本 Immer glücklich zu helfen.
+The focused UI element is 235 标签 (selected) Headings, Value: 1

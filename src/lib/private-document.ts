@@ -6,7 +6,7 @@ export function isPrivateDocumentPath(pathname: string): boolean {
     // Paraglide URL rewriting can interpret a repeated slash as an authority
     // (e.g. /zh//x/sign-in becomes /sign-in). Ambiguous paths fail closed.
     if (decoded.includes('//')) return true;
-    path = decoded.replace(/^\/zh(?=\/|$)/, '') || '/';
+    path = decoded.replace(/^\/(zh|de)(?=\/|$)/, '') || '/';
   } catch {
     // Malformed paths fail closed rather than enabling optional scripts.
     return true;

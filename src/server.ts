@@ -1,5 +1,6 @@
 import handler from '@tanstack/react-start/server-entry';
 
+import { hasGermanContent } from './config/locale';
 import { ensureCloudflareEnv } from './core/cloudflare-env';
 import { privateDocumentHeaders } from './lib/private-document';
 import { paraglideMiddleware } from './paraglide/server.js';
@@ -8,6 +9,14 @@ import { paraglideMiddleware } from './paraglide/server.js';
 // getLocale() resolves per-request (AsyncLocalStorage) during SSR.
 export default {
   async fetch(req: Request): Promise<Response> {
+    const url = new URL(req.url);
+    if (url.pathname.startsWith('/de/')) {
+      const path = url.pathname.slice(3) || '/';
+      if (!hasGermanContent(path)) {
+        url.pathname = path;
+        return Response.redirect(url.href, 302);
+      }
+    }
     await ensureCloudflareEnv();
     const response = await paraglideMiddleware(req, () => handler.fetch(req));
     const protectedHeaders = privateDocumentHeaders(req);

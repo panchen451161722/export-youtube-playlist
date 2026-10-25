@@ -1,0 +1,144 @@
+The following is a diff from the previous accessibility tree for Window: "YouTube Tools for Creators | MyFreshTools" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 488-533
+~396 标准窗口 YouTube Tools for Creators | MyFreshTools - Google Chrome - Stepan, URL: myfreshtools.com/, Secondary Actions: Raise
+~	397 container YouTube Tools for Creators | MyFreshTools - Google Chrome - Stepan, URL: myfreshtools.com/
+~				400 按钮 返回
++					536 按钮 为此标签页添加书签
+~					407 弹出式按钮 打开 SubYourURL
+想要访问此网站
++				537 滚动区
++					538 HTML 内容 YouTube Tools for Creators | MyFreshTools, URL: myfreshtools.com/
++						539 container
++							540 link MyFreshTools home, Value: myfreshtools.com/
++							541 container Primary
++								542 link Home, Value: myfreshtools.com/
++								543 link All Tools, Value: myfreshtools.com/tools
++								544 link Categories, Value: myfreshtools.com/#categories
++								545 link Blog, Value: myfreshtools.com/blog
++								546 link Pricing, Value: myfreshtools.com/pricing?utm_source=mft&utm_medium=home_nav&utm_campaign=upgrade_flow
++							547 按钮 Search tools
++							548 link Sign In, Value: myfreshtools.com/welcome/login
++							549 link Get Started Free, Value: myfreshtools.com/welcome/signup
++							550 text Trusted by  29,492 + Users
++							551 标题 Powerful YouTube tools for creators, by creators., Value: 1
++								552 text Powerful YouTube tools for creators, by creators.
++							553 文本 Export playlists, find missing videos, remove duplicates, and organize your YouTube library — all in one place.
++							554 container
++								555 组合框 (settable) Search for a tool, Placeholder: Search for a tool (e.g. playlist export, duplicate remover...)
++								556 按钮 Search tools
++							557 内容列表
++								558 文本 Free to try
++								559 文本 No installation
++								560 文本 Works in your browser
++							561 container Popular Tools
++								562 标题 Popular Tools, Value: 2
++									563 文本 Popular Tools
++								564 文本 The most used tools by YouTube creators.
++								565 link View all tools, Value: myfreshtools.com/tools
++								566 link Value: myfreshtools.com/youtube/playlistExport, YouTube Playlist Exporter Export any playlist to CSV, Excel-compatible files, JSON and more. Free preview
++								567 link Playlist Duplicate Remover Clean up repeated videos in your playlists. Free preview, Value: myfreshtools.com/youtube/playlist-duplicate-remover
++								568 link Playlist Backup & Restore Save your playlists and restore them when needed. Free to try, Value: myfreshtools.com/youtube/playlist-backup
++								569 link Find Deleted Videos Recover the titles of missing or private videos in a playlist. Free preview, Value: myfreshtools.com/youtube/deleted-video-finder
++							570 container Browse by category
++								571 标题 Browse by category, Value: 2
++									572 文本 Browse by category
++								573 文本 Find the right tool for your needs.
++								574 link Playlist Tools, Value: myfreshtools.com/tools?category=playlist-tools
++								575 link Music Tools, Value: myfreshtools.com/tools?category=music-tools
++								576 link Video Research, Value: myfreshtools.com/tools?category=video-research
++								577 link Subscription Tools, Value: myfreshtools.com/tools?category=subscription-tools
++								578 link Developer Tools, Value: myfreshtools.com/tools?category=developer-tools
++								579 link More Tools, Value: myfreshtools.com/tools?category=more-tools
++							580 container How it works
++								581 标题 How it works, Value: 2
++									582 文本 How it works
++								583 文本 Get results in just 3 simple steps.
++								584 内容列表
++									585 container
++										586 标题 1. Choose a tool, Value: 3
++											587 text 1 .  Choose a tool
++										588 文本 Find the tool you need from the collection or search above.
++									589 container
++										590 标题 2. Provide input, Value: 3
++											591 text 2 .  Provide input
++										592 文本 Paste a YouTube URL or enter details as required.
++									593 container
++										594 标题 3. Get your results, Value: 3
++											595 text .  Get your results
++										596 文本 Download your files or view the results instantly.
++							597 container Why creators trust MyFreshTools
++								598 标题 Why creators trust MyFreshTools, Value: 2
++									599 文本 Why creators trust MyFreshTools
++								600 文本 Built for YouTube creators who manage large libraries.
++								601 文本 29,492+
++								602 文本 Registered users
++								603 文本 53
++								604 文本 YouTube tools
++								605 文本 122
++								606 文本 Free tools, no sign-up*
++								607 文本 5
++								608 文本 Free credits, no card
++							609 container Try it free. Upgrade when you need more.
++								610 标题 Try it free. Upgrade when you need more., Value: 2
++									611 文本 Try it free. Upgrade when you need more.
++								612 文本 Preview supported tools for free, then upgrade for full results, more credits and advanced features.
++								613 link View Pricing, Value: myfreshtools.com/pricing?utm_source=mft&utm_medium=home_pricing_cta&utm_campaign=upgrade_flow
++								614 link Starter $5.99/mo 100 credits, Value: myfreshtools.com/pricing?utm_source=mft&utm_medium=home_plan_starter&utm_campaign=upgrade_flow
++								615 link Most popular Growth $9.99/mo 200 credits, Value: myfreshtools.com/pricing?utm_source=mft&utm_medium=home_plan_growth&utm_campaign=upgrade_flow
++								616 link Pro $19.99/mo 400 credits, Value: myfreshtools.com/pricing?utm_source=mft&utm_medium=home_plan_pro&utm_campaign=upgrade_flow
++								617 link Business $39.99/mo 1000 credits, Value: myfreshtools.com/pricing?utm_source=mft&utm_medium=home_plan_business&utm_campaign=upgrade_flow
++							618 container Helpful guides & blog
++								619 标题 Helpful guides & blog, Value: 2
++									620 文本 Helpful guides & blog
++								621 文本 Tips, tutorials and guides for YouTube playlists and our tools.
++								622 link View all articles, Value: myfreshtools.com/blog
++								623 link How to Export YouTube Playlist to CSV How to Export YouTube Playlist to CSV, Value: myfreshtools.com/blog/how-to-export-youtube-playlist-to-csv
++								624 link Value: myfreshtools.com/blog/how-to-find-deleted-or-private-youtube-playlist-videos, How to Find Deleted or Private YouTube Playlist Videos How to Find Deleted or Private YouTube Playlist Videos
++								625 link Value: myfreshtools.com/blog/find-duplicate-videos-in-youtube-playlist, YouTube Playlist Duplicate Videos: Find and Remove Them YouTube Playlist Duplicate Videos: Find and Remove Them
++								626 link How to Export a YouTube Music Playlist How to Export a YouTube Music Playlist, Value: myfreshtools.com/blog/how-to-export-youtube-music-playlist
++							627 container FEATURED ON
++								628 标题 FEATURED ON, Value: 2
++									629 文本 FEATURED ON
++								630 container
++									631 link Featured on DivvLaunches, Value: divvlaunches.com/
++									632 link Verified DR - Verified Domain Rating for myfreshtools.com, Value: verifieddr.com/website/myfreshtools-com
++									633 link Featured on toolfame.com, Value: toolfame.com/item/myfreshtools
++									634 link Featured on saasfame.com, Value: saasfame.com/item/myfreshtools
++									635 link Featured on ProductFame, Value: productfame.com/
++									636 link Featured on Findly.tools, Value: findly.tools/myfreshtools?utm_source=myfreshtools
++									637 link Find us on Indie.Deals, Value: indie.deals/?ref=https%3A%2F%2Fwww.myfreshtools.com
++									638 link Featured on Twelve Tools, Value: twelve.tools/
++									639 link MyFreshTools - Featured on Startup Fame, Value: startupfa.me/s/myfreshtools?utm_source=www.myfreshtools.com
++									640 link Launched on StartupBase, Value: startupbase.io/products/myfreshtools?utm_source=startupbase&utm_medium=badge&utm_campaign=launch-badge-light
++									641 link MyFreshTools on Nick Launches, Value: nicklaunches.com/products/myfreshtools/
++									642 link Featured on DodoDirectory, Value: dododirectory.com/
++									643 link Featured on ShipBoost, Value: shipboost.io/tools/myfreshtools
++									644 link Featured on DeepLaunch.io, Value: deeplaunch.io/
++									645 link Listed on Needle Directory, Value: useneedle.net/directory/myfreshtools
++									646 link Featured on ufind.best, Value: ufind.best/products/myfreshtools
++							647 link MyFreshTools home, Value: myfreshtools.com/
++							648 文本 Better tools for your YouTube library — playlists, music, research and more.
++							649 container Tools
++								650 标题 Tools, Value: 2
++									651 文本 Tools
++								652 link All Tools, Value: myfreshtools.com/tools
++								653 link Categories, Value: myfreshtools.com/tools#categories
++								654 link Free Tools, Value: myfreshtools.com/free-tools
++								655 link Pricing, Value: myfreshtools.com/pricing?utm_source=mft&utm_medium=home_footer&utm_campaign=upgrade_flow
++								656 link Blog, Value: myfreshtools.com/blog
++							657 container Support
++								658 标题 Support, Value: 2
++									659 文本 Support
++								660 link Contact Us, Value: myfreshtools.com/contact
++								661 link Checklists & Templates, Value: myfreshtools.com/resources
++								662 link Privacy Policy, Value: myfreshtools.com/privacy-policy
++								663 link Terms of Use, Value: myfreshtools.com/terms-of-use
++							664 container
++								665 text ©  2026  MyFreshTools. All rights reserved.
++				666 container 信息栏
++					667 container
++						668 文本 “ChatGPT”已开始调试此浏览器
++						669 按钮 取消
++					670 按钮 关闭
+~					534 标签 (selected, settable, boolean) YouTube Tools for Creators | MyFreshTools, Value: on
+The focused UI element is 538 HTML 内容 YouTube Tools for Creators | MyFreshTools, URL: myfreshtools.com/

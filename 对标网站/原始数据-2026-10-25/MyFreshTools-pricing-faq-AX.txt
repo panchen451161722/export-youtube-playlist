@@ -1,0 +1,15 @@
+The following is a diff from the previous accessibility tree for Window: "YouTube Tools for Creators | MyFreshTools" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 462-463, 468-469, 480-481, 556-561
++							588 container
++								589 标题 Do I need to enter my credit card details to sign up?, Value: 3
++									590 按钮 Do I need to enter my credit card details to sign up?
++								591 文本 No. We do not require any payment details for the free sign up.
++							592 container
++								593 标题 Will my credits reduce if the tool failed to do the job?, Value: 3
++									594 按钮 Will my credits reduce if the tool failed to do the job?
++								595 文本 You don't lose your credits if the tools failed to do the job at odd times.
++							596 container
++								597 标题 Will I lose my unused credits if I cancel my subscription?, Value: 3
++									598 按钮 Will I lose my unused credits if I cancel my subscription?
++								599 文本 You keep full access and your remaining credits until the end of your current billing period. Once it ends, unused credits don't roll over and your account moves to the Free plan with the standard free credits.
+The focused UI element is 598 按钮 Will I lose my unused credits if I cancel my subscription?

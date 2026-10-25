@@ -103,6 +103,7 @@ export default defineConfig({
           localized: [
             ['en', '/api/:path(.*)?'],
             ['zh', '/api/:path(.*)?'],
+            ['de', '/api/:path(.*)?'],
           ],
         },
         // Bare locale homes match without a trailing-slash redirect.
@@ -110,6 +111,7 @@ export default defineConfig({
           pattern: '/',
           localized: [
             ['zh', '/zh'],
+            ['de', '/de'],
             ['en', '/'],
           ],
         },
@@ -118,6 +120,7 @@ export default defineConfig({
           pattern: '/:path(.*)?',
           localized: [
             ['zh', '/zh/:path(.*)?'],
+            ['de', '/de/:path(.*)?'],
             ['en', '/:path(.*)?'],
           ],
         },

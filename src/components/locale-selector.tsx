@@ -1,8 +1,13 @@
 import { Check, ChevronDown, Globe, Languages } from 'lucide-react';
 
-import { localeNames } from '@/config/locale';
+import { hasGermanContent, localeNames } from '@/config/locale';
 import { cn } from '@/lib/utils';
-import { getLocale, locales, setLocale } from '@/paraglide/runtime.js';
+import {
+  deLocalizeUrl,
+  getLocale,
+  locales,
+  setLocale,
+} from '@/paraglide/runtime.js';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,13 +18,22 @@ import {
 export function LocaleSelector({
   variant = 'icon',
   className,
+  label = 'Switch language',
 }: {
   variant?: 'icon' | 'pill';
   className?: string;
+  label?: string;
 }) {
   const locale = getLocale();
 
   function handleSwitch(newLocale: string) {
+    if (
+      newLocale === 'de' &&
+      !hasGermanContent(deLocalizeUrl(window.location.href).pathname)
+    ) {
+      window.location.assign('/de');
+      return;
+    }
     // Writes the locale cookie and reloads on the localized URL.
     setLocale(newLocale as typeof locale);
   }
@@ -27,6 +41,7 @@ export function LocaleSelector({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
+        aria-label={label}
         className={cn(
           'inline-flex items-center transition-colors outline-none',
           variant === 'icon'
@@ -38,7 +53,7 @@ export function LocaleSelector({
         {variant === 'icon' ? (
           <>
             <Languages className="size-4" />
-            <span className="sr-only">Switch language</span>
+            <span className="sr-only">{label}</span>
           </>
         ) : (
           <>
