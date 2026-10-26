@@ -109,6 +109,10 @@ function videoLabels(
 
 function channelLabels(submit: string): ChannelUtilityLabels {
   return {
+    limit: (limit) => m['tools.extra.ui.channel_limit']({ limit }),
+    upgrade: (limit) => m['tools.extra.ui.channel_upgrade']({ limit }),
+    partial: (count, total) =>
+      m['tools.extra.ui.channel_partial']({ count, total }),
     inputLabel: ui('channel_input'),
     inputPlaceholder: ui('channel_placeholder'),
     inputHelper: ui('channel_helper'),

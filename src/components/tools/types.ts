@@ -115,6 +115,7 @@ export type ChannelPlaylist = {
 };
 
 export type ChannelToolData = {
+  exportAccess?: import('@/config/playlist-export').PlaylistExportAccess;
   channelId: string;
   title: string;
   description: string;

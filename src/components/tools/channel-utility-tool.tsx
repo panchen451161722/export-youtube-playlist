@@ -11,6 +11,10 @@ import {
 import { toast } from 'sonner';
 
 import { Link } from '@/core/i18n/navigation';
+import {
+  FREE_PLAYLIST_EXPORT_LIMIT,
+  SUBSCRIBER_PLAYLIST_EXPORT_LIMIT,
+} from '@/config/playlist-export';
 import { trackEvent } from '@/lib/analytics';
 import { apiPost } from '@/lib/api-client';
 import { clarityErrorType, resultSizeBucket } from '@/lib/clarity';
@@ -26,6 +30,7 @@ import {
   getYouTubeToolErrorMessage,
   type YouTubeToolErrorMessages,
 } from '@/lib/youtube-tool-error';
+import { usePlaylistExportAccess } from '@/hooks/use-playlist-export-access';
 import { useToolInput } from '@/hooks/use-tool-input';
 import {
   ExportBackupCta,
@@ -65,6 +70,9 @@ export type ChannelUtilityMode =
   | 'assets';
 
 export type ChannelUtilityLabels = {
+  limit: (limit: number) => string;
+  upgrade: (limit: number) => string;
+  partial: (count: number, total: number) => string;
   inputLabel: string;
   inputPlaceholder: string;
   inputHelper: string;
@@ -209,6 +217,7 @@ function VideoRows({
 }
 
 export function ChannelUtilityTool({ mode, labels, backupContent }: Props) {
+  const access = usePlaylistExportAccess();
   const [exportedPlaylist, setExportedPlaylist] = useState<string | null>(null);
   const [url, setUrl] = useToolInput();
   const [mediaType, setMediaType] = useState<ChannelMediaType>('all');
@@ -234,7 +243,6 @@ export function ChannelUtilityTool({ mode, labels, backupContent }: Props) {
         includeVideos,
         includePlaylists,
         mediaType,
-        limit: 5_000,
       });
       if (mode === 'export') {
         await downloadYouTubeExports({
@@ -390,6 +398,8 @@ export function ChannelUtilityTool({ mode, labels, backupContent }: Props) {
     }
   };
 
+  const exportAccess = mutation.data?.exportAccess ?? access.data;
+  const exportLimit = exportAccess?.limit ?? FREE_PLAYLIST_EXPORT_LIMIT;
   const error = getYouTubeToolErrorMessage(mutation.error, labels.errors);
 
   return (
@@ -450,6 +460,19 @@ export function ChannelUtilityTool({ mode, labels, backupContent }: Props) {
         <p className="text-muted-foreground mt-2 text-xs">
           {labels.inputHelper}
         </p>
+        {includeVideos ? (
+          <div className="mt-3 space-y-2 text-sm">
+            <p className="text-muted-foreground">{labels.limit(exportLimit)}</p>
+            {!exportAccess?.subscribed ? (
+              <Link
+                href="/pricing"
+                className="text-primary underline underline-offset-4"
+              >
+                {labels.upgrade(SUBSCRIBER_PLAYLIST_EXPORT_LIMIT)}
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
         {mode === 'export' ? (
           <fieldset className="mt-6">
             <legend className="text-foreground text-sm font-medium">
@@ -473,17 +496,44 @@ export function ChannelUtilityTool({ mode, labels, backupContent }: Props) {
           </p>
         ) : null}
       </form>
-      {exportedPlaylist && mutation.data && backupContent && (
-        <ExportBackupCta
-          key={mutation.submittedAt}
-          content={backupContent}
-          playlistUrl={exportedPlaylist}
-          tool="channel_export"
-          partialExportCount={
-            mutation.data.truncated ? mutation.data.videos.length : undefined
-          }
-        />
-      )}
+      {mutation.data?.truncated && includeVideos ? (
+        <div
+          role="status"
+          className="border-border bg-secondary/50 space-y-3 rounded-xl border p-5"
+        >
+          <p>
+            {labels.partial(
+              mutation.data.returnedVideos,
+              mutation.data.totalVideos
+            )}
+          </p>
+          <p className="text-muted-foreground text-sm">
+            {labels.limit(exportLimit)}
+          </p>
+          {!exportAccess?.subscribed ? (
+            <Link
+              href="/pricing"
+              className={buttonVariants({
+                variant: 'outline',
+                className: 'h-auto min-h-11 text-center whitespace-normal',
+              })}
+            >
+              {labels.upgrade(SUBSCRIBER_PLAYLIST_EXPORT_LIMIT)}
+            </Link>
+          ) : null}
+        </div>
+      ) : null}
+      {exportedPlaylist &&
+        mutation.data &&
+        backupContent &&
+        !mutation.data.truncated && (
+          <ExportBackupCta
+            key={mutation.submittedAt}
+            content={backupContent}
+            playlistUrl={exportedPlaylist}
+            tool="channel_export"
+          />
+        )}
 
       {mutation.data ? (
         <section

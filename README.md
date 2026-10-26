@@ -99,13 +99,12 @@ All admin pages include:
 | `pnpm rbac:init`   | Create roles + permissions + optional admin user |
 | `pnpm rbac:assign` | Assign role to user                              |
 
-## IndexNow — next release
+## IndexNow
 
 Key: `791d51e58f416ad58d0fefce94462254`. The UTF-8 verification file is
-`public/791d51e58f416ad58d0fefce94462254.txt` and will be deployed with the site.
+`public/791d51e58f416ad58d0fefce94462254.txt` and is deployed with the site.
 
-The user requested that the **next release submit the newly added multilingual
-pages** to IndexNow after deployment. This submission is pending:
+For future releases, submit newly added multilingual pages after deployment:
 
 1. Identify the new localized page URLs in that release and check that they are
    live, indexable, and present in the production sitemap.
@@ -120,6 +119,26 @@ pages** to IndexNow after deployment. This submission is pending:
 
 No scheduled or build-time submission is configured.
 Reference: [Bing IndexNow setup](https://www.bing.com/indexnow/getstarted).
+
+### Submission record — 2026-10-25
+
+- Deployed Worker version: `46082926-3cbf-492c-84f9-3b818f604577`.
+- Live key file: HTTP 200, text matches the key.
+- Production sitemap: 64 → 67 URLs; all three additions return HTTP 200 with
+  German language metadata, self-referencing canonical URLs and indexable robots metadata.
+- Submitted at 08:34:15 America/Los_Angeles (15:34:15 UTC):
+  - `https://exportyoutubeplaylist.com/de`
+  - `https://exportyoutubeplaylist.com/de/tools/export-youtube-playlist-to-csv`
+  - `https://exportyoutubeplaylist.com/de/tools/export-youtube-playlist-to-excel`
+- IndexNow response: **HTTP 202**, empty body. URLs received; search-engine key
+  validation is pending. This is not confirmation of crawling or indexing.
+- Request reference: `AEC53BFE19054F3FAB8ABEEAB4D9E070`.
+- Follow-up at 08:45:13 America/Los_Angeles (15:45:13 UTC): rechecked the live
+  key file (HTTP 200, matching text), then used curl to POST the same three URLs
+  directly to `https://www.bing.com/indexnow`. Bing returned **HTTP 200**, empty
+  body: submission accepted successfully. Request reference:
+  `F872583B0B074901A2FE552CB8B24CCF`. Dashboard visibility and indexing have not
+  been independently confirmed; do not repeatedly resubmit unchanged pages.
 
 ## Claude Code Skills
 

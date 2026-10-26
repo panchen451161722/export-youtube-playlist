@@ -1503,7 +1503,7 @@
   "tools.extra.channel_links.step_3": "Filter, sort, copy, or download the complete URL list.",
   "tools.extra.channel_links.benefit_export": "Move a channel's public URLs into research, archiving, or automation workflows.",
   "tools.extra.channel_links.faq_1_question": "How many channel links can be extracted?",
-  "tools.extra.channel_links.faq_1_answer": "The tool currently processes up to 5,000 available public uploads per request; unavailable items may be omitted.",
+  "tools.extra.channel_links.faq_1_answer": "Free tools process up to 500 recent uploads per channel. Sign in with an active Lite, Pro or Ultra subscription, including its trial, for up to 5,000. Unavailable videos are skipped.",
   "tools.extra.channel_titles.title": "YouTube Channel Title Extractor",
   "tools.extra.channel_titles.description": "Use this YouTube channel title extractor to collect and sort titles from public videos, Shorts, or live streams.",
   "tools.extra.channel_titles.seo_title": "YouTube Channel Title Extractor",
@@ -1516,9 +1516,9 @@
   "tools.extra.channel_titles.faq_1_question": "Will the titles stay in channel upload order?",
   "tools.extra.channel_titles.faq_1_answer": "Yes by default. You can also sort by date, engagement, duration, or alphabetically.",
   "tools.extra.channel_export.title": "Export a YouTube channel",
-  "tools.extra.channel_export.description": "Export YouTube channel data in 13 formats with public upload titles, descriptions, tags, statistics, and durations.",
+  "tools.extra.channel_export.description": "Export up to 500 public YouTube channel uploads free in 13 formats. Sign in with an active subscription for up to 5,000 uploads.",
   "tools.extra.channel_export.seo_title": "Export YouTube Channel in 13 File Formats",
-  "tools.extra.channel_export.seo_description": "Export up to 5,000 public YouTube channel uploads to CSV, Excel, JSON, Word, SQLite and 8 more formats with complete metadata.",
+  "tools.extra.channel_export.seo_description": "Export 500 YouTube channel uploads free to CSV, Excel, JSON and more. Sign in with an active subscription for up to 5,000 uploads.",
   "tools.extra.channel_export.eyebrow": "Full channel exporter",
   "tools.extra.channel_export.how_title": "How to export YouTube channel data",
   "tools.extra.channel_export.submit": "Export channel",
@@ -2121,5 +2121,8 @@
   "localizedHome.footer.contact": "Contact (English)",
   "localizedHome.footer.privacy": "Privacy (English)",
   "localizedHome.footer.terms": "Terms (English)",
-  "landing.nav.toggle_theme": "Toggle theme"
+  "landing.nav.toggle_theme": "Toggle theme",
+  "tools.extra.ui.channel_limit": "Up to {limit} recent uploads per channel. Unavailable videos are skipped; media filters apply within this limit.",
+  "tools.extra.ui.channel_upgrade": "Need more? Sign in with a subscription to export up to {limit} uploads",
+  "tools.extra.ui.channel_partial": "Partial results: {count} videos returned from a channel with {total} uploads."
 }

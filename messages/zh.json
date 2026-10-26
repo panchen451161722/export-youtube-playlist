@@ -1503,7 +1503,7 @@
   "tools.extra.channel_links.step_3": "筛选、排序、复制或下载完整网址清单。",
   "tools.extra.channel_links.benefit_export": "把频道的公开视频网址用于研究、归档或自动化流程。",
   "tools.extra.channel_links.faq_1_question": "最多可以提取多少个频道链接？",
-  "tools.extra.channel_links.faq_1_answer": "目前每次最多处理 5,000 个可用公开上传；不可用条目可能被省略。",
+  "tools.extra.channel_links.faq_1_answer": "免费工具每个频道最多处理最近 500 个上传条目。登录有效 Lite、Pro 或 Ultra 订阅账户后最多处理 5,000 个，试用期也适用。不可用视频会被跳过。",
   "tools.extra.channel_titles.title": "YouTube 频道标题提取器",
   "tools.extra.channel_titles.description": "使用 YouTube 频道标题提取器，收集并排序公开视频、Shorts 或直播的标题。",
   "tools.extra.channel_titles.seo_title": "YouTube 频道标题提取器",
@@ -1516,9 +1516,9 @@
   "tools.extra.channel_titles.faq_1_question": "标题会保持频道上传顺序吗？",
   "tools.extra.channel_titles.faq_1_answer": "默认会。也可按日期、互动、时长或字母排序。",
   "tools.extra.channel_export.title": "导出 YouTube 频道",
-  "tools.extra.channel_export.description": "将 YouTube 频道数据导出为 13 种格式，包括公开视频的标题、描述、标签、统计和时长。",
+  "tools.extra.channel_export.description": "免费导出最多 500 个 YouTube 频道公开上传条目，支持 13 种格式。登录有效订阅账户后最多导出 5,000 个。",
   "tools.extra.channel_export.seo_title": "将 YouTube 频道导出为 13 种文件格式",
-  "tools.extra.channel_export.seo_description": "把最多 5,000 个 YouTube 频道公开上传导出为 CSV、Excel、JSON、Word、SQLite 等 13 种格式，并包含完整元数据。",
+  "tools.extra.channel_export.seo_description": "免费将 500 个 YouTube 频道上传条目导出为 CSV、Excel、JSON 等格式。登录有效订阅账户后最多导出 5,000 个。",
   "tools.extra.channel_export.eyebrow": "完整频道导出工具",
   "tools.extra.channel_export.how_title": "如何导出 YouTube 频道数据",
   "tools.extra.channel_export.submit": "导出频道",
@@ -2121,5 +2121,8 @@
   "localizedHome.footer.contact": "联系（英语）",
   "localizedHome.footer.privacy": "隐私政策（英语）",
   "localizedHome.footer.terms": "使用条款（英语）",
-  "landing.nav.toggle_theme": "切换主题"
+  "landing.nav.toggle_theme": "切换主题",
+  "tools.extra.ui.channel_limit": "每个频道最多处理最近 {limit} 个上传条目。不可用视频会被跳过，类型筛选在此范围内进行。",
+  "tools.extra.ui.channel_upgrade": "需要更多？登录有效订阅账户，最多导出 {limit} 个上传条目",
+  "tools.extra.ui.channel_partial": "部分结果：此频道共有 {total} 个上传条目，本次返回 {count} 个视频。"
 }

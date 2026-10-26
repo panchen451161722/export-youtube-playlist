@@ -93,7 +93,7 @@ Hidden counts are stored as empty strings, which cast to 0, so filter them out w
 
 ## Things to know before you rely on the file
 
-- **Up to 5,000 uploads.** The exporter reads at most the 5,000 most recent uploads, in the order YouTube returns the uploads list, which is normally newest first. The page does not show a separate warning, so compare the Count with the channel's total.
+- **500 uploads free; 5,000 with a subscription.** Free exports scan up to the 500 most recent uploads. Sign in with an active Lite, Pro or Ultra subscription (including its trial) for up to 5,000. Larger channels show a partial-results notice. Unavailable videos are skipped, and media-type filters apply within the scanned uploads.
 - **Only public uploads.** Private videos, and videos YouTube removed, are not part of the public uploads list and never appear.
 - **Statistics are a snapshot,** taken when the data was loaded. To limit duplicate API calls the server may reuse data for the same channel for a few minutes, so re-running immediately can return identical numbers.
 - **Shorts are detected by length.** A video under 60 seconds that is not a live stream is labelled a Short. Shorts longer than that are counted as Videos, and an ordinary sub-minute clip is counted as a Short. Anything with live-stream details, including scheduled streams, is labelled Live.
@@ -108,7 +108,7 @@ Hidden counts are stored as empty strings, which cast to 0, so filter them out w
 | "The YouTube API quota is temporarily exhausted."                        | The site's shared daily quota is used up.                                                     | Try again later.                                                  |
 | "YouTube took too long to respond."                                      | A very large channel did not finish loading within about two minutes.                         | Retry, or use a media-type filter and export in parts.            |
 | Count is 0                                                               | The chosen media type has no matching uploads.                                                | Switch to All uploads.                                            |
-| Count is lower than the channel total                                    | The 5,000 limit, or private and removed videos.                                               | Expected; see the notes above.                                    |
+| Count is lower than the channel total                                    | The free 500 / subscriber 5,000 limit, or unavailable videos.                                 | Expected; see the notes above.                                    |
 
 ## Related guides
 
