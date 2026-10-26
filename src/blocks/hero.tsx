@@ -170,6 +170,15 @@ export function Hero({
       const result = await apiPost<PlaylistResult>('/api/youtube-playlist', {
         url: playlistUrl,
       });
+      // Count recognition separately from file generation, which can still fail.
+      trackEvent('playlist_limit_detected', {
+        tool: 'playlist_export',
+        total_items: result.totalItems,
+        free_limit: FREE_PLAYLIST_EXPORT_LIMIT,
+        export_limit: result.limit,
+        over_free_limit: result.totalItems > FREE_PLAYLIST_EXPORT_LIMIT,
+        truncated: result.truncated,
+      });
       await downloadYouTubeExports({
         records: playlistVideosToExportRecords(result.videos),
         context: { title: result.title, source: 'playlist' },
@@ -179,6 +188,10 @@ export function Hero({
     },
     onMutate: ({ selectedFormats }) => {
       setExportedPlaylist(null);
+      trackEvent('playlist_submitted', {
+        tool: 'playlist_export',
+        placement: variant === 'landing' ? 'homepage' : 'export_tool',
+      });
       trackEvent('tool_run_started', {
         tool: 'playlist_export',
         output_format: selectedFormats.join('_') || 'default',

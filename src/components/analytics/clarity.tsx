@@ -1,13 +1,36 @@
+import { useEffect, useRef } from 'react';
+import { useRouterState } from '@tanstack/react-router';
+
+import { trackEvent } from '@/lib/analytics';
+import { clarityBootstrap } from '@/lib/clarity-bootstrap';
+
 export function Clarity({ projectId }: { projectId: string }) {
-  const normalizedProjectId = projectId.trim();
-  if (!/^[a-z0-9]+$/i.test(normalizedProjectId)) return null;
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+  const lastPath = useRef<string | null>(null);
+  useEffect(() => {
+    if (lastPath.current === pathname) return;
+    lastPath.current = pathname;
+    const path = pathname.replace(/^\/(zh|de)(?=\/|$)/, '') || '/';
+    trackEvent('page_view', {
+      page_type:
+        path === '/'
+          ? 'homepage'
+          : path === '/pricing'
+            ? 'pricing'
+            : 'other_public',
+    });
+  }, [pathname]);
+  const bootstrap = clarityBootstrap(projectId);
+  if (!bootstrap) return null;
 
   return (
     <script
       id="clarity-init"
       async
       dangerouslySetInnerHTML={{
-        __html: `(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};try{c.localStorage.removeItem("clarity_consent")}catch(e){}c[a]("consentv2",{ad_Storage:"denied",analytics_Storage:"denied"});t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","${normalizedProjectId}");`,
+        __html: bootstrap,
       }}
     />
   );

@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, test } from 'node:test';
 import { createClient } from '@libsql/client';
+import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/libsql';
 import { getTableConfig } from 'drizzle-orm/sqlite-core';
 import Stripe from 'stripe';
@@ -107,6 +108,56 @@ const checkout = {
   invoice: 'in_first',
   created: start,
 };
+
+test('async checkout completion is recorded before payment without granting credits', async (t) => {
+  t.after(async () => {
+    await database.delete(order).where(eq(order.id, 'async-funnel'));
+  });
+  const session = {
+    ...checkout,
+    id: 'cs_async_funnel',
+    subscription: null,
+    payment_status: 'unpaid',
+  };
+  await database.insert(order).values({
+    id: 'async-funnel',
+    orderNo: 'ASYNC_FUNNEL',
+    userId: 'async-user',
+    status: 'created',
+    amount: 990,
+    currency: 'usd',
+    checkoutInfo: '{}',
+    paymentType: 'one-time',
+    paymentProvider: 'stripe',
+    paymentSessionId: session.id,
+  });
+  await handleWebhook(event('checkout.session.completed', session));
+  await handleWebhook(event('checkout.session.completed', session));
+  let persisted = (await database.select().from(order)).find(
+    (row) => row.id === 'async-funnel'
+  )!;
+  assert.equal(persisted.status, 'created');
+  assert.equal(persisted.paidAt, null);
+  assert.equal(JSON.parse(persisted.paymentResult!).status, 'complete');
+  assert.equal(
+    (await database.select().from(credit)).filter(
+      (row) => row.orderNo === 'ASYNC_FUNNEL'
+    ).length,
+    0
+  );
+  await handleWebhook(
+    event('checkout.session.async_payment_succeeded', {
+      ...session,
+      payment_status: 'paid',
+    })
+  );
+  await handleWebhook(event('checkout.session.completed', session));
+  persisted = (await database.select().from(order)).find(
+    (row) => row.id === 'async-funnel'
+  )!;
+  assert.equal(persisted.status, 'paid');
+  assert.equal(persisted.paymentAmount, 990);
+});
 
 test('pricing distinguishes renewal-off access from an ended subscription without granting another trial', () => {
   const now = Date.UTC(2026, 9, 22);

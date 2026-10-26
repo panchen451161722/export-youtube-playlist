@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import {
   ArrowRight,
   Check,
@@ -62,6 +63,7 @@ export function GuardPricing({
   checkoutAvailable,
   checkoutLoading,
   asPage,
+  onPlansViewed,
 }: {
   content: GuardPricingContent;
   onBuy: (id: GuardPlanId) => void;
@@ -69,7 +71,24 @@ export function GuardPricing({
   checkoutAvailable: boolean;
   checkoutLoading: boolean;
   asPage?: boolean;
+  onPlansViewed?: () => void;
 }) {
+  const firstPlan = useRef<HTMLElement>(null);
+  const viewed = useRef(false);
+  useEffect(() => {
+    if (!firstPlan.current || !onPlansViewed || viewed.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting || viewed.current) return;
+        viewed.current = true;
+        onPlansViewed();
+        observer.disconnect();
+      },
+      { threshold: 0.25 }
+    );
+    observer.observe(firstPlan.current);
+    return () => observer.disconnect();
+  }, [onPlansViewed]);
   const Heading = asPage ? 'h1' : 'h2';
   return (
     <section id="pricing" className="scroll-mt-20 px-5 py-16 sm:px-8 sm:py-24">
@@ -106,10 +125,11 @@ export function GuardPricing({
           </p>
         )}
         <div className="mt-12 grid gap-5 lg:grid-cols-3">
-          {content.plans.map((plan) => {
+          {content.plans.map((plan, index) => {
             const highlighted = plan.id === 'pro';
             return (
               <article
+                ref={index === 0 ? firstPlan : undefined}
                 key={plan.id}
                 className={cn(
                   'relative flex flex-col rounded-2xl border p-7 sm:p-8',

@@ -11,6 +11,7 @@ import {
   type GuardPlanId,
 } from '@/config/guard-plans';
 import { SUBSCRIBER_PLAYLIST_EXPORT_LIMIT } from '@/config/playlist-export';
+import { trackEvent } from '@/lib/analytics';
 import { apiGet, apiPost } from '@/lib/api-client';
 import { readBackupDraft, writeBackupDraft } from '@/lib/backup-draft';
 import {
@@ -62,12 +63,16 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
         expect_trial: trialEligible,
       });
     },
-    onSuccess: (result) => {
+    onSuccess: (result, planId) => {
       // Only a successful, explicit checkout request may leave this page.
       const url = new URL(result.checkout_url);
       if (url.protocol !== 'https:') {
         throw new Error(m['guardPricing.checkout_error']());
       }
+      trackEvent('checkout_started', {
+        plan_id: planId,
+        payment_provider: 'stripe',
+      });
       window.location.assign(url.href);
     },
     onError: () => {
@@ -229,7 +234,16 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
   return (
     <GuardPricing
       content={content}
+      onPlansViewed={() =>
+        trackEvent('paywall_view', {
+          placement: asPage ? 'pricing_page' : 'homepage_pricing',
+        })
+      }
       onBuy={(planId) => {
+        trackEvent('checkout_clicked', {
+          plan_id: planId,
+          placement: asPage ? 'pricing_page' : 'homepage_pricing',
+        });
         if (!session?.user) {
           router.push('/sign-in?callbackUrl=%2Fpricing');
           return;

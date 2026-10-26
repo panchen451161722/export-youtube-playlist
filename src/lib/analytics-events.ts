@@ -1,6 +1,12 @@
 // Keep conversion payloads categorical. Never include user IDs, email addresses,
 // playlist URLs/titles, order IDs, or raw error messages.
 export const CLIENT_ANALYTICS_EVENTS = [
+  'page_view',
+  'playlist_submitted',
+  'playlist_limit_detected',
+  'paywall_view',
+  'checkout_clicked',
+  'checkout_started',
   'tool_run_started',
   'tool_run_succeeded',
   'tool_run_failed',
@@ -24,6 +30,13 @@ const PROPERTY_KEYS = new Set([
   'error_type',
   'media_type',
   'placement',
+  'page_type',
+  'total_items',
+  'export_limit',
+  'free_limit',
+  'over_free_limit',
+  'plan_id',
+  'payment_provider',
 ]);
 
 export function analyticsProperties(input: AnalyticsProperties = {}) {
@@ -40,5 +53,11 @@ export function analyticsProperties(input: AnalyticsProperties = {}) {
 }
 
 export function isInteractiveEvent(event: ClientAnalyticsEvent) {
-  return !['backup_cta_viewed', 'tool_run_failed'].includes(event);
+  return ![
+    'page_view',
+    'playlist_limit_detected',
+    'paywall_view',
+    'backup_cta_viewed',
+    'tool_run_failed',
+  ].includes(event);
 }

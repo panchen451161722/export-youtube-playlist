@@ -515,6 +515,34 @@ storage (R2), AI (Replicate/Gemini/Fal), and analytics are configured at
 — same-named env vars still work as fallbacks, but database values win.
 Keep `.env.example` minimal; don't add provider keys to it.
 
+## Registration and Payment Conversion Experiments
+
+For future work intended to improve registration, checkout, or paid conversion,
+use an A/B experiment and maintain its record in
+`docs/experiments/conversion-tests.md`. Create that log when the first experiment
+is planned, and read existing records before starting another experiment.
+
+- Before implementation, record an experiment ID, hypothesis, target audience,
+  control (A), variant (B), and the specific difference being tested.
+- Define the primary conversion metric, denominator, conversion window, guardrail
+  metrics, traffic allocation, and stopping criteria before launch. Keep variant
+  assignment stable; normally test one substantive change at a time.
+- Record planned and actual start/end dates, deployment or commit references,
+  sample sizes, conversion counts/rates, and the final keep/revert/continue decision.
+- Distinguish registration, completed checkout, free trial activation, and actual
+  positive payment. Do not count a free trial or zero-amount payment as revenue.
+- Preserve the existing privacy boundary: public-page behavior may use Clarity;
+  authenticated and payment outcomes stay in first-party reporting. Keep the
+  experiment and variant associated with the relevant first-party outcome without
+  sending account or payment identifiers to Clarity.
+- Record status honestly: planned, running, concluded, not run, or inconclusive.
+  A before/after comparison, an unlaunched change, or insufficient traffic is not
+  evidence that an A/B variant won. If a real split test is not feasible, document
+  the reason and the validation used instead.
+- Update the record alongside each relevant change and report its experiment ID
+  and status to the user. This standing requirement does not itself authorize
+  deployment, changes to prices, or the weakening of privacy settings.
+
 ## Critical Rules
 
 1. **Don't import between modules** (except the documented payment→credits/subscriptions dependency)

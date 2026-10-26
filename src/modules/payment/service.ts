@@ -565,6 +565,26 @@ async function handleCheckoutSuccess(session: any, provider: string) {
           eq(order.status, existingOrder.status)
         )
       );
+  } else if (
+    provider === 'stripe' &&
+    session.paymentStatus === PaymentStatus.PROCESSING &&
+    result.status === 'complete'
+  ) {
+    // Completed checkout may still await an asynchronous payment. Preserve
+    // provider evidence for the funnel without granting access or marking paid.
+    await db()
+      .update(order)
+      .set({
+        // Keep the state unchanged so concurrent success handlers can still
+        // atomically transition the original state to paid.
+        paymentResult: JSON.stringify(session.paymentResult),
+      })
+      .where(
+        and(
+          eq(order.id, existingOrder.id),
+          eq(order.status, existingOrder.status)
+        )
+      );
   }
 }
 

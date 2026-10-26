@@ -4,8 +4,8 @@ import { useState, type ComponentType, type SVGProps } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Check } from 'lucide-react';
 
+import { trackEvent } from '@/lib/analytics';
 import { apiPost } from '@/lib/api-client';
-import { trackClarityEvent } from '@/lib/clarity';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
 import { Button } from '@/components/ui/button';
@@ -74,8 +74,12 @@ export function PricingTable({
         credits_valid_days: plan.creditsValidDays,
         payment_provider: plan.paymentProvider || 'stripe',
       }),
-    onSuccess: (data) => {
+    onSuccess: (data, plan) => {
       if (data?.checkout_url) {
+        trackEvent('checkout_started', {
+          plan_id: plan.id,
+          payment_provider: plan.paymentProvider || 'stripe',
+        });
         window.location.href = data.checkout_url;
       }
     },
@@ -85,10 +89,9 @@ export function PricingTable({
   });
 
   function handleCheckout(plan: PricingPlan) {
-    trackClarityEvent('checkout_started', {
+    trackEvent('checkout_clicked', {
       plan_id: plan.id,
       payment_provider: plan.paymentProvider || 'stripe',
-      purchase_type: plan.plan ? 'subscription' : 'one_time',
     });
 
     if (onCheckout) {

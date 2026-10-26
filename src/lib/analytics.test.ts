@@ -79,6 +79,36 @@ test('exposure and errors do not lower bounce rate; CTA clicks are interactive',
   );
 });
 
+test('funnel events preserve counts but never submit playlist URLs or payment identifiers', () => {
+  const { calls } = browser();
+  trackEvent('playlist_limit_detected', {
+    total_items: 750,
+    free_limit: 500,
+    export_limit: 500,
+    over_free_limit: true,
+    playlist_url: 'https://youtube.com/playlist?list=private',
+    order_id: 'order123',
+  });
+  assert.deepEqual(calls[0].options, {
+    props: {
+      total_items: 750,
+      free_limit: 500,
+      export_limit: 500,
+      over_free_limit: true,
+    },
+    interactive: false,
+  });
+  trackEvent('page_view');
+  trackEvent('paywall_view');
+  trackEvent('playlist_submitted');
+  trackEvent('checkout_clicked');
+  trackEvent('checkout_started');
+  assert.deepEqual(
+    calls.map((call) => (call.options as { interactive: boolean }).interactive),
+    [false, false, false, true, true, true]
+  );
+});
+
 test('a throwing Clarity tracker does not suppress Plausible or break the action', () => {
   const { win, calls } = browser();
   win.clarity = () => {

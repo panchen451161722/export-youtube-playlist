@@ -6,6 +6,7 @@ import { tDynamic } from '@/core/i18n/dynamic';
 import { apiGet, type PageResult } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
+import { PaymentFunnel } from '@/blocks/admin/payment-funnel';
 import { DataTable, type Column } from '@/components/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -125,6 +126,8 @@ function PaymentsPage() {
           {m['admin.payments.description']()}
         </p>
       </div>
+
+      <PaymentFunnel />
 
       <div className="border-border flex gap-1 overflow-x-auto overflow-y-hidden border-b">
         {TABS.map((tb) => (
