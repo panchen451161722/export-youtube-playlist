@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import { envConfigs } from '@/config';
+import { landingFaqSchema } from '@/lib/landing-faq';
 import { absoluteUrl, localizedPageUrl, publicPageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
@@ -49,6 +50,7 @@ export const Route = createFileRoute('/')({
       structuredData: {
         '@context': 'https://schema.org',
         '@graph': [
+          landingFaqSchema(locale),
           {
             '@type': 'Organization',
             name: envConfigs.app_name,

@@ -1,0 +1,58 @@
+export const meta = {
+  title: 'YouTube-Playlist-Dauer berechnen und Lernzeit planen',
+  description:
+    'So entstehen Gesamtdauer und Wiedergabezeit einer YouTube-Playlist, wie sich 1,25× bis 2× auswirken und welche Grenzen bei der Lernplanung gelten.',
+  created_at: '2026-10-12',
+  author_name: 'Playlist Exporter',
+};
+
+Eine Playlist mit 60 Videos kann einen Nachmittag oder mehrere Wochen beanspruchen. Die Videoanzahl allein sagt wenig über den Zeitbedarf. Mit dem [YouTube-Playlist-Analyzer](/tools/youtube-playlist-analyzer) kannst du die verfügbaren Laufzeiten zusammenrechnen und verschiedene Wiedergabegeschwindigkeiten vergleichen.
+
+## Wie die Gesamtdauer entsteht
+
+Die YouTube API liefert Videolaufzeiten als Metadaten, beispielsweise `PT1H4M30S` für eine Stunde, vier Minuten und 30 Sekunden. Der Analyzer lädt die verfügbaren Videos, wandelt ihre Laufzeiten in Sekunden um und addiert sie.
+
+Nur zurückgegebene Videos mit verfügbarer Laufzeit tragen zur Summe bei. Gelöschte oder private Einträge fehlen möglicherweise. Laufende oder geplante Livestreams haben unter Umständen noch keine verlässliche Dauer. Prüfe deshalb die Zahl analysierter Videos und Hinweise auf Teilergebnisse.
+
+Kostenlos werden bis zu 500 Playlist-Einträge geprüft, nach Anmeldung mit aktivem Abo einschließlich Testphase bis zu 5.000. Eine Teilmenge erlaubt keine sichere Aussage über die Dauer der gesamten Playlist.
+
+## Wiedergabegeschwindigkeit richtig berechnen
+
+Die Formel lautet:
+
+```text
+Wiedergabezeit = Gesamtdauer / Geschwindigkeitsfaktor
+```
+
+Für eine beispielhafte Playlist mit zwölf Stunden ergibt sich:
+
+| Geschwindigkeit | Reine Wiedergabezeit | Ersparnis |
+| --------------- | -------------------- | --------- |
+| 1×              | 12 Stunden           | –         |
+| 1,25×           | 9 Stunden 36 Minuten | 20 %      |
+| 1,5×            | 8 Stunden            | rund 33 % |
+| 2×              | 6 Stunden            | 50 %      |
+
+1,5-fache Geschwindigkeit bedeutet also nicht 50 Prozent weniger Zeit. Die ursprüngliche Dauer wird durch 1,5 geteilt.
+
+Diese Werte enthalten weder Werbung noch Pausen, Wiederholungen oder Übungen. Sie ändern keine Videoeinstellungen; sie sind eine rechnerische Vorschau.
+
+## Aus Laufzeit einen realistischen Lernplan machen
+
+Angenommen, du möchtest die Beispiel-Playlist bei 1,5× ansehen und hast täglich 45 Minuten. Die acht Stunden reine Wiedergabe entsprechen aufgerundet elf Sitzungen. Für Notizen, Aufgaben und schwierige Abschnitte brauchst du zusätzlich Zeit.
+
+Plane nicht jede Sitzung bis zur letzten Minute. Teile die Playlist an sinnvollen Themenwechseln auf. Wenn ein Video 90 Minuten dauert, kann es über mehrere Tage gehen. Wenn mehrere Clips nur wenige Minuten lang sind, passen sie möglicherweise in eine gemeinsame Übungseinheit.
+
+Der Analyzer zeigt auch längstes und kürzestes Video. Das hilft, solche Ausnahmen früh zu erkennen.
+
+## Mit einer Tabelle genauer planen
+
+Exportiere die [Playlist als CSV](/tools/export-youtube-playlist-to-csv) oder [Excel-Datei](/tools/export-youtube-playlist-to-excel). Verwende `Duration in seconds` für Berechnungen und ergänze Spalten für Lernziel, Status und Notizen.
+
+Für jeden Eintrag kannst du die Sekunden durch den Geschwindigkeitsfaktor und durch 60 teilen, um die geschätzten Minuten zu erhalten. Summiere diese Werte abschnittsweise. Achte darauf, dass Formeln und Zahlen zur Gebietseinstellung deiner Tabelle passen.
+
+## Laufzeit ist nicht YouTube-Watchtime
+
+Die berechnete Wiedergabezeit beschreibt, wie lange das Anschauen der geladenen Videos dauern würde. Sie ist keine tatsächliche Zuschauer-Watchtime und keine Kennzahl aus YouTube Studio. Auch Aufrufzahlen sagen nicht, wie viele Minuten Menschen angesehen haben.
+
+Für einen schnellen Zeitvergleich genügt der [Playlist-Analyzer](/tools/youtube-playlist-analyzer). Wenn du zusätzlich Quellen, Titel und Lernfortschritt dokumentieren möchtest, kombiniere ihn mit der [Google-Sheets-Anleitung](/blog/analyze-youtube-playlist-in-google-sheets).

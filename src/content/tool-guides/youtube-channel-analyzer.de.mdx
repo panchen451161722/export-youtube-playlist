@@ -1,0 +1,40 @@
+export const meta = {
+  title: 'Öffentliche Kanalstatistiken richtig interpretieren',
+  updated_at: '2026-10-26',
+};
+
+## Was die Analyse zeigt
+
+Der Kanal-Analyzer fasst die geladenen öffentlichen Uploads zusammen: Anzahl, Gesamtdauer, durchschnittliche Dauer, Aufrufe, Likes, Kommentare, Interaktionsrate und besonders häufig aufgerufene Videos. Du kannst eine Kanal-URL, einen Handle, eine Kanal-ID oder einen Video-Link eingeben.
+
+Kostenlos werden bis zu 500 aktuelle Uploads geprüft. Nach Anmeldung mit aktivem Abo einschließlich Testphase sind bis zu 5.000 möglich. Bei größeren Kanälen beschreiben die Kennzahlen nur diesen Ausschnitt. Nicht verfügbare Videos fehlen.
+
+## Videos, Shorts und Livestreams
+
+Der Medientyp-Filter begrenzt die Auswertung auf die ausgewählte Gruppe innerhalb der geladenen Uploads. Videos mit Livestream-Details werden als Live eingeordnet. Sonstige Videos unter 60 Sekunden gelten als Shorts, alle übrigen als Videos.
+
+Diese Heuristik ist keine offizielle Shorts-Kennzeichnung. Ein horizontaler Kurzclip kann als Short erscheinen, ein längerer Short als Video. Für Vergleiche mit vielen Clips zwischen einer und drei Minuten ist das besonders relevant.
+
+## Öffentliche Interaktionsrate
+
+Die Rate setzt die Summe verfügbarer Likes und Kommentare ins Verhältnis zur Summe verfügbarer Aufrufe. Einblendungen, Zuschauerbindung und Einnahmen stehen nicht zur Verfügung. Die Rate wird pro Aufruf berechnet, nicht pro Abonnent.
+
+Fehlende Likes oder Kommentare können die Rate senken, wenn Aufrufe trotzdem in der Summe enthalten sind. Kanäle mit deaktivierten Kommentaren lassen sich daher nicht ohne Weiteres mit Kanälen vergleichen, bei denen alle Werte öffentlich sind. Kommentare zu einem Livestream sind zudem nicht dessen Livechat-Nachrichten.
+
+## Ein sinnvoller Vergleich
+
+Vergleiche zunächst ähnliche Formate und Veröffentlichungszeiträume. Alte Videos hatten länger Zeit, Aufrufe zu sammeln. Eine hohe Gesamtsumme kann durch wenige erfolgreiche Videos geprägt sein; betrachte deshalb zusätzlich die Verteilung und typische Werte pro Video.
+
+Als Beispiel kannst du einen Kanal einmal für alle Uploads und anschließend nur für normale Videos auswerten. Dokumentiere die Filter und Ergebniszahlen. Wenn die Datenbasis begrenzt ist, vermeide Aussagen über den gesamten historischen Katalog.
+
+## Mit der CSV weiterarbeiten
+
+Die Analyse-CSV enthält pro Video Position, ID, Titel, URL, Kanal, Dauer in Sekunden, Aufrufe, Likes, Kommentare, Veröffentlichungszeit und Medientyp. Fehlende Statistiken bleiben leer. Gruppiere `Uploaded Time` nach Monat, um den Veröffentlichungsrhythmus zu untersuchen.
+
+Für Beschreibungen, Tags und weitere Formate verwende den [vollständigen Kanalexport](/tools/export-youtube-channel). Erhalte eine unveränderte Originaldatei und bearbeite eine Kopie, damit sich spätere Auswertungen nachvollziehen lassen.
+
+## Häufige Ursachen unerwarteter Ergebnisse
+
+Eine leere Auswertung kann am ausgewählten Medientyp liegen. Eine kleinere Videozahl kann durch Limit, Filter oder nicht verfügbare Uploads entstehen. Bei einem nicht erkannten Kanal probiere den aktuellen Handle, die Kanal-ID oder einen Video-Link. API-Kontingent- und Netzwerkfehler sind kein Hinweis auf fehlende Kanalaktivität.
+
+Weitere Hilfen: [YouTube-Kanal mit öffentlichen Daten prüfen](/blog/audit-a-youtube-channel-with-public-data), [Playlist analysieren](/tools/youtube-playlist-analyzer) und [Playlist als Excel exportieren](/tools/export-youtube-playlist-to-excel).

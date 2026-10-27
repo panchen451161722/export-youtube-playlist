@@ -7,6 +7,14 @@ import { m } from '@/paraglide/messages.js';
 const productLinks = [
   { label: () => m['landing.footer.tool'](), href: '/#exporter' },
   { label: () => m['landing.nav.tools'](), href: '/tools' },
+  {
+    label: () => m['tools.csv.title'](),
+    href: '/tools/export-youtube-playlist-to-csv',
+  },
+  {
+    label: () => m['tools.excel.title'](),
+    href: '/tools/export-youtube-playlist-to-excel',
+  },
   { label: () => m['landing.footer.features'](), href: '/#features' },
   { label: () => m['landing.footer.how'](), href: '/#how-it-works' },
   { label: () => m['landing.footer.pricing'](), href: '/pricing' },

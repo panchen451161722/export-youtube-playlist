@@ -951,7 +951,7 @@
   "landing.faq.limit.question": "How many videos can I export?",
   "landing.faq.limit.answer": "Free exports cover up to 500 playlist entries. Sign in with a current Lite, Pro or Ultra subscription to export up to 5,000 entries per playlist, including during your subscription trial. Unavailable videos are skipped; larger playlists include only the entries within your limit.",
   "landing.faq.retention.question": "Do you store my playlist or export?",
-  "landing.faq.retention.answer": "Public exports do not create a saved history. Playlist Expoter saves collection settings and metadata snapshots; each snapshot and missing-item record expires within 30 days. Files you download are under your control.",
+  "landing.faq.retention.answer": "Public exports do not create a saved history. Playlist Exporter saves collection settings and metadata snapshots; each snapshot and missing-item record expires within 30 days. Files you download are under your control.",
   "landing.faq.formats.question": "Which export formats are supported?",
   "landing.faq.formats.answer": "You can download CSV, Excel, Text, Bookmark HTML, JSON, Markdown, XML, HTML, YAML, SQLite, Word, M3U and M3U8. One selected format downloads directly; multiple formats—or no selection—download as one ZIP.",
   "landing.faq.quota.question": "What happens if the YouTube API quota is reached?",

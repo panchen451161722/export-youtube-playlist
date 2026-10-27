@@ -1,0 +1,48 @@
+export const meta = {
+  title: 'YouTube-Kanaldaten exportieren und richtig weiterverarbeiten',
+  updated_at: '2026-10-26',
+};
+
+## Welche Eingaben funktionieren
+
+Du kannst eine Kanal-URL, einen `@handle`, eine mit `UC` beginnende Kanal-ID oder die URL eines Videos aus dem Kanal verwenden. Ältere benutzerdefinierte `/c/`-URLs lassen sich nicht immer auflösen. Versuche in diesem Fall den aktuellen Handle oder einen Video-Link.
+
+Das Tool liest die offizielle Upload-Playlist über die YouTube Data API. Exportiert werden die verfügbaren öffentlichen Uploads, keine privaten Videos und keine Mediendateien.
+
+## Umfang und Filter
+
+Kostenlos werden bis zu 500 aktuelle Uploads verarbeitet. Mit Anmeldung und aktivem Lite-, Pro- oder Ultra-Abo einschließlich Testphase sind bis zu 5.000 möglich. Die Filter für Videos, Shorts oder Livestreams greifen innerhalb der geladenen Uploads. Ein Filter erweitert das Limit nicht und lädt nicht automatisch ältere passende Videos nach.
+
+Die Shorts-Erkennung verwendet die Laufzeit als Näherung: Nicht als Livestream erkannte Videos unter 60 Sekunden werden als Shorts eingeordnet. Längere Shorts können daher als normale Videos erscheinen. Prüfe wichtige Zuordnungen manuell.
+
+## Spalten und Dateiformate
+
+Der vollständige Export enthält 17 Spalten: Titel, Beschreibung, Vorschaubild-URL, Kanalname, Aufrufe, Likes, Kommentare, Dauer in Sekunden, Minuten, Zeitformat und lesbarem Text, Veröffentlichungszeit, Video-URL, Tags sowie Hashtags, E-Mails und Links aus der Beschreibung.
+
+Erkannte E-Mail-Adressen und Links sind Texttreffer, keine geprüften Kontaktdaten. Fehlende Zahlen bleiben leer. Die Spaltennamen bleiben auf Englisch; Inhalte behalten ihre Originalsprache.
+
+| Format                | Typischer Zweck                             |
+| --------------------- | ------------------------------------------- |
+| CSV / Excel           | Sortieren, Filtern und Tabellenanalysen     |
+| JSON / XML / YAML     | Strukturierte Weiterverarbeitung            |
+| SQLite                | Lokale SQL-Abfragen in einer videos-Tabelle |
+| TXT / Markdown / Word | Lesen, Notizen und Dokumente                |
+| HTML                  | Lesbare Tabelle                             |
+| HTML-Lesezeichen      | Import in die Lesezeichenverwaltung         |
+| M3U / M3U8            | URL-Listen für kompatible Player            |
+
+Ein ausgewähltes Format wird einzeln heruntergeladen. Mehrere Formate oder keine Auswahl ergeben eine ZIP-Datei; ohne Auswahl sind alle 13 Formate enthalten. Player-Dateien enthalten YouTube-Links, keine offline gespeicherten Videos.
+
+## Daten sicher verwenden
+
+CSV-Dateien verwenden UTF-8. Falls Excel die Spalten nicht trennt, importiere die Datei mit Komma als Trennzeichen oder wähle direkt XLSX. Beschreibungen können Zeilenumbrüche und Anführungszeichen enthalten.
+
+Der Export schützt Texte, die wie Tabellenformeln beginnen, mit einem vorangestellten Apostroph. Entferne diesen Schutz nicht pauschal. In SQLite werden Werte als Text gespeichert; wandle Zahlen für numerische Sortierung um und schließe leere Felder bei Durchschnittswerten aus.
+
+## Teilergebnisse richtig lesen
+
+Vergleiche die Ergebniszahl mit dem Limit und der erwarteten Datenmenge. Eine geringere Zahl kann durch nicht verfügbare Videos, das Exportlimit oder den Medienfilter entstehen. Sie beweist nicht, dass Videos gelöscht wurden. Öffentliche Statistiken sind eine Momentaufnahme und können kurzzeitig aus einem Cache stammen.
+
+Wenn ein Kanal nicht gefunden wird, prüfe Handle oder ID. Bei einer Zeitüberschreitung oder ausgeschöpftem API-Kontingent versuche den Abruf später erneut. Ein anderer Medienfilter reduziert nicht die Zahl der zuvor geladenen Uploads.
+
+Für Summen und Ranglisten nutze den [Kanal-Analyzer](/tools/youtube-channel-analyzer). Für einzelne Sammlungen sind der [Playlist-CSV-Export](/tools/export-youtube-playlist-to-csv) und der [Playlist-Excel-Export](/tools/export-youtube-playlist-to-excel) geeigneter. Eine weiterführende Methode beschreibt der [Leitfaden zur Kanalanalyse](/blog/audit-a-youtube-channel-with-public-data).

@@ -1,0 +1,59 @@
+export const meta = {
+  title: 'YouTube-Playlist als CSV oder Excel exportieren: Schritt für Schritt',
+  description:
+    'So exportierst du verfügbare Videotitel, Links, Laufzeiten und weitere YouTube-Playlist-Metadaten als CSV oder Excel und vermeidest typische Importprobleme.',
+  created_at: '2026-07-21',
+  author_name: 'Playlist Exporter',
+};
+
+Eine Tabelle macht lange Playlists leichter durchsuchbar. Du kannst nach Titeln suchen, Laufzeiten sortieren und Links aufbewahren, ohne jedes Video einzeln zu öffnen. Dieser Leitfaden zeigt den öffentlichen Export ohne Browser-Erweiterung und ohne Zugriff auf dein YouTube-Konto.
+
+## 1. Den richtigen Playlist-Link kopieren
+
+Öffne die Playlist auf YouTube und kopiere ihren Link. Entscheidend ist der Parameter `list`, etwa in dieser Beispielstruktur:
+
+```text
+https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx
+```
+
+Auch eine Video-URL kann funktionieren, wenn sie die Playlist-ID als `list`-Parameter enthält. Ein einzelner Video-Link ohne diesen Parameter bezeichnet keine Playlist.
+
+Öffentliche und über den Link zugängliche, nicht gelistete Listen werden unterstützt. Private Listen benötigen den separaten kontobasierten Bereich und eine passende YouTube-Autorisierung. Gelöschte oder nicht zugängliche Videos können auch damit nicht wiederhergestellt werden.
+
+## 2. CSV oder Excel auswählen
+
+Öffne den [YouTube-Playlist-Exporter für CSV](/tools/export-youtube-playlist-to-csv) oder den [YouTube-Playlist-Exporter für Excel](/tools/export-youtube-playlist-to-excel), füge die URL ein und starte den Export.
+
+| Format       | Geeignet für                                             | Beim Öffnen beachten                                                               |
+| ------------ | -------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| CSV          | Google Sheets, Datenimporte und Skripte                  | UTF-8, Komma als Trennzeichen und korrekte Behandlung von Anführungszeichen wählen |
+| Excel (XLSX) | Direkte Bearbeitung in Excel oder kompatiblen Programmen | Arbeitsmappe öffnen; kein CSV-Import nötig                                         |
+| JSON         | Eigene Programme und strukturierte Weiterverarbeitung    | Kein Tabellenformat; mit passender Software öffnen                                 |
+
+Ein ausgewähltes Format wird direkt heruntergeladen. Mehrere Formate oder keine Auswahl ergeben eine ZIP-Datei; ohne Auswahl enthält sie alle 13 Formate.
+
+## 3. Umfang und Spalten prüfen
+
+Kostenlose Exporte verarbeiten bis zu 500 Einträge pro Playlist. Nach Anmeldung mit aktivem Lite-, Pro- oder Ultra-Abo einschließlich Testphase sind bis zu 5.000 möglich. Nicht verfügbare Videos werden übersprungen. Prüfe Hinweise auf Teilergebnisse, bevor du die Datei als vollständige Liste verwendest.
+
+Die vollständigen CSV- und Excel-Exporte enthalten 17 Spalten: Titel, Beschreibung, Vorschaubild-URL, Kanalname, Aufrufe, Likes, Kommentare, vier Darstellungen der Dauer, Veröffentlichungszeit, Video-URL, Tags sowie in der Beschreibung erkannte Hashtags, E-Mail-Adressen und Links.
+
+Die Spaltennamen bleiben auf Englisch; Videotitel und Beschreibungen behalten ihre Originalsprache. Eine leere Statistik bedeutet „nicht verfügbar“, nicht zwingend null. Ein Vorschaubild-Link ist kein eingebettetes Bild und eine Video-URL keine heruntergeladene Mediendatei.
+
+## 4. CSV in einer deutschen Tabellenumgebung importieren
+
+Wenn nach einem Doppelklick alle Daten in einer Spalte erscheinen, importiere die Datei über die Datenimport-Funktion. Wähle **Komma** als Trennzeichen und **UTF-8** als Zeichencodierung. Beschreibungen können Kommas und Zeilenumbrüche enthalten; ein CSV-Parser muss deshalb Anführungszeichen korrekt auswerten.
+
+Für Berechnungen ist `Duration in seconds` verlässlicher als die lesbare Textdauer. Die Dezimaldarstellung verwendet einen Punkt. Passe beim Import die Gebietseinstellung an oder wandle Zahlen gezielt um, wenn dein Programm ein Dezimalkomma erwartet.
+
+Texte, die wie Tabellenformeln beginnen, können zum Schutz ein vorangestelltes Apostroph enthalten. Entferne diesen Schutz nicht pauschal bei unbekannten Daten.
+
+## 5. Die Datei sinnvoll weiterverwenden
+
+Bewahre zunächst eine unveränderte Kopie auf und bearbeite eine zweite. Ergänze eigene Spalten für Bearbeitungsstatus, Themen oder Notizen. Verwende die Video-URL als Kennung, wenn du mehrere Exporte vergleichen möchtest: Titel können sich ändern.
+
+Für eine schnelle Zeitplanung eignet sich der [Playlist-Analyzer](/tools/youtube-playlist-analyzer). Für Tabellenformeln und Pivot-Auswertungen lies die [Anleitung für Google Sheets](/blog/analyze-youtube-playlist-in-google-sheets).
+
+## Grenzen des Exports
+
+Der Export ist eine Momentaufnahme öffentlicher Metadaten. Er aktualisiert sich nicht automatisch, enthält keine Video- oder Audiodateien und garantiert nicht die spätere Verfügbarkeit eines Videos. API-Kontingente, Zugriffsbeschränkungen oder technische Fehler können einen Abruf vorübergehend verhindern. Bei einem Kontingentfehler hilft es, später erneut zu versuchen; schnelles wiederholtes Absenden erhöht das Kontingent nicht.

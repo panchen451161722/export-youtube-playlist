@@ -1,0 +1,43 @@
+export const meta = {
+  title: 'Playlist-Analyse verstehen: Laufzeit, Kennzahlen und Grenzen',
+  updated_at: '2026-10-26',
+};
+
+## Welche Daten in die Auswertung eingehen
+
+Der Analyzer liest die Playlist über die offizielle YouTube Data API und lädt Details zu den verfügbaren Videos. Die Ergebnisse beschreiben ausschließlich die tatsächlich zurückgegebenen Videos. Private, gelöschte oder anderweitig nicht verfügbare Einträge können fehlen.
+
+| Kennzahl                      | Berechnung                                                               |
+| ----------------------------- | ------------------------------------------------------------------------ |
+| Verfügbare Videos             | Zahl der Videos mit geladenen Details                                    |
+| Gesamtdauer                   | Summe der verfügbaren Videolaufzeiten                                    |
+| Durchschnittliche Dauer       | Gesamtdauer geteilt durch die Zahl der Videos mit Laufzeit               |
+| Verschiedene Kanäle           | Unterschiedliche Kanalnamen in den Ergebnissen                           |
+| Aufrufe, Likes, Kommentare    | Summe der jeweils verfügbaren Werte                                      |
+| Durchschnittliche Statistiken | Summe geteilt durch die Zahl der Videos, die den jeweiligen Wert liefern |
+
+Ein Hinweis wie „Basierend auf 36 von 38 Videos“ nennt die Datengrundlage. Fehlende Werte werden bei diesen Durchschnittswerten nicht als null mitgezählt. Zwei verschiedene Kanäle mit identischem Anzeigenamen können bei der Kanalzahl als einer erscheinen.
+
+## Wiedergabezeit und Ranglisten
+
+Die geschätzte Wiedergabezeit teilt die Gesamtdauer durch den Geschwindigkeitsfaktor. Werbung, Pausen und Wiederholungen sind nicht enthalten. Die Werte ändern weder die Videos noch deren Wiedergabeeinstellungen.
+
+Die längsten und kürzesten Videos helfen bei der Planung von Lerneinheiten. Die meistgesehenen Videos und häufigsten Kanäle geben einen Überblick über die Zusammensetzung der Liste. Aufrufzahlen beziehen sich auf die Videos insgesamt, nicht nur auf Aufrufe innerhalb dieser Playlist.
+
+## Die Analyse-CSV
+
+Die CSV enthält die Spalten `Index`, `Video ID`, `Title`, `URL`, `Channel`, `Duration Seconds`, `Views`, `Likes`, `Comments` und `Uploaded Time`. Fehlende Statistiken bleiben leer. Für Laufzeitberechnungen verwendest du am besten `Duration Seconds`.
+
+Diese schmale Datei unterscheidet sich vom [vollständigen Playlist-CSV-Export](/tools/export-youtube-playlist-to-csv), der auch Beschreibungen, Tags und Vorschaubild-Links enthält. Für eine Arbeitsmappe kannst du die [Playlist als Excel exportieren](/tools/export-youtube-playlist-to-excel).
+
+## Beispiel: einen Kurs einteilen
+
+Eine beispielhafte Playlist enthält zwölf Stunden verfügbare Videos. Bei 1,5-facher Geschwindigkeit beträgt die reine Wiedergabezeit acht Stunden. Bei 45 Minuten pro Tag brauchst du aufgerundet elf Sitzungen, zuzüglich Übungen und Pausen. Prüfe, ob einzelne lange Videos besser in mehrere Einheiten aufgeteilt werden sollten.
+
+## Limits und Fehler einordnen
+
+Kostenlos werden bis zu 500 Playlist-Einträge geprüft, mit Anmeldung und aktivem Abo einschließlich Testphase bis zu 5.000. Bei Teilergebnissen gelten alle Kennzahlen nur für den geladenen Teil. Laufende Streams können noch keine Dauer melden. Automatisch erzeugte Mix-Listen sind über die API häufig nicht verfügbar.
+
+Fehlt der `list`-Parameter, kopiere den Link direkt von der Playlist-Seite. Bei privaten Listen ist der separate autorisierte Backup-Bereich erforderlich; ein öffentlicher Abruf kann den Zugriff nicht umgehen. Bei Kontingent- oder Netzwerkproblemen versuche es später erneut.
+
+Vertiefende Anleitungen: [Wiedergabezeit berechnen](/blog/calculate-youtube-playlist-watch-time), [Playlist in Google Sheets auswerten](/blog/analyze-youtube-playlist-in-google-sheets) und [YouTube-Kanal analysieren](/tools/youtube-channel-analyzer).

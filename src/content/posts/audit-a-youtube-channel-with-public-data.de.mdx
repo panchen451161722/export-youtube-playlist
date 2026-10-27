@@ -1,0 +1,58 @@
+export const meta = {
+  title: 'YouTube-Kanal mit öffentlichen Daten analysieren',
+  description:
+    'Veröffentlichungsrhythmus, Videolängen, Shorts-Anteil und öffentliche Interaktionen eines YouTube-Kanals prüfen – mit klaren Grenzen der Aussagekraft.',
+  created_at: '2026-10-12',
+  author_name: 'Playlist Exporter',
+};
+
+Für eine erste Kanalanalyse brauchst du keinen Zugriff auf YouTube Studio. Öffentliche Uploads liefern Titel, Veröffentlichungsdatum, Dauer und häufig Aufruf-, Like- und Kommentarzahlen. Diese Daten helfen, Inhalte und Veröffentlichungsmuster zu vergleichen. Sie verraten jedoch keine Einnahmen, Zuschauerbindung oder tatsächliche Watchtime.
+
+## 1. Datenbasis festlegen
+
+Der [YouTube-Kanal-Analyzer](/tools/youtube-channel-analyzer) zeigt eine Zusammenfassung und bietet eine CSV pro Video. Der [Kanalexport](/tools/export-youtube-channel) liefert zusätzlich Beschreibungen, Tags, Vorschaubild-Links und weitere Metadaten in bis zu 13 Formaten.
+
+Beide verarbeiten kostenlos bis zu 500 aktuelle Uploads. Nach Anmeldung mit aktivem Abo einschließlich Testphase sind bis zu 5.000 möglich. Filter für Videos, Shorts und Livestreams gelten innerhalb der geladenen Uploads. Notiere das Abrufdatum, das Limit und die Zahl analysierter Videos. Ein Teilergebnis ist keine Vollerhebung des Kanals.
+
+## 2. Veröffentlichungsrhythmus untersuchen
+
+Gruppiere `Uploaded Time` nach Monat und zähle die Videos. So werden regelmäßige Veröffentlichungen, längere Pausen und Phasen mit vielen Uploads sichtbar. Vergleiche ähnliche Zeiträume und berücksichtige, dass private oder gelöschte Videos fehlen können.
+
+Eine Pause in den öffentlichen Uploads beweist nicht, dass ein Creator in dieser Zeit inaktiv war. Möglicherweise entstanden andere Inhalte oder Videos wurden später entfernt.
+
+## 3. Formate und Laufzeiten vergleichen
+
+Betrachte normale Videos, Shorts und Livestreams getrennt. Ein zweistündiger Stream und ein kurzer Clip erfüllen unterschiedliche Aufgaben und verzerren gemeinsam berechnete Durchschnittswerte.
+
+Die Tool-Zuordnung zu Shorts basiert auf einer Heuristik: Ein nicht als Livestream erkanntes Video unter 60 Sekunden gilt als Short. Dadurch können längere Shorts als normale Videos und kurze horizontale Clips als Shorts erscheinen. Nutze die Kategorien als Näherung und prüfe wichtige Beispiele manuell.
+
+Neben dem Durchschnitt ist der Median der Laufzeit hilfreich. Einzelne sehr lange Streams beeinflussen ihn weniger stark.
+
+## 4. Aufrufe und Interaktionen einordnen
+
+Die öffentliche Interaktionsrate im Analyzer setzt verfügbare Likes und Kommentare ins Verhältnis zu verfügbaren Aufrufen. Sie ist keine Kennzahl pro Abonnent und keine Messung der Zuschauerzufriedenheit.
+
+Fehlende oder ausgeblendete Statistiken können Vergleiche verzerren. Kommentare sind bei manchen Inhalten deaktiviert. Die öffentliche Kommentarzahl eines Livestreams ist außerdem nicht die Zahl seiner Chatnachrichten.
+
+Vergleiche neue Uploads nicht unbesehen mit jahrealten Videos. Alte Videos hatten mehr Zeit, Aufrufe zu sammeln. Für Aussagen zur jüngeren Entwicklung solltest du zuerst nach Veröffentlichungsdatum filtern.
+
+## 5. Auffällige Videos genauer ansehen
+
+Sortiere nach Aufrufen und untersuche die stärksten und schwächsten Einträge innerhalb eines vergleichbaren Zeitraums. Prüfe Thema, Titel, Format und Laufzeit. Eine auffällige Zahl ist ein Ausgangspunkt für Fragen, kein Beweis für eine bestimmte Ursache.
+
+Für Beschreibungs- oder Linkprüfungen nutze den vollständigen Kanalexport. Tags und [Kanal-Keywords](/tools/youtube-channel-keywords) zeigen veröffentlichte Metadaten; sie beweisen weder Suchvolumen noch einen Rankingvorteil.
+
+## 6. Ergebnisse nachvollziehbar festhalten
+
+Ein brauchbarer Kurzbericht enthält:
+
+- Kanal und Abrufdatum;
+- Umfang, Limit und angewendete Filter;
+- beobachteten Veröffentlichungsrhythmus;
+- typische Laufzeiten und Formatverteilung;
+- öffentliche Kennzahlen mit Hinweis auf fehlende Werte;
+- konkrete Videobeispiele und offene Fragen.
+
+Trenne Beobachtungen von Vermutungen. Wenn du eine Zusammenarbeit bewerten möchtest, reichen öffentliche Daten allein nicht für Aussagen zu Zielgruppen, tatsächlichen Werbeergebnissen oder Einnahmen. Dafür wären zusätzliche Angaben des Kanalinhabers erforderlich.
+
+Für einen ersten Überblick starte mit der [Kanalanalyse](/tools/youtube-channel-analyzer). Für eigene Tabellen und Vergleiche verwende den [Kanalexport als CSV oder Excel](/tools/export-youtube-channel).

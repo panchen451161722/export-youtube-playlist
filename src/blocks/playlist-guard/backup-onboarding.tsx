@@ -626,12 +626,14 @@ export function BackupOnboarding({
             }}
           >
             {(field) => (
-              <TextField
-                field={field}
-                label={m['guard.url']()}
-                placeholder="https://www.youtube.com/playlist?list=…"
-                disabled={busy}
-              />
+              <div data-clarity-mask="true">
+                <TextField
+                  field={field}
+                  label={m['guard.url']()}
+                  placeholder="https://www.youtube.com/playlist?list=…"
+                  disabled={busy}
+                />
+              </div>
             )}
           </form.Field>
           <form.Subscribe selector={(state) => state.values}>

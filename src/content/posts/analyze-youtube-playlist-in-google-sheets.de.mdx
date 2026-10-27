@@ -1,0 +1,79 @@
+export const meta = {
+  title: 'YouTube-Playlist in Google Sheets auswerten',
+  description:
+    'CSV-Dateien korrekt importieren, Laufzeiten summieren, Kanäle vergleichen und leere Statistikfelder bei der Auswertung von YouTube-Playlists berücksichtigen.',
+  created_at: '2026-10-12',
+  author_name: 'Playlist Exporter',
+};
+
+Nach dem [Playlist-Export als CSV](/tools/export-youtube-playlist-to-csv) kannst du in Google Sheets Fragen beantworten, die auf der YouTube-Seite schwer zu überblicken sind: Wie viel Zeit braucht die Liste? Welche Kanäle kommen häufig vor? Welche Videos sind besonders lang?
+
+## Import und Gebietseinstellung
+
+Importiere die CSV in eine neue Tabelle. Verwende das Komma als Trennzeichen und prüfe, ob Beschreibungen mit Zeilenumbrüchen in einer Zelle bleiben. Kontrolliere an einigen Zeilen Titel, Video-URL und Laufzeit. Ein fehlerhafter Import lässt sich leichter zu Beginn erkennen als nach mehreren Formeln.
+
+Die Beispiele unten verwenden englische Funktionsnamen und Kommata als Argumenttrenner. Je nach Sprache und Gebietseinstellung erwartet Google Sheets deutsche Funktionsnamen, Semikolons und Dezimalkommata. Stelle die Funktionssprache passend ein oder passe die Formeln an. Die Quelldatei verwendet für Dezimalzahlen einen Punkt.
+
+## Welche Spalten wofür geeignet sind
+
+Im vollständigen Export stehen die wichtigen Werte an diesen Positionen:
+
+| Spalte | Feld                | Verwendung                                        |
+| ------ | ------------------- | ------------------------------------------------- |
+| A      | Title               | Titel suchen oder kategorisieren                  |
+| D      | Channel name        | Kanalverteilung untersuchen                       |
+| E      | Views               | Öffentliche Aufrufe vergleichen                   |
+| F / G  | Likes / Comments    | Verfügbare Interaktionen auswerten                |
+| H      | Duration in seconds | Laufzeiten berechnen                              |
+| L      | Uploaded Time       | Veröffentlichungsdaten gruppieren                 |
+| M      | Video url           | Videos eindeutig zuordnen und Exporte vergleichen |
+
+Die übrigen Spalten enthalten Beschreibung, Vorschaubild-Link, weitere Laufzeitdarstellungen, Tags und aus Beschreibungen erkannte Daten. Die Reihenfolge gilt für den vollständigen Export, nicht für die schmalere Analyzer-CSV.
+
+## Gesamtdauer und Wiedergabezeit
+
+Die Gesamtdauer in Stunden erhältst du aus der Sekundenspalte:
+
+```text
+=SUM(H2:H)/3600
+```
+
+Bei 1,5-facher Wiedergabe:
+
+```text
+=SUM(H2:H)/1.5/3600
+```
+
+Für eine Darstellung als Zeitwert teile durch 86.400 und wähle das Zahlenformat **Dauer**. Eine normale Uhrzeit kann nach 24 Stunden umbrechen und ist deshalb für lange Playlists ungeeignet. Fehlende Laufzeiten müssen als fehlend erkennbar bleiben; aus der Summe lässt sich keine Dauer nicht verfügbarer Videos ableiten.
+
+## Lange Videos finden
+
+Sortiere den gesamten Datenbereich nach Spalte H absteigend. Wähle niemals nur die Laufzeitspalte aus: Sonst verlieren Titel, Links und Zahlen ihre Zuordnung. Alternativ erzeugt diese Formel eine separate Rangliste mit Titel und Sekunden:
+
+```text
+=QUERY(A1:Q,"select A,H where A is not null order by H desc limit 10",1)
+```
+
+Du kannst daneben eine eigene Spalte für Themen oder Prioritäten anlegen. Eine lange Vorlesung ist nicht automatisch wichtiger als ein kurzes Tutorial; die Rangliste hilft nur bei der Planung.
+
+## Kanäle und Veröffentlichungen vergleichen
+
+Erstelle eine Pivot-Tabelle mit `Channel name` als Zeilenfeld und der Anzahl von `Video url` als Wert. So erkennst du, ob deine Playlist eine einzelne Kursreihe oder eine Sammlung verschiedener Quellen ist. Gleiche Kanalnamen müssen nicht zwingend denselben Kanal bezeichnen.
+
+Für eine Gruppierung nach Veröffentlichungsmonat kannst du in einer Hilfsspalte die ersten sieben Zeichen aus `Uploaded Time` übernehmen:
+
+```text
+=LEFT(L2,7)
+```
+
+Dieser Wert beschreibt die Veröffentlichung des Videos, nicht automatisch den Zeitpunkt, zu dem es zur Playlist hinzugefügt wurde. Bewahre den ursprünglichen Zeitstempel auf, wenn du später genauer vergleichen möchtest.
+
+## Mit fehlenden Statistiken umgehen
+
+Leere Aufruf-, Like- oder Kommentarwerte bedeuten nicht, dass ein Video keine Interaktionen hat. Ersetze sie nicht pauschal durch null. Berichte neben einem Durchschnitt auch, wie viele Videos überhaupt einen Wert liefern.
+
+Vergleiche außerdem ähnliche Veröffentlichungszeiträume. Ein altes Video hatte mehr Zeit, Aufrufe zu sammeln. Öffentliche Zahlen liefern keine Aussage über Impressionen, Zuschauerbindung, Einnahmen oder tatsächliche Wiedergabedauer einzelner Zuschauer.
+
+## Ergebnisse sichern
+
+Bewahre die Original-CSV mit einem Abrufdatum auf. Arbeite in einer Kopie und dokumentiere Filter, fehlende Daten und Teilergebnis-Hinweise. Für einen schnellen Überblick ohne Formeln kannst du die [Playlist direkt analysieren](/tools/youtube-playlist-analyzer); für eine Arbeitsmappe ohne CSV-Import nutze den [Excel-Export](/tools/export-youtube-playlist-to-excel).

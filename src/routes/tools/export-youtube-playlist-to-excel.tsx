@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import { envConfigs } from '@/config';
+import { landingFaqSchema } from '@/lib/landing-faq';
 import { localizedPageUrl, publicPageSeo } from '@/lib/seo';
 import { m } from '@/paraglide/messages.js';
 import { getLocale } from '@/paraglide/runtime.js';
@@ -38,6 +39,9 @@ export const Route = createFileRoute('/tools/export-youtube-playlist-to-excel')(
         structuredData: {
           '@context': 'https://schema.org',
           '@graph': [
+            ...(loaderData.locale === 'de'
+              ? [landingFaqSchema(loaderData.locale)]
+              : []),
             {
               '@type': 'WebApplication',
               name: loaderData.toolName,

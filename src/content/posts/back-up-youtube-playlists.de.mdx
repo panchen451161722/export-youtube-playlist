@@ -1,0 +1,58 @@
+export const meta = {
+  title: 'YouTube-Playlists sichern, bevor Videos verschwinden',
+  description:
+    'Welche Playlist-Metadaten du aufbewahren solltest, welche Exportformate sich eignen und wie du fehlende oder umbenannte Videos durch Dateivergleiche erkennst.',
+  created_at: '2026-10-12',
+  author_name: 'Playlist Exporter',
+};
+
+Aus einer vertrauten Playlist wird manchmal eine Liste grauer Platzhalter: „Gelöschtes Video“ oder „Privates Video“. Eine Playlist enthält Verweise auf Videos, keine eigenen Kopien. Verschwindet ein Video oder wird sein Zugriff beschränkt, fehlen unter Umständen auch Titel und Kanalname.
+
+Ein rechtzeitig gespeicherter Metadaten-Export kann festhalten, was der Eintrag früher bezeichnet hat. Er stellt das Video nicht wieder her, kann dir aber bei der Suche nach einer erlaubten Alternative helfen.
+
+## Was du sichern solltest
+
+Bewahre mindestens Video-URL, Titel und Kanalname auf. Die URL enthält die Video-ID und eignet sich besser zum Vergleichen als der Titel, denn Titel können geändert werden. Zusätzlich helfen Beschreibung, Veröffentlichungszeit, Laufzeit und Playlist-Reihenfolge.
+
+Notiere auch das Datum des Abrufs. Ein Export ist eine Momentaufnahme. Wenn ein Eintrag bereits vor dem ersten Export nicht mehr verfügbar war, kann das Tool seinen früheren Titel nicht nachträglich ermitteln.
+
+## Das passende Format auswählen
+
+| Format           | Sinnvolle Verwendung                                        |
+| ---------------- | ----------------------------------------------------------- |
+| CSV              | Vergleiche in Tabellenprogrammen und Import in andere Tools |
+| Excel            | Manuelles Prüfen, Filtern und Ergänzen eigener Notizen      |
+| JSON             | Automatisierte Vergleiche mit eigenen Skripten              |
+| HTML-Lesezeichen | Links als Ordner im Browser aufbewahren                     |
+
+Du kannst mehrere Formate zusammen als ZIP herunterladen. Video- und Audiodateien sind in keinem dieser Formate enthalten. M3U-Dateien enthalten ebenfalls Links und keine offline abspielbaren Medienkopien.
+
+## Eine einfache Sicherungsroutine
+
+1. Öffne den [Playlist-Exporter](/) und füge den Playlist-Link ein.
+2. Wähle beispielsweise CSV und JSON.
+3. Prüfe die Zahl zurückgegebener Videos und mögliche Teilergebnis-Hinweise.
+4. Lege die Dateien in einem nach Datum benannten Ordner ab.
+5. Wiederhole den Export in einem Abstand, der zu den Änderungen deiner Liste passt.
+
+Kostenlos werden bis zu 500 Playlist-Einträge verarbeitet. Mit Anmeldung und aktivem Abo einschließlich Testphase sind bis zu 5.000 möglich. Eine längere Playlist oder nicht verfügbare Videos können zu unvollständigen Ergebnissen führen. Notiere diese Einschränkungen neben der Datei.
+
+## Zwei Exporte vergleichen
+
+Verwende `Video url` als Vergleichsschlüssel. Eine URL im älteren Export, die im neuen fehlt, ist ein Prüfhinweis. Sie beweist für sich allein keine Löschung: Auch Zugriffsbeschränkungen, API-Probleme, geänderte Playlist-Inhalte oder ein Exportlimit kommen infrage.
+
+Sind URL und Video-ID gleich, aber der Titel verschieden, wurde der Titel möglicherweise geändert. Eine andere Position kann bedeuten, dass die Playlist umsortiert wurde. Bewahre beide Dateien auf und prüfe auffällige Einträge auf YouTube, bevor du Schlussfolgerungen ziehst.
+
+Sortiere beim Arbeiten in einer Tabelle immer ganze Zeilen, damit Titel und URL zusammenbleiben. Für größere Listen eignet sich ein Skript, das anhand der URL hinzugefügte, entfernte und geänderte Datensätze getrennt ausgibt.
+
+## Browser-Export und gespeicherte Sammlungen unterscheiden
+
+Die öffentlichen Tools erzeugen keinen gespeicherten Exportverlauf. Die heruntergeladenen Dateien verwaltest du selbst. Der separate [Playlist-Backup-Bereich auf Englisch](/youtube-playlist-backup) speichert dagegen Sammlungen und Metadaten-Snapshots für den Vergleich.
+
+Gespeicherte YouTube-Metadaten verfallen innerhalb von 30 Tagen; höchstens fünf aktuelle Snapshots werden innerhalb dieser Frist aufbewahrt. Das ist kein dauerhaftes Archiv. Private Quellen benötigen eine berechtigte YouTube-Verbindung. Details zu Löschung und Aufbewahrung stehen in der [Datenschutzerklärung](/privacy-policy).
+
+## Was ein Backup nicht leisten kann
+
+Ein Metadaten-Backup kann keine gelöschten Videos wiederherstellen, keine privaten Inhalte freischalten und keine Rechte zur Wiederveröffentlichung übertragen. Behandle persönliche Angaben in Beschreibungen sorgsam und teile nur Daten, die du weitergeben darfst.
+
+Für den nächsten manuellen Export nutze [CSV](/tools/export-youtube-playlist-to-csv) oder [Excel](/tools/export-youtube-playlist-to-excel). Wenn du den Umfang der Liste zunächst einschätzen möchtest, hilft der [Playlist-Analyzer](/tools/youtube-playlist-analyzer).

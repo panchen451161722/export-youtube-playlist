@@ -140,6 +140,29 @@ Reference: [Bing IndexNow setup](https://www.bing.com/indexnow/getstarted).
   `F872583B0B074901A2FE552CB8B24CCF`. Dashboard visibility and indexing have not
   been independently confirmed; do not repeatedly resubmit unchanged pages.
 
+### Submission record — 2026-10-26
+
+- Deployed Worker version: `fcc52659-0c04-432a-a9d2-ec1dd096bfd7`.
+- Production build and deployment succeeded. All 35 German routes returned HTTP
+  200 with German language metadata, corrected branding, canonical URLs and
+  reciprocal hreflang links. The three main German landing pages each expose six
+  FAQ entries matching their visible content.
+- Live IndexNow key file: HTTP 200, text matches the configured public key.
+- Production sitemap: 67 → 95 URLs, including 31 German URLs.
+- Submitted the 28 newly added German URLs from the sitemap difference; every
+  submitted page was checked for HTTP 200 and indexable robots metadata. The
+  three previously submitted German URLs were excluded. Pricing and the three
+  existing noindex tools remain excluded from the sitemap and this submission.
+- Exact request and submitted URL list:
+  [indexnow-2026-10-26.json](docs/seo/indexnow-2026-10-26.json).
+- Submitted to `https://api.indexnow.org/indexnow` at **2026-10-26 14:38:46 UTC**
+  (07:38:46 America/Los_Angeles).
+- Response: **HTTP 200**, empty body; submission accepted successfully.
+- Request reference: `C993AC307BC54646B21300D6C17B2CB2`.
+- Acceptance does not confirm crawling or indexing. Bing Webmaster Tools dashboard
+  visibility and actual indexing have not been independently confirmed. No
+  scheduled or build-time submission was added.
+
 ## Claude Code Skills
 
 | Skill              | What it does                                        |

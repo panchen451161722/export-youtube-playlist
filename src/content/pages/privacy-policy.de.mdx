@@ -1,0 +1,85 @@
+export const meta = {
+  title: 'Datenschutzerklärung | Playlist Exporter',
+  description:
+    'Wie wir öffentliche Exporte, verbundene YouTube-Konten, gespeicherte Metadaten, Löschung, Zahlungen und optionale Benachrichtigungen behandeln.',
+  updated_at: '2026-10-26',
+};
+
+## Überblick
+
+Playlist Exporter bietet öffentliche Metadaten-Tools und einen kontobasierten Playlist-Backup-Arbeitsbereich. Öffentliche Tools verarbeiten die eingegebene URL für eine Vorschau oder einen Export im Browser. Wenn du eine Sammlung im Backup-Bereich anlegst, werden ihre Quelle, Einstellungen und Metadaten-Snapshots gespeichert, damit du Änderungen prüfen und Datensätze exportieren kannst.
+
+Wir verwenden YouTube API Services. YouTube und Google verarbeiten Informationen gemäß der [Google-Datenschutzerklärung](https://policies.google.com/privacy) und den [YouTube-Nutzungsbedingungen](https://www.youtube.com/t/terms). Dieser unabhängige Dienst wird nicht von YouTube oder Google unterstützt und ist nicht mit ihnen verbunden.
+
+## Öffentliche Tools und Browser-Exporte
+
+Unser Server prüft deine öffentliche Video-, Playlist- oder Kanal-URL, ruft verfügbare Metadaten über die YouTube Data API ab und gibt sie an deinen Browser zurück. Dazu können Kennungen, Titel, Links, Kanalnamen, Veröffentlichungsdaten, Laufzeiten, Aufrufzahlen, Vorschaubilder und Playlist-Positionen gehören.
+
+Öffentliche Tools erzeugen keine gespeicherte Sammlung und keinen Exportverlauf auf Anwendungsebene, sofern du nicht zusätzlich Playlist Backup verwendest. Exportdateien werden in deinem Browser erstellt und nicht an unseren Server zurückgesendet. Vorschauen können bis zum Neuladen oder Schließen im Browserspeicher bleiben. Hosting- und Sicherheitsanbieter können dennoch technische Informationen über Anfragen verarbeiten.
+
+Wir laden keine YouTube-Video- oder Audiodateien herunter und speichern sie nicht. Ein Metadaten-Export kann von YouTube entfernte Inhalte nicht wiederherstellen.
+
+## Website-Konto und separate YouTube-Autorisierung
+
+Die Anmeldung an der Website und das Verbinden von YouTube sind getrennte Entscheidungen. Die Google-Anmeldung liefert Identitätsinformationen für Website-Konto und Sitzung, etwa Name, E-Mail-Adresse, Profilbild und Kontokennung. Wir speichern außerdem Konto- und Sitzungsdatensätze sowie Zeitstempel, die für Betrieb und Schutz des Kontos erforderlich sind. Dein Google-Passwort erhalten wir nicht.
+
+Wenn du **Connect account** auswählst, wird die Berechtigung `https://www.googleapis.com/auth/youtube.readonly` angefordert. Damit können wir Informationen des verbundenen YouTube-Kanals und die von dir gewählten Quellen lesen: zugängliche private Playlists, mit „Mag ich“ markierte Videos und abonnierte Kanäle. „Liked music“ filtert markierte YouTube-Videos nach der Kategorie Musik. Dies ist nicht die vollständige YouTube-Music-Mediathek und kann von deren Liste „Musik, die ich mag“ abweichen. „Später ansehen“ wird nicht unterstützt.
+
+Wir speichern Kennung, Titel und Vorschaubild-Referenz des verbundenen Kanals, Verbindungsstatus, Autorisierungszeitpunkte und die für autorisierte Anfragen benötigten OAuth-Zugangsdaten. Die gesonderten Zugangsdaten der YouTube-Verbindung werden vor der Speicherung verschlüsselt. Das bedeutet nicht, dass sämtliche Kontodaten oder jedes Feld eines Identitätsanbieters auf Anwendungsebene verschlüsselt sind.
+
+Eine Offline-Autorisierung ermöglicht dem Server, den Zugriff für aktivierte Funktionen zu erneuern. Geplante Prüfungen laufen nur, wenn die Zeitplanung aktiviert ist und die Sammlung mit gültiger Nutzungsberechtigung eingeschaltet wurde. Die Berechtigung erlaubt weder Änderungen an Playlists, Likes oder Abos noch das Hochladen oder Löschen von Videos.
+
+## Gespeicherte Sammlungen und optionale Benachrichtigungen
+
+Playlist Exporter speichert die Sammlungsquelle und gegebenenfalls URL, ausgewählte Verbindung, Namen, Prüfhäufigkeit, Benachrichtigungseinstellungen, Prüfzeitpunkte, aktuelle Snapshots und Metadaten als fehlend erkannter Einträge. Diese Datensätze gehören zu deinem Website-Konto und werden anderen Nutzern nicht veröffentlicht. Sie ermöglichen Anzeige, Vergleich, Prüfungen sowie CSV-, Excel- oder JSON-Export. Jede Prüfung folgt allen verfügbaren Quellseiten, vorbehaltlich API-Verfügbarkeit, Zeitlimits und Speicherkapazität. Innerhalb der unten genannten Frist werden höchstens fünf aktuelle Snapshots aufbewahrt.
+
+Historische Snapshots sind datierte Aufzeichnungen und keine Aussage über den aktuellen Zustand auf YouTube. Nicht verfügbare Metadaten lassen sich nicht zuverlässig sichern.
+
+E-Mail-Hinweise und der Versand von JSON-Backups benötigen einen eingerichteten Versanddienst, deine aktivierten Einstellungen und eine bestätigte Empfängeradresse. Der ausgewählte Anbieter – Resend oder Cloudflare Email Service – verarbeitet dann Empfängeradresse und Benachrichtigungsinhalt. Dieser kann Sammlungsmetadaten, Änderungsdetails und einen JSON-Snapshot als Anhang enthalten. Manuelle Prüfungen versenden diese geplanten Benachrichtigungen nicht. Zugestellte Kopien unterliegen deiner Kontrolle und der deines E-Mail-Anbieters.
+
+## Verwendung und Weitergabe von Google-Nutzerdaten
+
+Wir verwenden Google- und YouTube-Nutzerdaten für die beschriebenen Konto-, Sammlungs-, Überwachungs-, Export- und optionalen Benachrichtigungsfunktionen sowie soweit für Sicherheit und rechtliche Pflichten erforderlich. Für Google-API-Daten beachten wir die [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy), einschließlich der Anforderungen zur eingeschränkten Nutzung („Limited Use“).
+
+Wir verkaufen keine Google- oder YouTube-Nutzerdaten, verwenden sie nicht für Werbung oder Kreditentscheidungen und nicht zum Training allgemeiner KI- oder Machine-Learning-Modelle. Private Sammlungsinhalte werden nicht an Werbeplattformen oder Analysedienste mit Sitzungsaufzeichnung übertragen. Menschen lesen diese Inhalte nur, wenn du eine konkrete Supportprüfung autorisierst, der Zugriff für Sicherheits- oder Missbrauchsuntersuchungen notwendig ist oder das Gesetz ihn verlangt.
+
+Google erhält die für Anmeldung, Autorisierung, Datenabruf und Widerruf erforderlichen Anfragen. Hosting- und Datenbankanbieter verarbeiten Daten zum Betrieb des Dienstes. Ein aktivierter E-Mail-Anbieter verarbeitet die oben genannten Benachrichtigungsdaten. Die Weitergabe bleibt auf angeforderte Funktionen, Sicherheit oder rechtliche Erfordernisse beschränkt. Inhalte von Sammlungsexporten werden nicht zur Abo-Abrechnung an Zahlungsanbieter gesendet.
+
+## Aufbewahrung, Trennen von Verbindungen und Löschung
+
+YouTube-API-Metadaten in Snapshots und Datensätzen fehlender Einträge werden höchstens 30 Tage nach Abruf aufbewahrt. Neue Abrufe können neue aktuelle Datensätze erzeugen, verlängern aber nicht die Lebensdauer alter Snapshots. Das Pausieren einer Sammlung oder das Ende eines Abos setzt diese Frist nicht aus. Abgelaufene Metadaten werden von Anzeige und Export ausgeschlossen und bei der Bereinigung entfernt. Von dir eingegebene Sammlungseinstellungen können bestehen bleiben, solange die Sammlung existiert, damit du Prüfungen später fortsetzen kannst.
+
+- **Sammlung entfernen:** Löscht ihre gespeicherten Metadaten und zugehörige ausstehende Benachrichtigungsdaten aus der aktiven Anwendungsdatenbank und beendet ihre Prüfungen. Die Quelle auf YouTube bleibt unverändert.
+- **YouTube-Konto trennen:** Beendet nach Bestätigung den Zugriff über diese Verbindung und entfernt die verbundenen Kontodaten, zugehörige private Sammlungen, Snapshots, den Verlauf fehlender Einträge und ausstehende Benachrichtigungsdaten aus der aktiven Anwendungsdatenbank. Wir fordern außerdem einen Widerruf bei Google an. Die Entfernung ist nicht rückgängig zu machen; erneutes Verbinden stellt gelöschte Snapshots nicht wieder her.
+- **Website-Konto löschen:** **Settings → Profile** entfernt Konto, Sitzungen und zugehörige Sammlungsdaten aus der aktiven Anwendungsdatenbank und fordert den Widerruf aller YouTube-Verbindungen an. Abrechnungs-, Sicherheits- oder gesetzlich erforderliche Datensätze können nur soweit für diese gesonderten Zwecke notwendig aufbewahrt werden.
+- **Über Google widerrufen:** Entferne den Zugriff in den [Google-Kontoberechtigungen](https://security.google.com/settings/security/permissions). Hintergrundprüfungen der Autorisierung sind täglich und unabhängig von der Prüfhäufigkeit einer Sammlung geplant. Erkennt die Wartung einen bestätigten Widerruf, entfernt sie die zugehörigen Daten. Kann die Autorisierung nicht erneut bestätigt werden, endet der Zugriff; die zugehörigen Daten werden spätestens 30 Tage nach der letzten erfolgreichen Bestätigung entfernt.
+
+Die lokale Entfernung wartet nicht auf Googles Antwort. Schlägt der Widerruf vorübergehend fehl, kann eine separate Warteschlange die minimal erforderlichen verschlüsselten Zugangsdaten bis zu sieben Tage für Wiederholungsversuche aufbewahren. Sie werden ausschließlich für den Widerruf verwendet, nicht zum Lesen von YouTube-Daten, und nach Abschluss oder Ablauf entfernt. Ein Widerruf kann andere Kanäle oder Google-Funktionen mit derselben Berechtigung betreffen; sie müssen gegebenenfalls neu verbunden werden.
+
+Du kannst die Löschung auch unter [support@exportyoutubeplaylist.com](mailto:support@exportyoutubeplaylist.com) beantragen. Nach Prüfung der Kontoinhaberschaft löschen wir die betreffenden YouTube-Daten so schnell wie möglich und innerhalb von sieben Kalendertagen. Wir fragen niemals nach deinem Google-Passwort oder OAuth-Tokens.
+
+Diese Funktionen entfernen Daten aus dem aktiven Anwendungsspeicher. Sie löschen nicht aus der Ferne deine Downloads, zugestellte E-Mails oder Originaldaten bei Google. Wiederherstellungskopien des Hostinganbieters und technische Protokolle haben eigene betriebliche Aufbewahrungsfristen; eine sofortige Löschung sämtlicher Kopien wird nicht zugesagt. Kontaktiere uns, wenn sich deine Anfrage auch auf solche Datensätze bezieht.
+
+## Cookies, Analyse, Sicherheit und Werbung
+
+Notwendige Cookies und lokaler Speicher unterstützen Sitzungen, Anmeldung, Sprache, Darstellung und Sicherheit. Infrastrukturanbieter wie Cloudflare können IP-Adressen, Browserinformationen, Zeitstempel und Sicherheitsereignisse verarbeiten. Wenn Turnstile aktiviert ist, bewertet es technische Signale, um automatisierten Missbrauch zu verhindern.
+
+Optionale Analysen auf öffentlichen Seiten für abgemeldete Besucher können Microsoft Clarity, Cloudflare Web Analytics oder andere konfigurierte Anbieter umfassen. Clarity verarbeitet Seitenpfade, Klicks und Scrollbewegungen und kann gemäß seinen regionalen Einwilligungsregeln Cookies verwenden, um Besuche auf öffentlichen Seiten zu verbinden. Wir zeigen keine Clarity-Einwilligungsabfrage und senden kein automatisches Zustimmungssignal. Für Besucher im Europäischen Wirtschaftsraum, im Vereinigten Königreich und in der Schweiz benötigt Clarity eine Einwilligung für cookiegestütztes Tracking; ohne diese werden Besuche nicht zu seitenübergreifenden Aufzeichnungen verbunden. Wir respektieren bestehende Ablehnungen und senden ein Ablehnungssignal, wenn Global Privacy Control oder Do Not Track aktiviert ist. Drittanbieter-Analysen, Sitzungsaufzeichnung, Werbung und Kundendienst-Skripte werden weder auf Konto-, Anmelde-, Sammlungs- oder Backup-Seiten noch auf öffentlichen Seiten für angemeldete Nutzer geladen. Eingegebene URLs und öffentliche Ergebnisbereiche werden bei öffentlicher Seitenaufzeichnung maskiert. Quellenkennungen, Titel und Kontodetails nehmen wir nicht absichtlich in benutzerdefinierte Analyseereignisse auf.
+
+Werbung einschließlich Google AdSense läuft nur, wenn sie konfiguriert und aktiviert ist. Anbieter können Cookies, Web-Beacons, IP-Adressen oder ähnliche Kennungen im Rahmen der geltenden regionalen Einwilligungsentscheidungen verwenden. Autorisierte Google-Nutzerdaten werden nicht für Werbung verwendet. Siehe [Googles Informationen zu Partner-Websites](https://policies.google.com/technologies/partner-sites), [Google-Werbeeinstellungen](https://adssettings.google.com/) und deine Browseroptionen. Wo Google eine zertifizierte Einwilligungsplattform verlangt, muss Werbung warten, bis dieser Ablauf verfügbar ist.
+
+## Zahlungen
+
+Bei aktivierten kostenpflichtigen Tarifen erfolgen Checkout und Abo-Verwaltung über den angezeigten Anbieter, derzeit Stripe für Playlist Exporter. Der Anbieter verarbeitet Zahlungsdetails nach seinen eigenen Richtlinien. Wir speichern Konto- und Transaktionsreferenzen, Tarif, Abo-Status, Abrechnungsdaten und die für Leistungen und Abrechnung benötigten Datensätze. Deine vollständige Kreditkartennummer erhalten und speichern wir nicht. Preise und Abrechnungsbedingungen werden vor dem Kauf angezeigt.
+
+## Sicherheit, Rechte und Änderungen
+
+Wir verwenden Zugriffskontrollen und technische Schutzmaßnahmen. Kein Internetdienst kann jedoch absolute Sicherheit garantieren. Je nach anwendbarem Recht kannst du Auskunft, Berichtigung, Löschung oder andere Rechte zu den von uns gehaltenen personenbezogenen Informationen verlangen. Vor der Bearbeitung können wir die Kontoinhaberschaft prüfen.
+
+Der Dienst richtet sich nicht an Kinder unterhalb des Alters, in dem ihr Land elterliche Zustimmung verlangt. Kontaktiere uns, wenn du vermutest, dass ein Kind personenbezogene Informationen über den Dienst bereitgestellt hat.
+
+Wir aktualisieren diese Erklärung, wenn sich der Dienst oder seine Datenverarbeitung ändert. Das Datum oben kennzeichnet die Fassung. Neue Verwendungszwecke für Google-Nutzerdaten erfordern vor Beginn eine angemessene Information und Einwilligung.
+
+## Kontakt
+
+Datenschutzfragen und Anfragen: [support@exportyoutubeplaylist.com](mailto:support@exportyoutubeplaylist.com).

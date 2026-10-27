@@ -77,7 +77,8 @@ export const Route = createFileRoute('/blog/$slug')({
         image: absoluteUrl(image),
         datePublished: post.createdAt,
         dateModified: post.createdAt,
-        inLanguage: locale === 'zh' ? 'zh-CN' : 'en-US',
+        inLanguage:
+          locale === 'zh' ? 'zh-CN' : locale === 'de' ? 'de-DE' : 'en-US',
         mainEntityOfPage: localizedPageUrl(path, locale),
         author: { '@type': 'Organization', name: author },
         publisher: {

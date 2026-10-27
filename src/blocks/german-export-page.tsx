@@ -115,7 +115,7 @@ const titleClass =
 const linkClass =
   'text-primary underline underline-offset-4 hover:no-underline';
 
-/** Three deliberately scoped German landing pages, sharing the actual exporter. */
+/** German export landing pages sharing the actual exporter. */
 export function GermanExportPage({ kind }: { kind: PageKind }) {
   const tool = kind === 'home' ? null : kind;
   const content = tool ? toolMessages[tool] : null;

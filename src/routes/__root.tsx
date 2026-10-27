@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import {
@@ -11,11 +11,14 @@ import {
   type ErrorComponentProps,
 } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
+import interLatinUrl from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
 import { ThemeProvider } from 'next-themes';
 
+import { useSession } from '@/core/auth/client';
 import { envConfigs } from '@/config';
 import {
   crossesPrivacyBoundary,
+  isBackupSelectionLocation,
   isPrivateDocumentPath,
   mayLoadThirdPartyScripts,
 } from '@/lib/private-document';
@@ -27,15 +30,18 @@ import { Plausible } from '@/components/analytics/plausible';
 import { CustomerService } from '@/components/customer-service';
 import { Toaster } from '@/components/ui/sonner';
 
-import '@fontsource-variable/inter';
+import '@/styles/fonts.css';
 import '@/styles/globals.css';
 
 // Analytics IDs live in the DB config (1h-cached service). Fetched via a
 // server function so drizzle/db code never reaches the client bundle.
 const getRootData = createServerFn()
-  .inputValidator((input: { privatePage: boolean }) => ({
-    privatePage: input?.privatePage !== false,
-  }))
+  .inputValidator(
+    (input: { privatePage: boolean; backupSelection: boolean }) => ({
+      privatePage: input?.privatePage !== false,
+      backupSelection: input?.backupSelection === true,
+    })
+  )
   .handler(async ({ data }) => {
     const [{ getAllConfigs }, { getRequestHeaders }] = await Promise.all([
       import('@/modules/config/service'),
@@ -54,6 +60,13 @@ const getRootData = createServerFn()
       requestHeaders.get('cookie') || '',
       isLocalRequest
     );
+    const recordBackupSelection =
+      data.backupSelection &&
+      mayLoadThirdPartyScripts(
+        false,
+        requestHeaders.get('cookie') || '',
+        isLocalRequest
+      );
     let user: {
       name: string;
       email: string;
@@ -81,6 +94,7 @@ const getRootData = createServerFn()
     return {
       user,
       thirdPartyAllowed,
+      recordBackupSelection,
       gaId: configs.google_analytics_id?.trim() || '',
       plausibleDomain: configs.plausible_domain?.trim() || '',
       plausibleSrc: configs.plausible_src?.trim() || '',
@@ -106,19 +120,32 @@ const getRootData = createServerFn()
 // document navigation at this boundary prevents that script seeing private DOM.
 const initialDocumentPath =
   typeof window === 'undefined' ? null : window.location.pathname;
+const initialDocumentSearch =
+  typeof window === 'undefined' ? '' : window.location.search;
 
 export const Route = createRootRoute({
   beforeLoad: ({ location }) => {
     if (
       initialDocumentPath !== null &&
-      crossesPrivacyBoundary(initialDocumentPath, location.pathname)
+      crossesPrivacyBoundary(
+        initialDocumentPath,
+        location.pathname,
+        initialDocumentSearch,
+        location.searchStr
+      )
     ) {
       throw redirect({ href: location.href, reloadDocument: true });
     }
   },
   loader: ({ location }) =>
     getRootData({
-      data: { privatePage: isPrivateDocumentPath(location.pathname) },
+      data: {
+        privatePage: isPrivateDocumentPath(location.pathname),
+        backupSelection: isBackupSelectionLocation(
+          location.pathname,
+          location.searchStr
+        ),
+      },
     }),
   head: ({ loaderData }) => {
     return {
@@ -137,6 +164,13 @@ export const Route = createRootRoute({
         { name: 'description', content: envConfigs.app_description },
       ],
       links: [
+        {
+          rel: 'preload',
+          href: interLatinUrl,
+          as: 'font',
+          type: 'font/woff2',
+          crossOrigin: 'anonymous',
+        },
         { rel: 'icon', href: '/favicon.ico', sizes: 'any' },
         { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
         {
@@ -164,6 +198,11 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   const rootData = Route.useLoaderData();
+  // Loader invalidation must not remove the guard from a document that has
+  // already executed Clarity (for example, after a cross-tab sign-in).
+  const [recordedSelectionDocument] = useState(
+    rootData?.recordBackupSelection === true
+  );
 
   return (
     <QueryClientProvider client={getQueryClient()}>
@@ -173,8 +212,19 @@ function RootComponent() {
         enableSystem
         disableTransitionOnChange
       >
-        <Outlet />
-        <Toaster position="top-center" richColors />
+        {recordedSelectionDocument ? (
+          <RecordedSelectionBoundary
+            privateNow={!rootData?.recordBackupSelection || !!rootData?.user}
+          >
+            <Outlet />
+            <Toaster position="top-center" richColors />
+          </RecordedSelectionBoundary>
+        ) : (
+          <>
+            <Outlet />
+            <Toaster position="top-center" richColors />
+          </>
+        )}
         {rootData?.thirdPartyAllowed && rootData.gaId ? (
           <GoogleAnalytics measurementId={rootData.gaId} />
         ) : null}
@@ -185,8 +235,12 @@ function RootComponent() {
             src={rootData.plausibleSrc || undefined}
           />
         ) : null}
-        {rootData?.thirdPartyAllowed && rootData.clarityProjectId ? (
-          <Clarity projectId={rootData.clarityProjectId} />
+        {(rootData?.thirdPartyAllowed || rootData?.recordBackupSelection) &&
+        rootData.clarityProjectId ? (
+          <Clarity
+            projectId={rootData.clarityProjectId}
+            backupSelection={rootData.recordBackupSelection}
+          />
         ) : null}
         {rootData?.thirdPartyAllowed && (
           <CustomerService
@@ -199,6 +253,26 @@ function RootComponent() {
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   );
+}
+
+// An account may sign in in another tab. Never render its DOM into a recorded
+// guest document, even for one frame; reload into the server's private CSP.
+function RecordedSelectionBoundary({
+  children,
+  privateNow,
+}: {
+  children: ReactNode;
+  privateNow: boolean;
+}) {
+  const { data: session } = useSession();
+  const reload = privateNow || !!session?.user;
+  useEffect(() => {
+    if (reload) window.location.reload();
+  }, [reload]);
+  // SSR already verified the absence of an auth cookie. While the client
+  // session is pending, descendants render their existing anonymous state.
+  if (reload) return null;
+  return children;
 }
 
 function RootDocument({ children }: { children: ReactNode }) {

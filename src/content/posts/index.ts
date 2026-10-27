@@ -136,9 +136,14 @@ export function mergePosts(
 }
 
 export function formatPostDate(dateIso: string, locale: string): string {
-  return new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
-    year: 'numeric',
-    month: locale === 'zh' ? 'long' : 'short',
-    day: 'numeric',
-  }).format(new Date(dateIso));
+  return new Intl.DateTimeFormat(
+    locale === 'zh' ? 'zh-CN' : locale === 'de' ? 'de-DE' : 'en-US',
+    {
+      // Publication dates must not shift a day between server and browser time zones.
+      timeZone: 'UTC',
+      year: 'numeric',
+      month: locale === 'zh' ? 'long' : 'short',
+      day: 'numeric',
+    }
+  ).format(new Date(dateIso));
 }

@@ -1,35 +1,9 @@
 import { useId, useState } from 'react';
 import { Plus } from 'lucide-react';
 
+import { landingFaqItems } from '@/lib/landing-faq';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
-
-const faqItems = [
-  {
-    question: () => m['landing.faq.public_private.question'](),
-    answer: () => m['landing.faq.public_private.answer'](),
-  },
-  {
-    question: () => m['landing.faq.limit.question'](),
-    answer: () => m['landing.faq.limit.answer'](),
-  },
-  {
-    question: () => m['landing.faq.retention.question'](),
-    answer: () => m['landing.faq.retention.answer'](),
-  },
-  {
-    question: () => m['landing.faq.formats.question'](),
-    answer: () => m['landing.faq.formats.answer'](),
-  },
-  {
-    question: () => m['landing.faq.quota.question'](),
-    answer: () => m['landing.faq.quota.answer'](),
-  },
-  {
-    question: () => m['landing.faq.media.question'](),
-    answer: () => m['landing.faq.media.answer'](),
-  },
-] as const;
 
 export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
@@ -51,7 +25,7 @@ export function FAQ() {
         </div>
 
         <div className="border-border overflow-hidden border-y">
-          {faqItems.map(({ question, answer }, index) => {
+          {landingFaqItems().map(({ question, answer }, index) => {
             const isOpen = openIndex === index;
             const triggerId = `${id}-trigger-${index}`;
             const panelId = `${id}-panel-${index}`;
@@ -67,7 +41,7 @@ export function FAQ() {
                     onClick={() => setOpenIndex(isOpen ? null : index)}
                     className="focus-visible:ring-ring/50 flex min-h-16 w-full items-center justify-between gap-5 rounded-lg py-5 text-left text-base font-medium outline-none focus-visible:ring-3 sm:text-lg"
                   >
-                    {question()}
+                    {question}
                     <Plus
                       aria-hidden="true"
                       className={cn(
@@ -84,7 +58,7 @@ export function FAQ() {
                   hidden={!isOpen}
                   className="text-muted-foreground max-w-2xl pb-6 leading-7"
                 >
-                  {answer()}
+                  {answer}
                 </div>
               </div>
             );

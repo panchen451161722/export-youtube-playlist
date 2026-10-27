@@ -66,7 +66,8 @@ export function staticPageRouteOptions(slug: string) {
           name: meta.title,
           description: meta.description,
           dateModified: meta.updated_at,
-          inLanguage: locale === 'zh' ? 'zh-CN' : 'en-US',
+          inLanguage:
+            locale === 'zh' ? 'zh-CN' : locale === 'de' ? 'de-DE' : 'en-US',
           url: localizedPageUrl(path, locale),
           isPartOf: {
             '@type': 'WebSite',

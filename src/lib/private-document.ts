@@ -19,8 +19,30 @@ export function isPrivateDocumentPath(pathname: string): boolean {
   );
 }
 
-export function crossesPrivacyBoundary(from: string, to: string): boolean {
-  return isPrivateDocumentPath(from) !== isPrivateDocumentPath(to);
+/** Only the bare selection URL is recordable; callbacks/unknown parameters fail closed. */
+export function isBackupSelectionLocation(
+  pathname: string,
+  search = ''
+): boolean {
+  return (
+    /^\/(?:zh\/|de\/)?youtube-playlist-backup\/?$/.test(pathname) && !search
+  );
+}
+
+export function documentPrivacyMode(pathname: string, search = '') {
+  if (isBackupSelectionLocation(pathname, search)) return 'backup-selection';
+  return isPrivateDocumentPath(pathname) ? 'private' : 'public';
+}
+
+export function crossesPrivacyBoundary(
+  from: string,
+  to: string,
+  fromSearch = '',
+  toSearch = ''
+): boolean {
+  return (
+    documentPrivacyMode(from, fromSearch) !== documentPrivacyMode(to, toSearch)
+  );
 }
 
 export function mayLoadThirdPartyScripts(
@@ -41,8 +63,12 @@ export function hasAccountCookie(cookie: string): boolean {
 export function privateDocumentHeaders(
   request: Request
 ): Record<string, string> {
+  const url = new URL(request.url);
+  const selection =
+    isBackupSelectionLocation(url.pathname, url.search) &&
+    !hasAccountCookie(request.headers.get('cookie') || '');
   if (
-    !isPrivateDocumentPath(new URL(request.url).pathname) &&
+    !isPrivateDocumentPath(url.pathname) &&
     !hasAccountCookie(request.headers.get('cookie') || '')
   )
     return {};
@@ -52,8 +78,10 @@ export function privateDocumentHeaders(
     'Content-Security-Policy': [
       // SQLite exports compile same-origin WASM, including on signed-in pages.
       // Permit WASM without enabling JavaScript eval or third-party trackers.
-      "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://challenges.cloudflare.com https://accounts.google.com",
-      "connect-src 'self' https://challenges.cloudflare.com https://accounts.google.com",
+      "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://challenges.cloudflare.com https://accounts.google.com" +
+        (selection ? ' https://*.clarity.ms' : ''),
+      "connect-src 'self' https://challenges.cloudflare.com https://accounts.google.com" +
+        (selection ? ' https://*.clarity.ms https://c.bing.com' : ''),
       "object-src 'none'",
       "base-uri 'self'",
     ].join('; '),

@@ -1,0 +1,49 @@
+export const meta = {
+  title: 'Wie aus einer Playlist-Export-Idee eine Webanwendung wurde',
+  description:
+    'Produktentscheidungen hinter Playlist Exporter: öffentliche Metadaten, ein einfacher Exportablauf, brauchbare Dateien und klare Grenzen beim Datenzugriff.',
+  created_at: '2026-07-29T12:00:00Z',
+  author_name: 'Playlist Exporter',
+};
+
+Am Anfang stand eine wiederkehrende Aufgabe: Eine öffentliche YouTube-Playlist sollte zu strukturierten Daten werden, die sich suchen, sortieren und auswerten lassen. Videotitel und Links einzeln zu kopieren war umständlich. Ein Skript konnte das Problem technisch lösen, verlangte aber eine Laufzeitumgebung, Abhängigkeiten, einen API-Schlüssel und Erfahrung mit der Kommandozeile.
+
+[Playlist Exporter](/) macht daraus einen Ablauf im Browser: URL einfügen, Format wählen und Datei herunterladen.
+
+## Den ersten Funktionsumfang bewusst klein halten
+
+Die grundlegenden Anforderungen waren klar: öffentliche Playlist-URLs annehmen, die Reihenfolge verfügbarer Videos erhalten, nützliche Metadaten abrufen und Dateien für verbreitete Programme erzeugen. Für diesen öffentlichen Export sollte kein Zugriff auf das persönliche YouTube-Konto nötig sein.
+
+Diese Grenze ist bis heute wichtig. Eine öffentliche API-Anfrage ist etwas anderes als die separate Autorisierung für private Quellen. Die Oberfläche muss verständlich machen, welchen Zugriff eine Funktion benötigt und welche Inhalte sie nicht lesen kann.
+
+## Metadaten sind nicht die Videos selbst
+
+Die Anwendung verwendet die offizielle YouTube Data API. Zuerst wird die Playlist-ID aus dem Link gelesen. Danach werden verfügbare Einträge und ihre Videodetails geladen. Das Ergebnis enthält unter anderem Titel, Links, Laufzeiten und öffentliche Statistiken.
+
+Nicht jeder Eintrag ist verfügbar. Ein Video kann gelöscht, privat oder beschränkt sein; eine Statistik kann fehlen. Deshalb darf eine leere Zahl nicht stillschweigend als null interpretiert werden. Auch ein Exportlimit muss sichtbar bleiben, damit eine Teilmenge nicht mit einer vollständigen Playlist verwechselt wird.
+
+## Dateien müssen außerhalb der Anwendung funktionieren
+
+Eine Datei ist erst dann nützlich, wenn sie sich im Zielprogramm korrekt öffnen lässt. Bei CSV sind Zeichencodierung, Trennzeichen, Anführungszeichen und Zeilenumbrüche relevant. Beschreibungen können mehrere Zeilen enthalten; Titel können Zeichen verwenden, die ein Tabellenprogramm als Formel interpretiert.
+
+Der Export schützt solche Texte vor unbeabsichtigter Formelausführung. CSV und Excel verwenden eine stabile Spaltenreihenfolge. Laufzeiten werden zusätzlich in Sekunden ausgegeben, damit Berechnungen nicht vom Format eines lesbaren Textes abhängen.
+
+Der [CSV-Exporter](/tools/export-youtube-playlist-to-csv) eignet sich für Datenimporte. Der [Excel-Exporter](/tools/export-youtube-playlist-to-excel) reduziert die Importarbeit für Menschen, die direkt mit einer Arbeitsmappe arbeiten möchten.
+
+## Fehler sind Teil des normalen Ablaufs
+
+Ein ungültiger Link, eine private Playlist und ein ausgeschöpftes API-Kontingent benötigen unterschiedliche Erklärungen. Ein erneuter Versuch kann bei einer vorübergehenden Netzwerkstörung sinnvoll sein, aber keinen privaten Inhalt freischalten.
+
+Die gemeinsame API-Quota setzt außerdem eine reale Grenze. Limits und kurze Zwischenspeicherung helfen, die Ressource für mehrere Besucher nutzbar zu halten. Sie sind kein Versprechen, dass jede Anfrage jederzeit erfolgreich sein wird.
+
+## Öffentliche Exporte und gespeicherte Backups trennen
+
+Beim öffentlichen Export entstehen die Dateien im Browser; das Tool erzeugt keinen gespeicherten Exportverlauf. Die optionale kontobasierte Backup-Funktion speichert dagegen Sammlungen und zeitlich begrenzte Metadaten-Snapshots.
+
+Diese Unterschiede gehören in die Produktbeschreibung und die [Datenschutzerklärung](/privacy-policy). Eine heruntergeladene Datei verwaltet der Nutzer selbst. Ein gespeicherter Snapshot im Dienst unterliegt den dort beschriebenen Aufbewahrungs- und Löschregeln.
+
+## Was daraus für neue Funktionen folgt
+
+Neue Tools sollten eine konkrete Frage beantworten: nur Links sammeln, Titel als Liste auslesen, den Zeitbedarf einer Playlist abschätzen oder öffentliche Kanaldaten exportieren. Dafür lassen sich dieselben Datenwege nutzen, ohne jede Oberfläche mit sämtlichen Optionen zu überladen.
+
+Im [Werkzeugverzeichnis](/tools) findest du diese spezialisierten Ansichten. Wenn du zum ersten Mal exportierst, führt dich die [Schritt-für-Schritt-Anleitung](/blog/how-to-export-a-youtube-playlist-to-csv-or-excel) durch den gesamten Ablauf.
