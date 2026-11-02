@@ -2,6 +2,7 @@ import { serverFetch } from 'nitro/app';
 import { defineTask } from 'nitro/task';
 
 import { jobConfiguration } from '../../src/lib/playlist-guard/job-config';
+import { retrySubscriptionWelcomes } from '../../src/modules/payment/welcome';
 import { retryGuestCheckouts } from '../../src/routes/api/payment/-guest-checkout';
 import { runYoutubeMaintenance } from '../utils/youtube-maintenance';
 
@@ -13,6 +14,7 @@ export default defineTask({
   },
   async run({ context }) {
     const maintenance = await runYoutubeMaintenance();
+    await retrySubscriptionWelcomes();
     const guestCheckouts = await retryGuestCheckouts();
     if (guestCheckouts.failed)
       console.error('guest_checkout_retry_failed', guestCheckouts.failed);

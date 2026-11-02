@@ -68,7 +68,7 @@ type PlaylistResult = {
   totalItems: number;
   returnedItems: number;
   truncated: boolean;
-  limit: number;
+  limit: number | null;
   videos: PlaylistVideo[];
 };
 
@@ -175,7 +175,7 @@ export function Hero({
         tool: 'playlist_export',
         total_items: result.totalItems,
         free_limit: FREE_PLAYLIST_EXPORT_LIMIT,
-        export_limit: result.limit,
+        export_limit: result.limit ?? 'unlimited',
         over_free_limit: result.totalItems > FREE_PLAYLIST_EXPORT_LIMIT,
         truncated: result.truncated,
       });
@@ -345,9 +345,11 @@ export function Hero({
             {m['landing.exporter.helper']()}
           </p>
           <p className="text-muted-foreground mt-1 text-xs">
-            {m['landing.exporter.limit']({
-              limit: access.data?.limit ?? FREE_PLAYLIST_EXPORT_LIMIT,
-            })}
+            {access.data?.subscribed && access.data.limit === null
+              ? m['landing.exporter.limit_unlimited']()
+              : m['landing.exporter.limit']({
+                  limit: access.data?.limit ?? FREE_PLAYLIST_EXPORT_LIMIT,
+                })}
           </p>
         </div>
 

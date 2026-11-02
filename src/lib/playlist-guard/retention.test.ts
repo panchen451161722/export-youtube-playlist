@@ -3,7 +3,7 @@ import { test } from 'node:test';
 
 import { applyScan } from '@/modules/playlist-guard/service';
 
-import { GUARD_METADATA_RETENTION_MS, pruneGuardMetadata } from './retention';
+import { isFreshGuardMetadata, pruneGuardMetadata } from './retention';
 import type { GuardCollectionDetail, GuardItem } from './types';
 
 const now = Date.UTC(2026, 9, 18);
@@ -38,7 +38,7 @@ const empty: GuardCollectionDetail = {
   missing: [],
 };
 
-test('missing metadata expires from its last successful retrieval, not later disappearance or scans', () => {
+test('snapshots and missing metadata remain readable years after retrieval', () => {
   const first = applyScan(empty, { complete: true, items: [item] }, now);
   const missing = applyScan(
     first,
@@ -50,17 +50,19 @@ test('missing metadata expires from its last successful retrieval, not later dis
     missing.missing[0].missingSince,
     new Date(now + 29 * DAY).toISOString()
   );
-  const boundary = pruneGuardMetadata(
-    missing,
-    now + GUARD_METADATA_RETENTION_MS
-  );
-  assert.equal(boundary.missing.length, 0);
+  const boundary = pruneGuardMetadata(missing, now + 10 * 365 * DAY);
+  assert.equal(boundary.missing.length, 1);
   assert.equal(
     boundary.snapshots.length,
-    1,
-    'recent empty snapshot remains, old video does not'
+    2,
+    'both the old video and newer empty snapshot remain'
   );
-  assert.equal(JSON.stringify(boundary).includes('Old metadata'), false);
+  assert.equal(JSON.stringify(boundary).includes('Old metadata'), true);
+  assert.equal(
+    isFreshGuardMetadata(new Date(now).toISOString(), now + 30 * DAY),
+    false,
+    'authorization and queued-notification freshness still expires'
+  );
 });
 
 test('legacy missing records need a genuine snapshot retrieval timestamp; unproven titles fail closed', () => {
@@ -83,8 +85,8 @@ test('legacy missing records need a genuine snapshot retrieval timestamp; unprov
     sourceTitleFetchedAt: new Date(now).toISOString(),
   };
   const cleaned = pruneGuardMetadata(titled, now + 30 * DAY);
-  assert.equal(cleaned.sourceTitle, undefined);
-  assert.equal(cleaned.name, 'Collection');
+  assert.equal(cleaned.sourceTitle, 'Old channel');
+  assert.equal(cleaned.name, 'Old channel');
   assert.equal(
     pruneGuardMetadata({ ...titled, name: 'My research' }, now + 30 * DAY).name,
     'My research'
@@ -96,7 +98,7 @@ test('legacy missing records need a genuine snapshot retrieval timestamp; unprov
   );
 });
 
-test('fresh scans cannot renew old snapshots, source titles or missing metadata', () => {
+test('new scans keep historical snapshots and original missing-item provenance', () => {
   const first = applyScan(
     { ...empty, source: 'channel' },
     { complete: true, items: [item], sourceTitle: 'Channel title' },
@@ -107,14 +109,15 @@ test('fresh scans cannot renew old snapshots, source titles or missing metadata'
     { complete: true, items: [{ ...item, id: 'new', title: 'Fresh' }] },
     now + 30 * DAY
   );
-  assert.equal(newest.snapshots.length, 1);
-  assert.equal(newest.missing.length, 0);
-  assert.equal(newest.sourceTitle, undefined);
+  assert.equal(newest.snapshots.length, 2);
+  assert.equal(newest.missing.length, 1);
+  assert.equal(newest.missing[0].lastSeenAt, new Date(now).toISOString());
+  assert.equal(newest.sourceTitle, 'Channel title');
   assert.equal(newest.snapshots[0].items[0].title, 'Fresh');
   assert.equal(
     newest.snapshots[0].added,
-    0,
-    'Expired baselines do not classify the entire collection as new'
+    1,
+    'the stored baseline still supports change comparison'
   );
   const future = {
     ...first.snapshots[0],

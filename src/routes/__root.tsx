@@ -134,7 +134,9 @@ export const Route = createRootRoute({
         location.searchStr
       )
     ) {
-      throw redirect({ href: location.href, reloadDocument: true });
+      // `href` is the locale-free route. A document reload must use the
+      // rewritten browser URL so /de and /zh survive this privacy boundary.
+      throw redirect({ href: location.publicHref, reloadDocument: true });
     }
   },
   loader: ({ location }) =>

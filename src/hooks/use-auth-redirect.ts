@@ -4,7 +4,7 @@ import { useLocation } from '@tanstack/react-router';
 import { getAuthRedirect, getSignInHref } from '@/lib/auth-redirect';
 
 export function useSignInHref() {
-  const href = useLocation({ select: (location) => location.href });
+  const href = useLocation({ select: (location) => location.publicHref });
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
   // Fragments are absent on the server; add them after hydration so React

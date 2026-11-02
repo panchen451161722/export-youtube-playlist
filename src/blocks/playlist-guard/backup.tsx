@@ -125,6 +125,7 @@ function BackupSetup() {
   const [draft, setDraft] = useState<BackupDraft | null>(null);
   const [quickOpen, setQuickOpen] = useState(false);
   const [checkoutCancelled, setCheckoutCancelled] = useState(false);
+  const [checkoutAfterAuth, setCheckoutAfterAuth] = useState(false);
   const [guestId, setGuestId] = useState<string | null>(null);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -139,13 +140,15 @@ function BackupSetup() {
     const privateDraft = arrival.draft?.source === 'private_playlist';
     setQuickOpen(arrival.open || (!!privateDraft && params.has('youtube')));
     setCheckoutCancelled(arrival.cancelled);
-    if (new URLSearchParams(window.location.search).has('setup'))
-      router.replace('/youtube-playlist-backup');
+    setCheckoutAfterAuth(arrival.checkoutAfterAuth);
+    // Keep the private callback URL while resuming. Removing its query crosses
+    // the analytics privacy boundary and reloads away the consumed draft intent.
   }, []);
   function openQuickSetup() {
     const saved = readBackupDraft();
     setDraft(saved);
     setCheckoutCancelled(false);
+    setCheckoutAfterAuth(false);
     setQuickOpen(true);
   }
   const [open, setOpen] = useState(false);
@@ -156,9 +159,13 @@ function BackupSetup() {
   const user = session?.user;
   const youtube = useYoutubeConnections(
     user?.id,
-    getLocale() === 'zh'
-      ? '/zh/youtube-playlist-backup'
-      : '/youtube-playlist-backup'
+    (
+      {
+        en: '/youtube-playlist-backup',
+        zh: '/zh/youtube-playlist-backup',
+        de: '/de/youtube-playlist-backup',
+      } as const
+    )[getLocale()]
   );
   const loggedIn = !!(user ?? (sessionPending ? initialUser : null));
   const queryClient = useQueryClient();
@@ -460,6 +467,7 @@ function BackupSetup() {
         <BackupOnboarding
           initialDraft={draft}
           cancelled={checkoutCancelled}
+          checkoutAfterAuth={checkoutAfterAuth}
           onConnectPrivate={() => {
             setDraft(readBackupDraft());
             setQuickOpen(false);

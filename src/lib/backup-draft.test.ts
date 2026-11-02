@@ -14,6 +14,14 @@ import {
 
 const url = 'https://www.youtube.com/playlist?list=PL1234567890';
 const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+test('new backup setup defaults to the $9.90 annual Lite plan', async () => {
+  const { getGuardPlan } = await import('@/config/guard-plans');
+  assert.equal(DEFAULT_BACKUP_PREFERENCES.planId, 'lite');
+  assert.equal(
+    getGuardPlan(DEFAULT_BACKUP_PREFERENCES.planId)?.yearlyPriceInCents,
+    990
+  );
+});
 afterEach(() => {
   if (originalWindow)
     Object.defineProperty(globalThis, 'window', originalWindow);
@@ -67,10 +75,135 @@ test('entry opens once and an auth return restores the selected playlist and pla
   });
   const returned = backupArrival('?setup=auth');
   assert.equal(returned.open, true);
+  assert.equal(returned.checkoutAfterAuth, false);
   assert.equal(returned.draft?.url, url);
   assert.equal(returned.draft?.preferences?.planId, 'pro');
   assert.equal(returned.draft?.preferences?.frequency, 'weekly');
   assert.equal(backupArrival('').open, false);
+});
+
+test('main CTA authentication resumes checkout once with the selected settings and source', () => {
+  browser();
+  const preferences = {
+    ...DEFAULT_BACKUP_PREFERENCES,
+    planId: 'pro' as const,
+    frequency: 'weekly' as const,
+    notifyAdded: false,
+  };
+  for (const source of ['playlist', 'private_playlist'] as const) {
+    writeBackupDraft({
+      url,
+      source,
+      savedAt: Date.now(),
+      preferences,
+      resume: 'auth-checkout',
+    });
+    const arrival = backupArrival('?setup=auth');
+    assert.equal(arrival.open, true);
+    assert.equal(arrival.checkoutAfterAuth, true);
+    assert.equal(arrival.draft?.url, url);
+    assert.equal(arrival.draft?.source, source);
+    assert.deepEqual(arrival.draft?.preferences, preferences);
+    assert.equal(arrival.draft?.resume, undefined);
+    assert.equal(arrival.draft?.checkout, undefined);
+    assert.deepEqual(readBackupDraft()?.preferences, preferences);
+    assert.equal(readBackupDraft()?.resume, undefined);
+    assert.equal(backupArrival('?setup=auth').checkoutAfterAuth, false);
+    assert.equal(backupArrival('').checkoutAfterAuth, false);
+  }
+});
+
+test('auth callbacks require explicit checkout intent, valid preferences, and no existing payment', () => {
+  const data = browser();
+  assert.equal(backupArrival('?setup=auth').checkoutAfterAuth, false);
+  const draft = {
+    url,
+    source: 'playlist',
+    savedAt: Date.now(),
+    preferences: DEFAULT_BACKUP_PREFERENCES,
+  };
+  for (const candidate of [
+    draft,
+    { ...draft, resume: 'entry' },
+    { ...draft, resume: 'auth' },
+    { ...draft, resume: 'checkout' },
+    { ...draft, resume: 'auth-checkout', preferences: undefined },
+    {
+      ...draft,
+      resume: 'auth-checkout',
+      preferences: { ...DEFAULT_BACKUP_PREFERENCES, planId: 'unknown' },
+    },
+    {
+      ...draft,
+      resume: 'auth-checkout',
+      checkout: { userId: 'owner', returned: false },
+    },
+    {
+      ...draft,
+      resume: 'auth-checkout',
+      checkout: { userId: 'owner', returned: true },
+    },
+  ]) {
+    data.set('playlist-backup-draft', JSON.stringify(candidate));
+    assert.equal(backupArrival('?setup=auth').checkoutAfterAuth, false);
+  }
+});
+
+test('cancellation, success, and returning without the auth callback consume pending checkout intent', () => {
+  browser();
+  for (const search of [
+    '',
+    '?setup=cancel',
+    '?setup=success',
+    '?setup=unknown',
+  ]) {
+    writeBackupDraft({
+      url,
+      source: 'playlist',
+      savedAt: Date.now(),
+      preferences: DEFAULT_BACKUP_PREFERENCES,
+      resume: 'auth-checkout',
+    });
+    const arrival = backupArrival(search);
+    assert.equal(arrival.checkoutAfterAuth, false);
+    assert.equal(arrival.cancelled, search === '?setup=cancel');
+    assert.deepEqual(arrival.draft?.preferences, DEFAULT_BACKUP_PREFERENCES);
+    assert.equal(backupArrival('?setup=auth').checkoutAfterAuth, false);
+  }
+});
+
+test('expired or corrupted checkout intents never resume payment', () => {
+  const data = browser();
+  const draft = {
+    url,
+    source: 'playlist',
+    preferences: DEFAULT_BACKUP_PREFERENCES,
+    resume: 'auth-checkout',
+  };
+  for (const savedAt of [Date.now() - 3 * 3600000, Date.now() + 3600000]) {
+    data.set('playlist-backup-draft', JSON.stringify({ ...draft, savedAt }));
+    const arrival = backupArrival('?setup=auth');
+    assert.equal(arrival.draft, null);
+    assert.equal(arrival.checkoutAfterAuth, false);
+  }
+  data.set('playlist-backup-draft', 'broken');
+  assert.equal(backupArrival('?setup=auth').checkoutAfterAuth, false);
+});
+
+test('checkout does not resume when its saved intent cannot be consumed', () => {
+  browser();
+  writeBackupDraft({
+    url,
+    source: 'playlist',
+    savedAt: Date.now(),
+    preferences: DEFAULT_BACKUP_PREFERENCES,
+    resume: 'auth-checkout',
+  });
+  window.sessionStorage.setItem = () => {
+    throw new Error('storage blocked');
+  };
+  assert.equal(backupArrival('?setup=auth').checkoutAfterAuth, false);
+  assert.equal(backupArrival('?setup=auth').checkoutAfterAuth, false);
 });
 
 test('checkout return requires the same account and server entitlement before auto-creation', () => {

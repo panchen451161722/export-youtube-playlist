@@ -9,7 +9,7 @@ import {
   getGuardCheckoutOptions,
 } from '@/modules/payment/service';
 import { createGuardStore } from '@/modules/playlist-guard/service';
-import { backupCheckoutPaths } from '@/lib/backup-checkout';
+import { backupCheckoutPaths, checkoutLocale } from '@/lib/backup-checkout';
 import { paymentAppUrl } from '@/lib/payment-return-url';
 import { enforceMinIntervalRateLimit } from '@/lib/rate-limit';
 import { respData, respErr } from '@/lib/resp';
@@ -99,12 +99,13 @@ async function POST({ request }: { request: Request }) {
 
     // Build success/cancel URLs — only accept same-origin redirects.
     const baseUrl = paymentAppUrl(configs.app_url, request.url);
+    const locale = checkoutLocale(body.locale);
     const backupPaths = backupCheckoutPaths(body.checkout_flow, body.locale);
     const safeRedirectPath =
       backupPaths?.success ??
       safeSameOriginPath(redirect, '/settings/billing', baseUrl);
     const successUrl = `${baseUrl}${safeRedirectPath}`;
-    const cancelUrl = `${baseUrl}${backupPaths?.cancel ?? '/pricing'}`;
+    const cancelUrl = `${baseUrl}${backupPaths?.cancel ?? `${locale === 'en' ? '' : `/${locale}`}/pricing`}`;
 
     const checkout = await createCheckout({
       requestUrl: request.url,
@@ -117,7 +118,7 @@ async function POST({ request }: { request: Request }) {
       paymentOrder: {
         metadata: {
           checkout_flow: backupPaths ? 'backup' : 'pricing',
-          checkout_locale: body.locale === 'zh' ? 'zh' : 'en',
+          checkout_locale: locale,
         },
         productId: product.productId,
         price: { amount: product.priceInCents, currency: product.currency },

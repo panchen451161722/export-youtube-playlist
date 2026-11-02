@@ -160,7 +160,7 @@ async function seedOld(
   return old;
 }
 
-test('bounded retention clears paused/expired collections, failed outbox and legacy tombstones without paid access', async () => {
+test('maintenance preserves older snapshots without paid access while clearing stale outbox and deleted collections', async () => {
   const f = await fixture();
   try {
     await f.database.update(subscription).set({ status: 'canceled' });
@@ -187,10 +187,10 @@ test('bounded retention clears paused/expired collections, failed outbox and leg
       });
     assert.equal(
       (await f.store.detail('owner', 'a')).snapshots.length,
-      0,
-      'read-time gate works before maintenance'
+      1,
+      'older snapshots remain readable before maintenance'
     );
-    assert.equal((await f.store.list('owner'))[0].name, 'Collection');
+    assert.equal((await f.store.list('owner'))[0].name, 'API channel title');
     let cursor: GuardCleanupCursor | undefined;
     const progress: { reviewed: number; deliveriesReviewed: number }[] = [];
     for (let page = 0; page < 5; page++) {
@@ -211,11 +211,11 @@ test('bounded retention clears paused/expired collections, failed outbox and leg
     const rows = await f.database.select().from(guardCollection);
     assert.equal(rows.length, 3, 'legacy tombstone physically removed');
     for (const row of rows) {
-      assert(!row.document.includes('Private metadata'));
-      assert(!row.summary.includes('API channel title'));
+      assert(row.document.includes('Private metadata'));
+      assert(row.summary.includes('API channel title'));
       const document = JSON.parse(row.document);
-      assert.equal(document.snapshots.length, 0);
-      assert.equal(document.missing.length, 0);
+      assert.equal(document.snapshots.length, 1);
+      assert.equal(document.missing.length, 1);
     }
     assert.equal((await f.database.select().from(guardDelivery)).length, 0);
   } finally {
@@ -223,11 +223,17 @@ test('bounded retention clears paused/expired collections, failed outbox and leg
   }
 });
 
-test('cleanup fences successful and failed scans so expired metadata cannot return', async () => {
+test('cleanup fences successful and failed scans so invalid metadata cannot return', async () => {
   for (const fails of [false, true]) {
     const f = await fixture();
     try {
-      await seedOld(f, 'stale', true);
+      const invalid = await seedOld(f, 'stale', true);
+      invalid.snapshots[0].createdAt = 'invalid';
+      invalid.missing[0].lastSeenAt = 'invalid';
+      invalid.sourceTitleFetchedAt = 'invalid';
+      await f.database
+        .update(guardCollection)
+        .set({ document: JSON.stringify(invalid) });
       let started!: () => void;
       const begun = new Promise<void>((resolve) => {
         started = resolve;

@@ -1,6 +1,7 @@
 import { Check, ChevronDown, Globe, Languages } from 'lucide-react';
 
 import { hasGermanContent, localeNames } from '@/config/locale';
+import { rememberLocalePreference } from '@/lib/locale-preference';
 import { cn } from '@/lib/utils';
 import {
   deLocalizeUrl,
@@ -27,6 +28,7 @@ export function LocaleSelector({
   const locale = getLocale();
 
   function handleSwitch(newLocale: string) {
+    rememberLocalePreference(newLocale as typeof locale);
     if (
       newLocale === 'de' &&
       !hasGermanContent(deLocalizeUrl(window.location.href).pathname)

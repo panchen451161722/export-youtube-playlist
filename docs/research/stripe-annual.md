@@ -213,3 +213,157 @@ All 44 focused tests, TypeScript checking, and the production build passed.
 This implementation is not deployed. Stripe's account-level trial reminder
 email setting and production scheduler/email activation are separate runtime
 configuration; this verification does not claim they are enabled.
+
+## New-subscription account cutover — 2026-10-28 (activated)
+
+Scope confirmed by the user: future subscriptions only; existing subscriptions
+continue in the original account. The correct destination is **Playlist Expoter**,
+`acct_1UVQkLPhHyOI5tl9` (HK, website `exportyoutubeplaylist.com`). Read-only live API
+checks confirm `charges_enabled: true` and `payouts_enabled: true`. CLI profile
+`playlist-exporter-target` is verified against that exact ID. A different US
+account with the same display name is not the destination.
+
+The original account has three subscriptions referencing this project's live
+catalog: one active, one trialing and one past due. Before activation, production used the original live price mapping and portal
+listed above. The original secret and signing secret were encrypted. The user
+saved both new credentials to encrypted custom staging fields and explicitly
+approved production deployment and the new-subscription account switch.
+
+Local compatibility code retains one previous account using
+`stripe_legacy_secret_key`, `stripe_legacy_signing_secret`, and
+`stripe_legacy_portal_configuration_id`. New Checkout creation uses the current
+account. Existing customer/subscription/session/invoice ownership is resolved by
+a read-only lookup before selecting a provider; writes are never retried against
+another account. Both endpoint signatures are accepted independently, with all
+subsequent event lookups using the account whose secret verified the event.
+Subscription and guest-trial history checks include both accounts.
+
+The final 29 focused payment/configuration tests pass, including both signed webhook paths, legacy
+portal/cancellation, current-only new checkout, rejecting invalid/cross-mode
+signatures, failing closed on permission errors, and historical trial eligibility.
+Type checking and `pnpm build` passed during preparation. These are local checks,
+not evidence of a deployed cutover or actual production callback delivery.
+
+The user approved the four CLI permission changes (Products, Prices, Customer
+Portal, Webhook Endpoints → Write). They were saved and verified by the catalog
+creation operations. The target live resources are:
+
+| Plan  | Annual USD | Product               | Price                            |
+| ----- | ---------: | --------------------- | -------------------------------- |
+| Lite  |       9.90 | `prod_VWUPGz8sBkEjZ6` | `price_1UVRR5PhHyOI5tl9Gg9loTv6` |
+| Pro   |      29.90 | `prod_VWUQgufoVjsskC` | `price_1UVRRaPhHyOI5tl9Ss5sQOQL` |
+| Ultra |      69.90 | `prod_VWUQZ4nQIE7ttn` | `price_1UVRRhPhHyOI5tl9OtTKW2ko` |
+
+Portal `bpc_1UVRSXPhHyOI5tl9YwRNHmRS` is active/live, with invoice history,
+payment-method updates, and cancellation at period end without proration.
+Webhook `we_1UVRTfPhHyOI5tl9hN37u7Rz` targets
+`https://exportyoutubeplaylist.com/api/payment/notify/stripe`, API version
+`2025-08-27.basil`, and is now **enabled**. Events:
+`checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+`checkout.session.async_payment_failed`, `checkout.session.expired`,
+`invoice.payment_succeeded`, `invoice.payment_failed`,
+`customer.subscription.updated`, `customer.subscription.deleted`.
+The signing secret was not printed or written to a local file.
+
+The user created a separate website restricted key with Checkout Sessions,
+Customers, Subscriptions, and Customer Portal Write; Prices and Invoices Read,
+and saved it and the endpoint signing secret in encrypted staging fields. Both
+values were then promoted into the standard Stripe settings. The two temporary
+`stripe_next_*` fields were removed after successful production verification. These secret-like custom names use the existing
+production encryption and masking. An expiring CLI management key is not used
+as the website key.
+
+A release directory at `/private/tmp/playlist-stripe-release` contains HEAD plus
+only this payment change, excluding the unrelated locale UI/server work. Its
+Cloudflare build passes after copying the existing inlang plugin cache; the
+initial missing-plugin/translation warnings are resolved. No schema change or
+migration is required.
+
+Activation progress:
+
+- Compatibility deployment: `2f24bedf-2e72-48db-8b1e-0ebbf9968abe`.
+- Active values were copied directly inside D1 with one guarded INSERT statement;
+  credentials never left the encrypted configuration store. Original values are
+  retained in `stripe_legacy_*`; the standard template `stripe_secret_key`,
+  `stripe_signing_secret`, `stripe_price_ids_mapping`, and
+  `stripe_portal_configuration_id` now reference the target account.
+- Cache-refresh deployment: `27df5efb-2f09-43ea-b815-7130bba77acd`.
+- Original endpoint `we_1UQhd7PX7HdkZlWUxGZAmrt3` remains enabled. Target endpoint
+  `we_1UVRTfPhHyOI5tl9hN37u7Rz` was enabled after activation.
+- Production homepage returned HTTP 200; public config returned code 0 with
+  Stripe enabled and selected as default.
+- Automatic approval rejected the template's former live $1 Checkout diagnostic.
+  No diagnostic payment was submitted. The template Stripe settings test was
+  changed to GET-only validation of configured prices, portal, and API read
+  access, returning no customer data; no financial objects are created.
+- Preview smoke checks covered 390/768/1440-pixel home layouts, light/dark theme,
+  rendered metadata, sitemap and robots, plus build/bundle and security review.
+  This was not a complete Lighthouse/CWV measurement or every-route visual audit.
+- The local Workers preview required a command-line compatibility-date override
+  because its workerd binary predates the production date; production config
+  was left unchanged.
+
+Final verification:
+
+- Final deployment: `976cc7fe-9431-4791-a32d-c51dc2d9cf96`.
+- Production Admin → Payment → Stripe → Test succeeded using the actual saved
+  website key. All three exact target prices returned active/live at 990, 2990,
+  and 6990 USD cents per year; dedicated portal
+  `bpc_1UVRSXPhHyOI5tl9YwRNHmRS` was accessible. Customers, subscriptions,
+  Checkout Sessions, and invoices read requests also succeeded.
+- New legacy-setting labels display correctly. Both active credentials and both
+  legacy credentials remain encrypted. The two temporary staging records were
+  removed only after verifying their ciphertext matched the promoted values;
+  database readback confirms zero staging fields remain.
+- Final focused suite: 29 passed, zero failed. TypeScript, `pnpm build`,
+  Cloudflare build/deploy and the security scan passed.
+- No real payment or subscription was created. The blocked $1 diagnostic was not
+  executed; the replacement read-only check created no payment objects.
+- Target recent events contain catalog/portal setup events only. No signed
+  production delivery for the eight subscribed billing events has yet been
+  observed. Webhook configuration is enabled, but live delivery and payment
+  acceptance are not claimed as verified. Local signed-event fixtures passed.
+
+Future new subscriptions now use `acct_1UVQkLPhHyOI5tl9`; the original three
+subscriptions and original webhook remain on `acct_1Tk2iZPX7HdkZlWU`.
+
+### Checkout compatibility incident after cutover
+
+A user retry exposed an account-default difference that the read-only connection
+check does not exercise. Stripe request `req_g0iVhWV6TrsiP5` returned HTTP 400:
+Managed Payments is enabled by default on the new account and rejects the
+integration's explicit `payment_method_types`. Later retries, including
+`req_InPpwq3TTzRXnL`, returned `idempotency_error` because the same customer/first
+checkout key carried newly generated order metadata and callback parameters.
+This was not an existing-subscription eligibility rejection. Readback found zero
+Checkout Sessions for the affected customer before the fix.
+
+The provider now explicitly sends `managed_payments[enabled]=false` to retain the
+site's original direct-Stripe subscription integration. It uses a versioned
+Checkout idempotency namespace and derives a stable authenticated order number
+from the existing checkout generation, using the same number in session metadata,
+subscription metadata and callback URL. Guest order numbers remain unchanged.
+The generation still serializes competing selections; writes are not blindly
+retried with random keys. Existing open sessions continue to be reused.
+
+Regression coverage exercises the explicit Managed Payments opt-out and an
+ambiguous/lost response followed by a retry with a different generated order
+number. Both calls must have identical Stripe parameters and keys, and the
+returned order must match the callback and subscription metadata. Final suite:
+30 passed, zero failures; typecheck, build and security scan passed.
+
+Fix deployment: `d09aea09-a433-495d-be6c-2065ad80b919`. The user retried the
+pricing button and confirmed the Stripe page opened, providing a screenshot.
+Read-only verification on the target account found session
+`cs_live_b14AOGZfZN8czRnj42HUy8vSB8b0myqwGF2ICPAfH1voHgt4FlETIMISxC`:
+`livemode=true`, `mode=subscription`, `status=open`, `payment_status=unpaid`,
+`currency=usd`, `product_id=guard_lite_yearly`, `trial_days=7`, and no created
+subscription. The screenshot shows Playlist Expoter, Lite, and seven free days.
+The customer-operated session was left unchanged. No agent-operated live
+financial diagnostic or real payment was performed. Successful Checkout creation
+does not yet prove paid activation or production webhook delivery.
+
+Primary references:
+
+- https://docs.stripe.com/payments/managed-payments/update-checkout#remove-unsupported-parameters
+- Original request: https://dashboard.stripe.com/acct_1UVQkLPhHyOI5tl9/workbench/logs/req_g0iVhWV6TrsiP5

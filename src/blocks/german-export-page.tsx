@@ -1,8 +1,5 @@
 import { Link } from '@/core/i18n/navigation';
-import {
-  FREE_PLAYLIST_EXPORT_LIMIT,
-  SUBSCRIBER_PLAYLIST_EXPORT_LIMIT,
-} from '@/config/playlist-export';
+import { FREE_PLAYLIST_EXPORT_LIMIT } from '@/config/playlist-export';
 import { m } from '@/paraglide/messages.js';
 import { CTA } from '@/blocks/cta';
 import { FAQ } from '@/blocks/faq';
@@ -315,7 +312,6 @@ export function GermanExportPage({ kind }: { kind: PageKind }) {
             <p className="text-muted-foreground mt-5 max-w-3xl leading-7">
               {m['localizedHome.limits.body']({
                 free: FREE_PLAYLIST_EXPORT_LIMIT.toLocaleString('de-DE'),
-                paid: SUBSCRIBER_PLAYLIST_EXPORT_LIMIT.toLocaleString('de-DE'),
               })}
             </p>
             <Link className={`${linkClass} mt-5 inline-block`} href="/pricing">

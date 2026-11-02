@@ -8,6 +8,7 @@ import {
   StripeProvider,
   WechatPayProvider,
 } from '@/core/payment';
+import { StripeAccountsProvider } from '@/core/payment/stripe-accounts';
 import {
   PaymentStatus,
   PaymentType,
@@ -38,11 +39,13 @@ import {
   type NewSubscription,
   type UpdateSubscription,
 } from '@/modules/subscriptions/service';
+import { checkoutLocale } from '@/lib/backup-checkout';
 import type { GuardCheckoutOptions } from '@/lib/guard-checkout';
 import { getSnowId, getUniSeq, getUuid } from '@/lib/hash';
 import { paymentAppUrl } from '@/lib/payment-return-url';
 
 import { guestSubscriptionHistory } from './guest-trial';
+import { trySubscriptionWelcome } from './welcome';
 
 // --- Order types ---
 
@@ -68,6 +71,9 @@ async function getPaymentManager(): Promise<PaymentManager> {
     c('stripe_secret_key') || c('stripe_api_key'),
     c('stripe_signing_secret') || c('stripe_webhook_secret'),
     c('stripe_portal_configuration_id'),
+    c('stripe_legacy_secret_key'),
+    c('stripe_legacy_signing_secret'),
+    c('stripe_legacy_portal_configuration_id'),
     c('creem_enabled'),
     c('creem_api_key'),
     c('alipay_app_id'),
@@ -76,31 +82,42 @@ async function getPaymentManager(): Promise<PaymentManager> {
   ]);
   if (manager && hash === managerConfigHash) return manager;
 
-  manager = new PaymentManager();
-  managerConfigHash = hash;
+  const nextManager = new PaymentManager();
 
   const stripeKey = c('stripe_secret_key') || c('stripe_api_key');
   if (stripeKey) {
     const isDefault =
       !c('default_payment_provider') ||
       c('default_payment_provider') === 'stripe';
-    manager.addProvider(
-      new StripeProvider({
-        secretKey: stripeKey,
-        publishableKey: c('stripe_publishable_key'),
-        signingSecret:
-          c('stripe_signing_secret') || c('stripe_webhook_secret') || undefined,
-        portalConfigurationId: c('stripe_portal_configuration_id'),
-        allowPromotionCodes: true,
-        allowedPaymentMethods: ['card', 'wechat_pay', 'alipay'],
-      }),
+    nextManager.addProvider(
+      new StripeAccountsProvider(
+        {
+          secretKey: stripeKey,
+          publishableKey: c('stripe_publishable_key'),
+          signingSecret:
+            c('stripe_signing_secret') ||
+            c('stripe_webhook_secret') ||
+            undefined,
+          portalConfigurationId: c('stripe_portal_configuration_id'),
+          allowPromotionCodes: true,
+          allowedPaymentMethods: ['card', 'wechat_pay', 'alipay'],
+        },
+        c('stripe_legacy_secret_key')
+          ? {
+              secretKey: c('stripe_legacy_secret_key'),
+              publishableKey: '',
+              signingSecret: c('stripe_legacy_signing_secret'),
+              portalConfigurationId: c('stripe_legacy_portal_configuration_id'),
+            }
+          : undefined
+      ),
       isDefault
     );
   }
 
   if (c('creem_enabled') === 'true' && c('creem_api_key')) {
     const isDefault = c('default_payment_provider') === 'creem';
-    manager.addProvider(
+    nextManager.addProvider(
       new CreemProvider({
         apiKey: c('creem_api_key'),
         signingSecret: c('creem_signing_secret') || undefined,
@@ -113,7 +130,7 @@ async function getPaymentManager(): Promise<PaymentManager> {
 
   if (c('alipay_app_id') && c('alipay_private_key')) {
     const isDefault = c('default_payment_provider') === 'alipay';
-    manager.addProvider(
+    nextManager.addProvider(
       new AlipayProvider({
         appId: c('alipay_app_id'),
         privateKey: c('alipay_private_key'),
@@ -126,7 +143,7 @@ async function getPaymentManager(): Promise<PaymentManager> {
 
   if (c('wechat_mch_id') && c('wechat_private_key')) {
     const isDefault = c('default_payment_provider') === 'wechat';
-    manager.addProvider(
+    nextManager.addProvider(
       new WechatPayProvider({
         appId: c('wechat_app_id'),
         mchId: c('wechat_mch_id'),
@@ -140,6 +157,8 @@ async function getPaymentManager(): Promise<PaymentManager> {
     );
   }
 
+  manager = nextManager;
+  managerConfigHash = hash;
   return manager;
 }
 
@@ -306,7 +325,19 @@ export async function createCheckout(params: {
       paymentType: paymentOrder.type || 'one-time',
       paymentProvider: session.provider,
       paymentSessionId: session.checkoutInfo.sessionId,
-      checkoutInfo: JSON.stringify(session.checkoutInfo),
+      checkoutInfo: JSON.stringify({
+        ...session.checkoutInfo,
+        ...(paymentOrder.type === PaymentType.SUBSCRIPTION &&
+        getGuardPlan(paymentOrder.productId || '') &&
+        !userId.startsWith('guest_')
+          ? {
+              subscriptionEmail: {
+                status: 'pending',
+                locale: checkoutLocale(paymentOrder.metadata?.checkout_locale),
+              },
+            }
+          : {}),
+      }),
       checkoutResult: JSON.stringify(session.checkoutResult),
       checkoutUrl: session.checkoutInfo.checkoutUrl,
       description: paymentOrder.description || '',
@@ -331,8 +362,10 @@ export async function handlePaymentCallback(orderNo: string) {
     [OrderStatus.PAID, OrderStatus.TRIALING].includes(
       existingOrder.status as OrderStatus
     )
-  )
+  ) {
+    await trySubscriptionWelcome(existingOrder.orderNo);
     return;
+  }
 
   // Query the payment provider for latest status
   const pm = await getPaymentManager();
@@ -423,8 +456,10 @@ async function handleCheckoutSuccess(session: any, provider: string) {
     [OrderStatus.PAID, OrderStatus.TRIALING].includes(
       existingOrder.status as OrderStatus
     )
-  )
+  ) {
+    await trySubscriptionWelcome(existingOrder.orderNo);
     return;
+  }
   if (
     existingOrder.status !== OrderStatus.CREATED &&
     existingOrder.status !== OrderStatus.PENDING
@@ -549,6 +584,7 @@ async function handleCheckoutSuccess(session: any, provider: string) {
       );
       return writes;
     });
+    await trySubscriptionWelcome(existingOrder.orderNo);
   } else if (
     session.paymentStatus === PaymentStatus.FAILED ||
     session.paymentStatus === PaymentStatus.CANCELED
@@ -808,10 +844,13 @@ export async function cancelUserSubscription(params: {
   });
 
   const info = session.subscriptionInfo;
+  if (info?.status !== SubscriptionStatus.CANCELED) {
+    throw new Error('Immediate cancellation was not confirmed');
+  }
   const updated = await updateBySubscriptionNo(subscriptionNo, {
-    status: info?.status || SubscriptionStatus.CANCELED,
-    canceledAt: info?.canceledAt || new Date(),
-    canceledEndAt: info?.canceledEndAt || null,
+    status: SubscriptionStatus.CANCELED,
+    canceledAt: info.canceledAt || new Date(),
+    canceledEndAt: info.canceledEndAt || new Date(),
     canceledReason: info?.canceledReason || 'Canceled by user',
     canceledReasonType: info?.canceledReasonType || 'user_request',
   });

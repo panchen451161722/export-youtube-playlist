@@ -6,7 +6,13 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { Eye, MoreHorizontal, Pencil, XCircle } from 'lucide-react';
+import {
+  Eye,
+  LockKeyhole,
+  MoreHorizontal,
+  Pencil,
+  XCircle,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import { tDynamic } from '@/core/i18n/dynamic';
@@ -166,12 +172,12 @@ function BillingPage() {
       queryClient.setQueryData<Subscription | null>(
         ['billing', 'current'],
         (existing) =>
-          existing?.subscriptionNo === updated.subscriptionNo
-            ? updated
-            : existing
+          existing?.subscriptionNo === updated.subscriptionNo ? null : existing
       );
       queryClient.invalidateQueries({ queryKey: ['billing'] });
       queryClient.invalidateQueries({ queryKey: ['checkout-eligibility'] });
+      queryClient.resetQueries({ queryKey: ['playlist-guard'] });
+      queryClient.resetQueries({ queryKey: ['playlist-export-access'] });
     },
     onError: (err) => {
       toast.error(
@@ -508,26 +514,30 @@ function BillingPage() {
               })}
             </DialogDescription>
           </DialogHeader>
-          {canceling?.paymentProvider === 'stripe' &&
-            canceling.currentPeriodEnd && (
-              <p className="bg-muted rounded-lg p-3 text-sm">
-                {m['settings.billing.cancel_access_until']({
-                  date: new Date(
-                    canceling.currentPeriodEnd
-                  ).toLocaleDateString(),
-                })}
+          <div className="bg-primary/5 flex gap-3 rounded-lg border p-4">
+            <LockKeyhole
+              aria-hidden="true"
+              className="text-primary mt-0.5 size-5 shrink-0"
+            />
+            <div className="space-y-1">
+              <p className="font-medium">
+                {m['settings.billing.cancel_private_title']()}
               </p>
-            )}
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                {m['settings.billing.cancel_private_description']()}
+              </p>
+            </div>
+          </div>
+          <p className="border-destructive/20 bg-destructive/5 text-destructive rounded-lg border p-3 text-sm leading-relaxed">
+            {m['settings.billing.cancel_access_ends_now']()}
+          </p>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setCanceling(null)}
-              disabled={submitting}
-            >
+            <Button onClick={() => setCanceling(null)} disabled={submitting}>
               {m['settings.billing.cancel_back']()}
             </Button>
             <Button
-              variant="destructive"
+              variant="outline"
+              className="text-destructive"
               onClick={confirmCancel}
               disabled={submitting}
             >

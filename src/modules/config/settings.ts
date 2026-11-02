@@ -446,6 +446,29 @@ export function getSettings(): Setting[] {
       tab: 'payment',
     },
 
+    // Kept after a Stripe account cutover for existing subscriptions only.
+    {
+      name: 'stripe_legacy_secret_key',
+      title: 'Previous account Secret Key',
+      type: 'password',
+      group: 'stripe',
+      tab: 'payment',
+    },
+    {
+      name: 'stripe_legacy_signing_secret',
+      title: 'Previous account Webhook Signing Secret',
+      type: 'password',
+      group: 'stripe',
+      tab: 'payment',
+    },
+    {
+      name: 'stripe_legacy_portal_configuration_id',
+      title: 'Previous account Billing Portal Configuration ID',
+      type: 'text',
+      group: 'stripe',
+      tab: 'payment',
+    },
+
     // ─── Payment / Creem ─────────────────────────────────────────────
     {
       name: 'creem_enabled',

@@ -15,6 +15,7 @@ import { useTheme } from 'next-themes';
 import { signOut } from '@/core/auth/client';
 import { Link, useRouter } from '@/core/i18n/navigation';
 import { localeNames } from '@/config/locale';
+import { rememberLocalePreference } from '@/lib/locale-preference';
 import { m } from '@/paraglide/messages.js';
 import {
   getLocale,
@@ -65,6 +66,7 @@ export function UserMenu({
   }
 
   function handleLocaleSwitch(newLocale: string) {
+    rememberLocalePreference(newLocale as typeof locale);
     // Writes the locale cookie and reloads on the localized URL.
     setLocale(newLocale as typeof locale);
   }

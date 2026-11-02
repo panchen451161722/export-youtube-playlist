@@ -2,6 +2,7 @@ import { getSessionCookie } from 'better-auth/cookies';
 
 import {
   FREE_PLAYLIST_EXPORT_LIMIT,
+  SUBSCRIBER_CHANNEL_EXPORT_LIMIT,
   type PlaylistExportAccess,
 } from '@/config/playlist-export';
 import {
@@ -73,11 +74,21 @@ export function createChannelToolHandlers(deps: ChannelDependencies) {
       if (objectBody.includeVideos === true && getSessionCookie(request)) {
         // A cookie is only a hint: validate the session and subscription on the server.
         const session = await deps.getSession(request);
-        if (session?.user) exportAccess = await deps.getAccess(session.user.id);
+        if (session?.user) {
+          const access = await deps.getAccess(session.user.id);
+          exportAccess = {
+            ...access,
+            limit: access.subscribed
+              ? SUBSCRIBER_CHANNEL_EXPORT_LIMIT
+              : FREE_PLAYLIST_EXPORT_LIMIT,
+          };
+        }
       }
+      const channelLimit =
+        exportAccess.limit ?? SUBSCRIBER_CHANNEL_EXPORT_LIMIT;
       const limit = Math.min(
-        Math.max(Math.floor(requestedLimit ?? exportAccess.limit), 1),
-        exportAccess.limit
+        Math.max(Math.floor(requestedLimit ?? channelLimit), 1),
+        channelLimit
       );
       const result = await deps.loadChannel({
         input,

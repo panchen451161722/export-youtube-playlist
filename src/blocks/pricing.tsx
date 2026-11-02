@@ -10,7 +10,6 @@ import {
   guardProductId,
   type GuardPlanId,
 } from '@/config/guard-plans';
-import { SUBSCRIBER_PLAYLIST_EXPORT_LIMIT } from '@/config/playlist-export';
 import { trackEvent } from '@/lib/analytics';
 import { apiGet, apiPost } from '@/lib/api-client';
 import { readBackupDraft, writeBackupDraft } from '@/lib/backup-draft';
@@ -19,8 +18,9 @@ import {
   type GuardCheckoutOptions,
 } from '@/lib/guard-checkout';
 import { m } from '@/paraglide/messages.js';
-import { getLocale } from '@/paraglide/runtime.js';
+import { getLocale, localizeHref } from '@/paraglide/runtime.js';
 import { usePublicConfig } from '@/hooks/use-public-config';
+import { guardPlanFeatures } from '@/blocks/playlist-guard/plan-features';
 import {
   GuardPricing,
   type GuardPricingContent,
@@ -57,8 +57,9 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
       return apiPost<{ checkout_url: string }>('/api/payment/checkout', {
         product_id: guardProductId(planId),
         payment_provider: checkoutProvider,
+        locale: getLocale(),
         redirect: readBackupDraft()
-          ? '/youtube-playlist-backup'
+          ? localizeHref('/youtube-playlist-backup')
           : '/settings/collections',
         expect_trial: trialEligible,
       });
@@ -86,15 +87,7 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
     pro: m['guardPricing.pro_description'](),
     ultra: m['guardPricing.ultra_description'](),
   };
-  const sharedFeatures = [
-    m['guardPricing.feature_sources'](),
-    m['guardPricing.feature_snapshots']({ count: GUARD_SNAPSHOT_LIMIT }),
-    m['guardPricing.feature_changes'](),
-    m['guardPricing.feature_exports'](),
-    m['guardPricing.feature_playlist_exports']({
-      limit: SUBSCRIBER_PLAYLIST_EXPORT_LIMIT,
-    }),
-  ];
+  const sharedFeatures = guardPlanFeatures();
   const same = (value: string) => GUARD_PLANS.map(() => value);
   const content: GuardPricingContent = {
     eyebrow: m['guardPricing.eyebrow'](),
@@ -202,7 +195,7 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
       },
       {
         feature: m['guardPricing.compare_playlist_exports'](),
-        values: same(String(SUBSCRIBER_PLAYLIST_EXPORT_LIMIT)),
+        values: same(m['guardPricing.unlimited']()),
       },
       {
         feature: m['guardPricing.compare_sources'](),
@@ -245,7 +238,9 @@ export function Pricing({ asPage = false }: { asPage?: boolean }) {
           placement: asPage ? 'pricing_page' : 'homepage_pricing',
         });
         if (!session?.user) {
-          router.push('/sign-in?callbackUrl=%2Fpricing');
+          router.push(
+            `/sign-in?${new URLSearchParams({ callbackUrl: localizeHref('/pricing') })}`
+          );
           return;
         }
         const action = guardPricingAction(eligibility.data, planId);

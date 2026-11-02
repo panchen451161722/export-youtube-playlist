@@ -5,7 +5,7 @@ import { StripeProvider } from './stripe';
 import { SubscriptionStatus } from './types';
 
 for (const status of ['active', 'trialing']) {
-  test(`Stripe ${status} cancellation keeps access until period end`, async () => {
+  test(`Stripe ${status} cancellation ends access immediately without a final invoice or proration`, async () => {
     const provider = new StripeProvider({
       secretKey: 'unit-test-placeholder',
       publishableKey: '',
@@ -14,14 +14,17 @@ for (const status of ['active', 'trialing']) {
     Object.defineProperty(provider, 'client', {
       value: {
         subscriptions: {
-          update: async (id: string, options: unknown) => {
+          cancel: async (id: string, options: unknown) => {
             calls.push([id, options]);
             return {
               id,
-              status,
-              cancel_at_period_end: true,
+              status: 'canceled',
+              trial_start: status === 'trialing' ? 1700000000 : null,
+              trial_end: status === 'trialing' ? 1700604800 : null,
+              cancel_at_period_end: false,
               cancel_at: null,
               canceled_at: 1700000000,
+              ended_at: 1700000100,
               metadata: {},
               items: {
                 data: [
@@ -40,8 +43,8 @@ for (const status of ['active', 'trialing']) {
               },
             };
           },
-          cancel: () => {
-            throw Error('Must not cancel immediately');
+          update: () => {
+            throw Error('Must not schedule cancellation at period end');
           },
         },
       },
@@ -50,26 +53,25 @@ for (const status of ['active', 'trialing']) {
       subscriptionId: 'subscription-test',
     });
     assert.deepEqual(calls, [
-      ['subscription-test', { cancel_at_period_end: true }],
+      ['subscription-test', { invoice_now: false, prorate: false }],
     ]);
-    assert.equal(
-      session.subscriptionInfo?.status,
-      SubscriptionStatus.PENDING_CANCEL
-    );
+    assert.equal(session.subscriptionInfo?.status, SubscriptionStatus.CANCELED);
     assert.equal(
       session.subscriptionInfo?.canceledEndAt?.getTime(),
-      1702592000000
+      1700000100000
     );
   });
 }
-test('Stripe refuses to report cancellation when provider did not schedule it', async () => {
+test('Stripe refuses to report immediate cancellation when the provider only scheduled it', async () => {
   const provider = new StripeProvider({
     secretKey: 'unit-test-placeholder',
     publishableKey: '',
   });
   Object.defineProperty(provider, 'client', {
     value: {
-      subscriptions: { update: async () => ({ cancel_at_period_end: false }) },
+      subscriptions: {
+        cancel: async () => ({ status: 'active', cancel_at_period_end: true }),
+      },
     },
   });
   await assert.rejects(
@@ -224,6 +226,7 @@ test('trial Checkout requires a card, preserves annual price, reuses open sessio
           create: async (p: any, options: any) => {
             created++;
             assert.equal(p.payment_method_collection, 'always');
+            assert.deepEqual(p.managed_payments, { enabled: false });
             assert.equal(p.subscription_data.trial_period_days, 7);
             assert.equal(
               p.subscription_data.trial_settings.end_behavior
@@ -234,7 +237,7 @@ test('trial Checkout requires a card, preserves annual price, reuses open sessio
             assert.equal(p.line_items[0].price_data.recurring.interval, 'year');
             assert.equal(
               options.idempotencyKey,
-              'guard-checkout-cus_fixture-first'
+              'guard-checkout-v2-cus_fixture-first'
             );
             const result = {
               id: 'cs_trial',
@@ -462,4 +465,150 @@ test('rejecting a guest trial refuses a different checkout owner without canceli
     /ownership mismatch/
   );
   assert.equal(canceled, false);
+});
+
+test('Stripe connectivity verification only sends GET requests and omits customer data', async (t) => {
+  const paths: string[] = [];
+  t.mock.method(
+    globalThis,
+    'fetch',
+    async (input: string | URL | Request, init?: RequestInit) => {
+      const req = new Request(input, init);
+      assert.equal(req.method, 'GET');
+      const path = new URL(req.url).pathname;
+      paths.push(path);
+      if (path === '/v1/prices/price_fixture')
+        return Response.json({
+          id: 'price_fixture',
+          active: true,
+          livemode: false,
+          currency: 'usd',
+          unit_amount: 990,
+          recurring: { interval: 'year', interval_count: 1 },
+        });
+      if (path === '/v1/billing_portal/configurations/bpc_fixture')
+        return Response.json({
+          id: 'bpc_fixture',
+          active: true,
+          livemode: false,
+        });
+      return Response.json({
+        object: 'list',
+        data: [{ email: 'private-customer@example.invalid' }],
+        has_more: false,
+      });
+    }
+  );
+  const provider = new StripeProvider({
+    secretKey: 'sk_test_fixture',
+    publishableKey: '',
+    portalConfigurationId: 'bpc_fixture',
+  });
+  const result = await provider.verifyConnection(['price_fixture']);
+  assert.equal(result.price_fixture, '990 usd / 1 year');
+  assert.equal(result['Billing portal'], 'bpc_fixture');
+  assert.equal(JSON.stringify(result).includes('private-customer'), false);
+  assert.deepEqual(
+    paths.sort(),
+    [
+      '/v1/prices/price_fixture',
+      '/v1/billing_portal/configurations/bpc_fixture',
+      '/v1/customers',
+      '/v1/subscriptions',
+      '/v1/checkout/sessions',
+      '/v1/invoices',
+    ].sort()
+  );
+});
+
+test('Stripe read-only verification rejects a price from the wrong environment', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () =>
+    Response.json({ id: 'price_fixture', active: true, livemode: true })
+  );
+  const provider = new StripeProvider({
+    secretKey: 'sk_test_fixture',
+    publishableKey: '',
+  });
+  await assert.rejects(
+    provider.verifyConnection(['price_fixture']),
+    /another environment/
+  );
+});
+
+test('Checkout retries after an ambiguous response keep identical parameters and the callback order', async () => {
+  const { PaymentType, PaymentInterval } = await import('./types');
+  const provider = new StripeProvider({
+    secretKey: 'sk_test_fixture',
+    publishableKey: '',
+  });
+  const requests: { params: any; key: string }[] = [];
+  Object.defineProperty(provider, 'client', {
+    value: {
+      customers: {
+        list: async () => ({
+          data: [
+            {
+              id: 'cus_fixture',
+              metadata: { app: 'export-youtube-playlist', user_id: 'fixture' },
+            },
+          ],
+        }),
+      },
+      subscriptions: { list: async () => ({ data: [] }) },
+      checkout: {
+        sessions: {
+          list: async () => ({ data: [] }),
+          create: async (params: any, options: any) => {
+            requests.push({
+              params: structuredClone(params),
+              key: options.idempotencyKey,
+            });
+            if (requests.length === 1) throw new Error('Response lost');
+            return {
+              id: 'cs_fixture',
+              url: 'https://checkout.stripe.com/fixture',
+              metadata: params.metadata,
+            };
+          },
+        },
+      },
+    },
+  });
+  const orderFor = (orderNo: string) => ({
+    type: PaymentType.SUBSCRIPTION,
+    price: { amount: 990, currency: 'usd' },
+    plan: {
+      name: 'Lite',
+      interval: PaymentInterval.YEAR,
+      intervalCount: 1,
+      trialPeriodDays: 7,
+    },
+    customer: { email: 'fixture@example.invalid' },
+    successUrl: `https://example.invalid/api/payment/callback?order_no=${orderNo}&redirect=%2Fsettings%2Fbilling`,
+    cancelUrl: 'https://example.invalid/pricing',
+    metadata: {
+      app: 'export-youtube-playlist',
+      user_id: 'fixture',
+      product_id: 'guard_lite_yearly',
+      order_no: orderNo,
+      trial_days: '7',
+    },
+  });
+  await assert.rejects(
+    provider.createPayment({ order: orderFor('ORDfirst') }),
+    /Response lost/
+  );
+  const retry = await provider.createPayment({ order: orderFor('ORDretry') });
+  assert.deepEqual(requests[0], requests[1]);
+  assert.deepEqual(requests[1].params.managed_payments, { enabled: false });
+  assert.equal(requests[1].params.payment_method_types[0], 'card');
+  assert.equal(
+    new URL(requests[1].params.success_url).searchParams.get('order_no'),
+    retry.metadata?.order_no
+  );
+  assert.equal(
+    requests[1].params.subscription_data.metadata.order_no,
+    retry.metadata?.order_no
+  );
+  assert.equal(requests[1].key, 'guard-checkout-v2-cus_fixture-first');
 });

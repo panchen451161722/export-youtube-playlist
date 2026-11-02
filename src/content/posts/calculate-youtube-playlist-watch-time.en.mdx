@@ -27,7 +27,7 @@ Two details matter for accuracy:
 - **Only available videos are counted.** If a video was deleted or made private, the API does not return its metadata, so it cannot contribute to the total. The analyzer reports how many available videos were analyzed.
 - **Missing durations are excluded, not guessed.** Under the total duration card, the analyzer shows a note such as "Based on 47 of 48 videos", so you can see when one or more entries had no usable duration.
 
-The analyzer checks up to 500 playlist entries for free, or 5,000 for signed-in users with a current Lite, Pro or Ultra subscription. Unavailable videos are skipped. For larger playlists, a notice identifies partial results.
+The analyzer checks up to 500 playlist entries for free, or without a video-count cap for signed-in users with a current Lite, Pro or Ultra subscription. Unavailable videos are skipped. For larger playlists, a notice identifies partial results.
 
 ## The playback speed formula
 
@@ -102,7 +102,7 @@ Shorts in a playlist count as videos but add very little time. A playlist with 1
 
 ### Duplicates and playlist limits
 
-If the same video was added to a playlist twice, it appears twice in the list and is counted twice. For playlists exceeding your limit of 500 entries for free or 5,000 with a current subscription, the analyzer covers only entries within that limit, so the true total may be higher.
+If the same video was added to a playlist twice, it appears twice in the list and is counted twice. Free exports cover up to 500 entries; active subscribers have no video-count cap. If YouTube returns a partial result, the analyzer describes only those returned entries, so the true total may be higher.
 
 ## Doing the calculation yourself in a spreadsheet
 

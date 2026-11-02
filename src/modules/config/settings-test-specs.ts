@@ -38,31 +38,7 @@ export const testSpecs: Record<string, TestSpec> = {
       },
     ],
   },
-  stripe: {
-    group: 'stripe',
-    fields: [
-      {
-        name: 'amount',
-        label: 'Amount (cents)',
-        type: 'number',
-        defaultValue: '100',
-        required: true,
-      },
-      {
-        name: 'currency',
-        label: 'Currency',
-        type: 'text',
-        defaultValue: 'usd',
-        required: true,
-      },
-      {
-        name: 'description',
-        label: 'Description',
-        type: 'text',
-        defaultValue: 'Test checkout',
-      },
-    ],
-  },
+  stripe: { group: 'stripe', fields: [] },
   creem: {
     group: 'creem',
     fields: [

@@ -4,10 +4,7 @@ import { magicLink, oneTap } from 'better-auth/plugins';
 import { and, eq, isNull, lt, or } from 'drizzle-orm';
 
 import { db } from '@/core/db';
-import type { EmailProvider } from '@/core/email';
-import { CloudflareEmailProvider } from '@/core/email/cloudflare';
-import { PreviewEmailProvider, previewMailUrl } from '@/core/email/preview';
-import { ResendProvider } from '@/core/email/resend';
+import { getEmailProvider } from '@/core/email/provider';
 import { VerifyEmail } from '@/core/email/templates/verify-email';
 import {
   drainYoutubeRevocations,
@@ -16,6 +13,8 @@ import {
 import { AUTH_SECRET_PLACEHOLDER, envConfigs } from '@/config';
 import * as schema from '@/config/db/schema';
 import { getAllConfigs } from '@/modules/config/service';
+import { checkoutLocale } from '@/lib/backup-checkout';
+import { subscriptionEmail } from '@/lib/emails/subscription';
 import { guestPaths } from '@/lib/guest-checkout';
 import { getUuid } from '@/lib/hash';
 import { m } from '@/paraglide/messages.js';
@@ -117,42 +116,7 @@ function getSocialSignature(configs: Record<string, string>) {
   ].join('|');
 }
 
-/**
- * Build the configured email provider from admin settings.
- * Returns null if the chosen provider is not fully configured.
- */
-export function getEmailProvider(
-  configs: Record<string, string>
-): { provider: EmailProvider; from: string } | null {
-  const preview = previewMailUrl();
-  if (preview)
-    return {
-      provider: new PreviewEmailProvider(preview),
-      from: 'preview@localhost',
-    };
-  const selected = configs.email_provider || 'resend';
-
-  if (selected === 'cloudflare') {
-    const apiToken = configs.cloudflare_email_api_token;
-    const accountId = configs.cloudflare_email_account_id;
-    const from = configs.cloudflare_email_sender_email;
-    if (!apiToken || !accountId || !from) return null;
-    return {
-      provider: new CloudflareEmailProvider({
-        apiToken,
-        accountId,
-        defaultFrom: from,
-      }),
-      from,
-    };
-  }
-
-  // Default: resend
-  const apiKey = configs.resend_api_key;
-  const from = configs.resend_sender_email;
-  if (!apiKey || !from) return null;
-  return { provider: new ResendProvider({ apiKey, defaultFrom: from }), from };
-}
+export { getEmailProvider } from '@/core/email/provider';
 
 /** Check whether email sending is available for the selected provider */
 let emailProviderAvailableLoaded: boolean | null = null;
@@ -208,7 +172,7 @@ function getAuthPlugins(configs: Record<string, string> | undefined) {
         const all = await getAllConfigs();
         const mail = getEmailProvider(all);
         if (!mail) throw new Error('Claim email unavailable');
-        const locale = purchase.locale === 'zh' ? 'zh' : 'en';
+        const locale = checkoutLocale(purchase.locale);
         const link = new URL(
           guestPaths(id, locale).claim,
           all.app_url || envConfigs.app_url
@@ -217,31 +181,53 @@ function getAuthPlugins(configs: Record<string, string> | undefined) {
         const name = all.app_name || envConfigs.app_name;
         const privatePlaylist =
           JSON.parse(purchase.backup).source === 'private_playlist';
-        const subject = privatePlaylist
-          ? m['privateCheckout.email_subject']({ name }, { locale })
-          : m['guestClaim.email_subject']({ name }, { locale });
-        const body = privatePlaylist
-          ? m['privateCheckout.email_body']({}, { locale })
-          : m['guestClaim.email_body']({}, { locale });
-        const action = m['guestClaim.email_action']({}, { locale });
-        const escape = (value: string) =>
-          value.replace(
-            /[&<>"']/g,
-            (c) =>
-              ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#39;',
-              })[c]!
-          );
-        const result = await mail.provider.sendEmail({
+        const [paidOrder] = await db()
+          .select()
+          .from(schema.order)
+          .where(eq(schema.order.orderNo, purchase.orderNo))
+          .limit(1);
+        const [plan] = paidOrder?.subscriptionNo
+          ? await db()
+              .select()
+              .from(schema.subscription)
+              .where(
+                and(
+                  eq(
+                    schema.subscription.subscriptionNo,
+                    paidOrder.subscriptionNo
+                  ),
+                  eq(
+                    schema.subscription.userId,
+                    purchase.claimedByUserId || purchase.userId
+                  )
+                )
+              )
+              .limit(1)
+          : [];
+        if (!paidOrder || !plan)
+          throw new Error('Subscription confirmation unavailable');
+        const message = subscriptionEmail({
           to: email,
-          subject,
-          text: `${body}\n\n${action}: ${link.href}`,
-          html: `<p>${escape(body)}</p><p><a href="${escape(link.href)}">${escape(action)}</a></p>`,
+          id: `claim-${purchase.id}-${now}`,
+          locale,
+          brand: {
+            name,
+            url: all.app_url || envConfigs.app_url,
+            logo: all.app_logo || envConfigs.app_logo,
+          },
+          planName: plan.planName || plan.productName || '',
+          trial: plan.status === 'trialing',
+          ended: !['active', 'trialing'].includes(plan.status),
+          amount: plan.amount,
+          currency: plan.currency || paidOrder.currency,
+          paidAmount: paidOrder.paymentAmount,
+          paidCurrency: paidOrder.paymentCurrency,
+          periodEnd: plan.currentPeriodEnd,
+          interval: plan.interval,
+          intervalCount: plan.intervalCount,
+          claim: { url: link.href, privatePlaylist },
         });
+        const result = await mail.provider.sendEmail(message);
         if (!result.success) throw new Error('Claim email delivery failed');
         await db()
           .update(schema.guestCheckout)

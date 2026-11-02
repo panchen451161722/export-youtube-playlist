@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { GuardPlanId } from '@/config/guard-plans';
+import { checkoutLocale } from '@/lib/backup-checkout';
 import { playlistBackupUrl } from '@/lib/backup-draft';
 import { GUARD_FREQUENCIES } from '@/lib/playlist-guard/types';
 
@@ -22,7 +23,7 @@ export const guestBackupSchema = z
   .strict();
 export const guestCheckoutSchema = z
   .object({
-    locale: z.enum(['en', 'zh']).default('en'),
+    locale: z.enum(['en', 'zh', 'de']).default('en'),
     backup: guestBackupSchema,
   })
   .strict();
@@ -48,7 +49,8 @@ export type GuestCheckoutStatus = {
 };
 
 export function guestPaths(id: string, locale: string) {
-  const prefix = locale === 'zh' ? '/zh' : '';
+  const language = checkoutLocale(locale);
+  const prefix = language === 'en' ? '' : `/${language}`;
   const query = `guest=${encodeURIComponent(id)}`;
   return {
     success: `${prefix}/youtube-playlist-backup?${query}`,

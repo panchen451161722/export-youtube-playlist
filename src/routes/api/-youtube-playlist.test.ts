@@ -30,7 +30,7 @@ function request(
     requestHeaders.set('content-type', 'application/json');
   return new Request(endpoint, { method, body, headers: requestHeaders });
 }
-function result(limit: number) {
+function result(limit: number | null) {
   return {
     playlistId: 'PLfixture12345',
     title: 'Fixture playlist',

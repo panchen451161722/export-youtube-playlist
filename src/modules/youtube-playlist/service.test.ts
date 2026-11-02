@@ -152,22 +152,23 @@ test('the default free export stops at 500 without requesting an extra page', as
   assert.equal(api.videoRequests.flat().includes('video-500'), false);
 });
 
-test('requested limits cannot exceed the subscriber cap', async () => {
-  const api = createPaginatedApi({ itemCount: 5_001 });
+test('unlimited subscribers export beyond 5000 and preserve the unlimited value over JSON', async () => {
+  const api = createPaginatedApi({ itemCount: 5_101 });
   const result = await getPlaylistExport({
     playlistUrl,
     apiKey: 'test-key',
     fetchImpl: api.fetchImpl,
-    maxItems: 10_000,
+    maxItems: SUBSCRIBER_PLAYLIST_EXPORT_LIMIT,
   });
 
   assert.equal(result.limit, SUBSCRIBER_PLAYLIST_EXPORT_LIMIT);
-  assert.equal(result.returnedItems, 5_000);
-  assert.equal(result.scannedCount, 5_000);
-  assert.equal(result.truncated, true);
-  assert.equal(api.pageRequests.length, 100);
-  assert.equal(api.videoRequests.length, 100);
-  assert.equal(api.videoRequests.flat().includes('video-5000'), false);
+  assert.equal(JSON.parse(JSON.stringify(result)).limit, null);
+  assert.equal(result.returnedItems, 5_101);
+  assert.equal(result.scannedCount, 5_101);
+  assert.equal(result.truncated, false);
+  assert.equal(api.pageRequests.length, 103);
+  assert.equal(api.videoRequests.length, 103);
+  assert.equal(api.videoRequests.flat().includes('video-5100'), true);
   assert.equal(api.maxConcurrentVideoRequests, 5);
 });
 
@@ -405,7 +406,7 @@ test('getPlaylistExport maps the rich video metadata without extra requests', as
   });
 });
 
-test('backup scans follow every page beyond both one-off export caps', async () => {
+test('backup scans follow every page beyond the former 5000-item export cap', async () => {
   const api = createPaginatedApi({
     itemCount: 5_101,
     unavailablePositions: [500],

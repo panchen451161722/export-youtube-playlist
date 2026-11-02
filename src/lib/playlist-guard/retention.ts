@@ -1,6 +1,13 @@
 import type { GuardCollectionDetail } from './types';
 
-export const GUARD_METADATA_RETENTION_MS = 30 * 86_400_000;
+/** Authorization checks and queued notifications still require recent evidence. */
+export const GUARD_FRESHNESS_WINDOW_MS = 30 * 86_400_000;
+
+function hasValidTimestamp(value: unknown, now: number): boolean {
+  if (typeof value !== 'string') return false;
+  const time = Date.parse(value);
+  return Number.isFinite(time) && time <= now;
+}
 
 /** Missing/invalid/future timestamps are not evidence of a recent API retrieval. */
 export function isFreshGuardMetadata(value: unknown, now: number): boolean {
@@ -8,18 +15,18 @@ export function isFreshGuardMetadata(value: unknown, now: number): boolean {
   const time = Date.parse(value);
   return (
     Number.isFinite(time) &&
-    time > now - GUARD_METADATA_RETENTION_MS &&
+    time > now - GUARD_FRESHNESS_WINDOW_MS &&
     time <= now
   );
 }
 
-/** Apply on reads as well as maintenance so expired data cannot be exported between sweeps. */
+/** Cloud snapshots have no age expiry; reject invalid provenance on reads and maintenance. */
 export function pruneGuardMetadata(
   document: GuardCollectionDetail,
   now: number
 ): GuardCollectionDetail {
   const snapshots = document.snapshots.filter((snapshot) =>
-    isFreshGuardMetadata(snapshot.createdAt, now)
+    hasValidTimestamp(snapshot.createdAt, now)
   );
   const missing = document.missing.flatMap((item) => {
     // Legacy missingSince dates describe absence, not retrieval. Recover provenance
@@ -33,9 +40,7 @@ export function pruneGuardMetadata(
         .map((snapshot) => snapshot.createdAt)
         .sort()
         .at(-1);
-    return isFreshGuardMetadata(lastSeenAt, now)
-      ? [{ ...item, lastSeenAt }]
-      : [];
+    return hasValidTimestamp(lastSeenAt, now) ? [{ ...item, lastSeenAt }] : [];
   });
   const result = {
     ...document,
@@ -46,7 +51,7 @@ export function pruneGuardMetadata(
   };
   if (
     document.sourceTitle &&
-    !isFreshGuardMetadata(document.sourceTitleFetchedAt, now)
+    !hasValidTimestamp(document.sourceTitleFetchedAt, now)
   ) {
     // Auto-generated names may themselves be a copy of API metadata.
     if (result.name === document.sourceTitle) result.name = 'Collection';

@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { Link } from '@/core/i18n/navigation';
 import {
   FREE_PLAYLIST_EXPORT_LIMIT,
-  SUBSCRIBER_PLAYLIST_EXPORT_LIMIT,
+  SUBSCRIBER_CHANNEL_EXPORT_LIMIT,
 } from '@/config/playlist-export';
 import { trackEvent } from '@/lib/analytics';
 import { apiPost } from '@/lib/api-client';
@@ -399,7 +399,11 @@ export function ChannelUtilityTool({ mode, labels, backupContent }: Props) {
   };
 
   const exportAccess = mutation.data?.exportAccess ?? access.data;
-  const exportLimit = exportAccess?.limit ?? FREE_PLAYLIST_EXPORT_LIMIT;
+  const exportLimit =
+    exportAccess?.limit ??
+    (exportAccess?.subscribed
+      ? SUBSCRIBER_CHANNEL_EXPORT_LIMIT
+      : FREE_PLAYLIST_EXPORT_LIMIT);
   const error = getYouTubeToolErrorMessage(mutation.error, labels.errors);
 
   return (
@@ -468,7 +472,7 @@ export function ChannelUtilityTool({ mode, labels, backupContent }: Props) {
                 href="/pricing"
                 className="text-primary underline underline-offset-4"
               >
-                {labels.upgrade(SUBSCRIBER_PLAYLIST_EXPORT_LIMIT)}
+                {labels.upgrade(SUBSCRIBER_CHANNEL_EXPORT_LIMIT)}
               </Link>
             ) : null}
           </div>
@@ -518,7 +522,7 @@ export function ChannelUtilityTool({ mode, labels, backupContent }: Props) {
                 className: 'h-auto min-h-11 text-center whitespace-normal',
               })}
             >
-              {labels.upgrade(SUBSCRIBER_PLAYLIST_EXPORT_LIMIT)}
+              {labels.upgrade(SUBSCRIBER_CHANNEL_EXPORT_LIMIT)}
             </Link>
           ) : null}
         </div>

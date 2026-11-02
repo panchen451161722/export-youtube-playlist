@@ -44,7 +44,7 @@ import {
   type GuardNotificationPayload,
 } from '@/lib/playlist-guard/notifications';
 import {
-  GUARD_METADATA_RETENTION_MS,
+  GUARD_FRESHNESS_WINDOW_MS,
   isFreshGuardMetadata,
   pruneGuardMetadata,
 } from '@/lib/playlist-guard/retention';
@@ -369,7 +369,7 @@ export function createGuardStore(
               ne(youtubeConnection.credentials, ''),
               gt(
                 youtubeConnection.verifiedAt,
-                new Date(clock() - GUARD_METADATA_RETENTION_MS).toISOString()
+                new Date(clock() - GUARD_FRESHNESS_WINDOW_MS).toISOString()
               ),
               lte(youtubeConnection.verifiedAt, new Date(clock()).toISOString())
             )

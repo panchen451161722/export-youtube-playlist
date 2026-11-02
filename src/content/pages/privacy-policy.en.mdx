@@ -47,7 +47,7 @@ Google receives requests needed for sign-in, authorization, data retrieval, and 
 
 ## Retention, Disconnecting, and Deleting Data
 
-Snapshot and missing-item YouTube API metadata is retained for no more than 30 days after retrieval. New retrievals can create new current records but do not extend an old snapshot's lifetime. Pausing a collection or ending a subscription does not suspend this limit. Expired metadata is excluded from display and export and removed by cleanup. Collection settings you supplied may remain while the collection exists so you can resume checks later.
+The latest five cloud snapshots and missing-item metadata have no age-based expiry. New snapshots replace the oldest when the five-snapshot limit is reached. Pausing a collection or ending a subscription does not by itself delete existing snapshots. Deleting a collection or account, disconnecting YouTube, or revoking access removes related data as described below. Invalid or unverified data may also be removed. Collection settings you supplied may remain while the collection exists so you can resume checks later.
 
 - **Remove collection:** deletes its saved metadata and associated queued notification data from the active application database and stops its checks. The source on YouTube is unchanged.
 - **Disconnect a YouTube account:** after confirmation, stops access through that connection and removes its connected-account data, associated private collections, snapshots, missing-item history, and queued notification data from the active application database. We also request revocation from Google. Removal cannot be undone; reconnecting does not recover deleted snapshots.

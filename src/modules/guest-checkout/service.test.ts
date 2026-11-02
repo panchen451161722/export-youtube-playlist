@@ -24,7 +24,7 @@ import {
   verification,
 } from '@/config/db/schema';
 import { GUARD_TRIAL_DAYS } from '@/config/guard-plans';
-import { guestCheckoutSchema } from '@/lib/guest-checkout';
+import { guestCheckoutSchema, guestPaths } from '@/lib/guest-checkout';
 
 // Disposable database, signed Stripe fixtures and a fake mail transport. Never charge or send email.
 const folder = mkdtempSync(join(tmpdir(), 'eyp-guest-'));
@@ -83,7 +83,7 @@ const payment = await import('@/modules/payment/service');
 const { getAuth } = await import('@/core/auth');
 const { getAllConfigs } = await import('@/modules/config/service');
 const originalFetch = globalThis.fetch;
-const mails: { text: string; to: string }[] = [];
+const mails: { text: string; html: string; to: string }[] = [];
 let mailFails = false;
 let youtubeRequests = 0;
 let stripeStatus = 'open';
@@ -151,7 +151,7 @@ globalThis.fetch = async (input, init) => {
       return Response.json({ data: remoteSubscriptions, has_more: false });
     if (url.pathname === '/v1/checkout/sessions' && init?.method === 'POST') {
       const key = new Headers(init.headers).get('Idempotency-Key');
-      assert.ok(key?.startsWith('guard-checkout-guest-'));
+      assert.ok(key?.startsWith('guard-checkout-v2-guest-'));
       const prior = stripeRequests.get(key!);
       if (prior) {
         assert.equal(
@@ -267,6 +267,7 @@ const input = () =>
       notifyRestored: true,
     },
   });
+
 async function paid(
   id: string,
   email = 'buyer@example.invalid',
@@ -448,7 +449,9 @@ test('email link establishes a verified session, is single-use, and transfers on
     service.claimGuest(row.id, 'unverified'),
     /claim_forbidden/
   );
-  const link = new URL(mails[0].text.split('Claim my account: ')[1]);
+  const link = new URL(
+    mails[0].text.split('Claim my account: ')[1].split('\n')[0]
+  );
   assert.equal(link.pathname, '/claim-backup');
   assert.equal(
     link.searchParams.has('token'),
@@ -561,7 +564,7 @@ test('a new buyer creates an account only after verifying the emailed token', as
     0
   );
   const mail = mails.find((item) => item.to === row.email)!;
-  const link = new URL(mail.text.split('Claim my account: ')[1]);
+  const link = new URL(mail.text.split('Claim my account: ')[1].split('\n')[0]);
   const token = new URLSearchParams(link.hash.slice(1)).get('token')!;
   const auth = getAuth(await getAllConfigs());
   const verifyUrl = new URL('/api/auth/magic-link/verify', link.origin);
@@ -996,4 +999,49 @@ test('private checkout intent does not grant an unpaid plan and rejects unsuppor
     }).success,
     false
   );
+});
+
+test('trial checkout sends the selected language to Stripe and retains it in all return URLs', async () => {
+  for (const locale of ['en', 'zh', 'de'] as const) {
+    const values = { ...input(), locale };
+    const result = await flow.startGuestCheckout(
+      values,
+      service.newGuestToken()
+    );
+    const row = (await service.guestById(result.id))!;
+    const paths = guestPaths(row.id, locale);
+    assert.equal(row.locale, locale);
+    assert.equal(createParams.get('locale'), locale);
+    assert.equal(createParams.get('metadata[checkout_locale]'), locale);
+    const callback = new URL(createParams.get('success_url')!);
+    assert.equal(callback.pathname, '/api/payment/callback');
+    const success = new URL(callback.searchParams.get('redirect')!);
+    const cancel = new URL(createParams.get('cancel_url')!);
+    assert.equal(success.pathname, paths.success.split('?')[0]);
+    assert.equal(success.searchParams.get('guest'), row.id);
+    assert.equal(cancel.pathname + cancel.search, paths.cancel);
+    assert.equal(createParams.get('subscription_data[trial_period_days]'), '7');
+    await flow.cancelGuestCheckout(row.id);
+  }
+});
+
+test('German trial welcome includes billing dates, pink branding and a localized single-use claim link', async () => {
+  const result = await flow.startGuestCheckout(
+    { ...input(), locale: 'de' },
+    service.newGuestToken()
+  );
+  const before = mails.length;
+  await paid(result.id, 'german-welcome@example.invalid', true);
+  const mail = mails.at(-1)!;
+  assert.equal(mails.length, before + 1);
+  assert.match(mail.text, /Testphase endet/);
+  assert.match(mail.text, /Erste geplante Abbuchung/);
+  assert.match(mail.text, /0,00/);
+  assert.match(mail.text, /9,90/);
+  assert.match(mail.html, /#fce7ef/);
+  assert.match(mail.html, /logo.png/);
+  assert.match(mail.html, /\/de\/claim-backup\?purchase=/);
+  assert.match(mail.text, /Metadaten/);
+  await flow.completeGuestCheckout(result.id);
+  assert.equal(mails.length, before + 1);
 });

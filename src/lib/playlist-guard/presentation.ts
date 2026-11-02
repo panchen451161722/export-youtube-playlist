@@ -51,14 +51,17 @@ export function formatCollectionDate(
   style: CollectionDateStyle = 'full'
 ) {
   if (!value) return notYet;
-  return new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
-    month: 'short',
-    day: 'numeric',
-    ...(style !== 'short' ? { year: 'numeric' as const } : {}),
-    ...(style !== 'date'
-      ? { hour: 'numeric' as const, minute: '2-digit' as const }
-      : {}),
-  }).format(new Date(value));
+  return new Intl.DateTimeFormat(
+    locale === 'zh' ? 'zh-CN' : locale === 'de' ? 'de-DE' : 'en-US',
+    {
+      month: 'short',
+      day: 'numeric',
+      ...(style !== 'short' ? { year: 'numeric' as const } : {}),
+      ...(style !== 'date'
+        ? { hour: 'numeric' as const, minute: '2-digit' as const }
+        : {}),
+    }
+  ).format(new Date(value));
 }
 
 export function collectionView(

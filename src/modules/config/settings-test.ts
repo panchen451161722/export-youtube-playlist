@@ -116,43 +116,35 @@ async function testResend(
 // --- Stripe ---------------------------------------------------------------
 
 async function testStripe(
-  inputs: Record<string, string>,
+  _inputs: Record<string, string>,
   configs: Record<string, string>
 ): Promise<TestResult> {
   const key = configs.stripe_secret_key || configs.stripe_api_key;
   if (!key)
     return { success: false, message: 'Missing config: stripe_secret_key' };
 
+  const mapping: unknown = JSON.parse(configs.stripe_price_ids_mapping || '{}');
+  if (!mapping || typeof mapping !== 'object' || Array.isArray(mapping))
+    throw new Error('Invalid Stripe price mapping');
+  const priceIds = Object.values(mapping);
+  if (
+    priceIds.some(
+      (id) => typeof id !== 'string' || !/^price_[A-Za-z0-9]+$/.test(id)
+    )
+  )
+    throw new Error('Invalid Stripe price ID');
   const provider = new StripeProvider({
     secretKey: key,
-    publishableKey: configs.stripe_publishable_key || '',
-    signingSecret:
-      configs.stripe_signing_secret ||
-      configs.stripe_webhook_secret ||
-      undefined,
-    allowedPaymentMethods: ['card'],
+    publishableKey: '',
+    portalConfigurationId: configs.stripe_portal_configuration_id,
   });
-
-  const order: PaymentOrder = {
-    type: PaymentType.ONE_TIME,
-    orderNo: getUniSeq('TEST'),
-    price: {
-      amount: Number(inputs.amount) || 100,
-      currency: (inputs.currency || 'usd').toLowerCase(),
-    },
-    description: inputs.description || 'Test checkout',
-    successUrl: configuredSuccessUrl('stripe', configs),
-    cancelUrl: configuredSuccessUrl('stripe', configs),
-  };
-
-  const session = await provider.createPayment({ order });
   return {
     success: true,
-    message: 'Checkout session created',
-    details: {
-      'Session ID': session.checkoutInfo.sessionId,
-      'Checkout URL': session.checkoutInfo.checkoutUrl,
-    },
+    message:
+      'Stripe read-only connectivity check passed; no payment objects created',
+    details: await provider.verifyConnection([
+      ...new Set(priceIds as string[]),
+    ]),
   };
 }
 

@@ -1,5 +1,7 @@
 import Stripe from 'stripe';
 
+import { checkoutLocale } from '@/lib/backup-checkout';
+import { md5 } from '@/lib/hash';
 import { sameCheckoutReturnUrls } from '@/lib/payment-return-url';
 
 import {
@@ -48,6 +50,69 @@ export class StripeProvider implements PaymentProvider {
     this.client = new Stripe(configs.secretKey, {
       httpClient: Stripe.createFetchHttpClient(),
     });
+  }
+
+  /** Verify configured resources without creating a Checkout or exposing customer data. */
+  async verifyConnection(priceIds: string[] = []) {
+    const live = /^(sk|rk)_live_/.test(this.configs.secretKey);
+    const details: Record<string, string> = {
+      Environment: live ? 'Live' : 'Test',
+      Operations: 'Read-only; no checkout, payment, or subscription created',
+    };
+    for (const id of priceIds) {
+      const price = await this.client.prices.retrieve(id);
+      if (!price.active || price.livemode !== live)
+        throw new Error(
+          'Configured price is inactive or uses another environment'
+        );
+      details[id] =
+        `${price.unit_amount} ${price.currency} / ${price.recurring?.interval_count || 1} ${price.recurring?.interval || 'one-time'}`;
+    }
+    if (!priceIds.length) await this.client.prices.list({ limit: 1 });
+    if (this.configs.portalConfigurationId) {
+      const portal = await this.client.billingPortal.configurations.retrieve(
+        this.configs.portalConfigurationId
+      );
+      if (!portal.active || portal.livemode !== live)
+        throw new Error(
+          'Configured portal is inactive or uses another environment'
+        );
+      details['Billing portal'] = portal.id;
+    }
+    await Promise.all([
+      this.client.customers.list({ limit: 1 }),
+      this.client.subscriptions.list({ limit: 1 }),
+      this.client.checkout.sessions.list({ limit: 1 }),
+      this.client.invoices.list({ limit: 1 }),
+    ]);
+    details['API access'] =
+      'Customers, Subscriptions, Checkout Sessions, Invoices';
+    details.Webhook =
+      'Signing-secret delivery is not checked by this read-only test';
+    return details;
+  }
+
+  /** Read-only ownership check used when retaining a previous Stripe account. */
+  async hasResource(
+    kind: 'customer' | 'subscription' | 'checkout' | 'invoice',
+    id: string
+  ) {
+    try {
+      if (kind === 'customer') await this.client.customers.retrieve(id);
+      else if (kind === 'subscription')
+        await this.client.subscriptions.retrieve(id);
+      else if (kind === 'checkout')
+        await this.client.checkout.sessions.retrieve(id);
+      else await this.client.invoices.retrieve(id);
+      return true;
+    } catch (error) {
+      if (
+        error instanceof Stripe.errors.StripeInvalidRequestError &&
+        error.code === 'resource_missing'
+      )
+        return false;
+      throw error;
+    }
   }
 
   async getSubscriptionAccess(email: string, userId: string) {
@@ -302,7 +367,16 @@ export class StripeProvider implements PaymentProvider {
       }
 
       // create payment session params
-      const sessionParams: Stripe.Checkout.SessionCreateParams = {
+      // This integration manages its own subscriptions, invoices and card rules.
+      // New Stripe accounts can default to Managed Payments; opt out per request.
+      // stripe-node 18's types predate this backwards-compatible API parameter.
+      const sessionParams: Stripe.Checkout.SessionCreateParams & {
+        managed_payments: { enabled: false };
+      } = {
+        managed_payments: { enabled: false },
+        ...(order.metadata?.checkout_locale
+          ? { locale: checkoutLocale(order.metadata.checkout_locale) }
+          : {}),
         mode:
           order.type === PaymentType.SUBSCRIPTION ? 'subscription' : 'payment',
         line_items: [lineItem],
@@ -391,10 +465,30 @@ export class StripeProvider implements PaymentProvider {
         sessionParams.cancel_url = order.cancelUrl;
       }
 
+      // The same generation key must carry identical order metadata and callback
+      // URLs across retries, including after a timeout before the session is listed.
+      // Guest purchases already have a durable order number in the database.
+      if (customerId && checkoutGeneration && order.metadata?.order_no) {
+        const stableOrderNo = `ORD${md5(checkoutGeneration)}`;
+        const metadata = { ...order.metadata, order_no: stableOrderNo };
+        sessionParams.metadata = metadata;
+        if (sessionParams.subscription_data)
+          sessionParams.subscription_data.metadata = metadata;
+        if (sessionParams.success_url) {
+          const callback = new URL(sessionParams.success_url);
+          if (
+            callback.searchParams.get('order_no') === order.metadata.order_no
+          ) {
+            callback.searchParams.set('order_no', stableOrderNo);
+            sessionParams.success_url = callback.toString();
+          }
+        }
+      }
+
       const session = await this.client.checkout.sessions.create(
         sessionParams,
         checkoutGeneration
-          ? { idempotencyKey: `guard-checkout-${checkoutGeneration}` }
+          ? { idempotencyKey: `guard-checkout-v2-${checkoutGeneration}` }
           : undefined
       );
       if (!session.id || !session.url) {
@@ -409,7 +503,7 @@ export class StripeProvider implements PaymentProvider {
           checkoutUrl: session.url,
         },
         checkoutResult: session,
-        metadata: order.metadata || {},
+        metadata: session.metadata || sessionParams.metadata || {},
       };
     } catch (error) {
       throw error;
@@ -574,12 +668,12 @@ export class StripeProvider implements PaymentProvider {
         throw new Error('subscriptionId is required');
       }
 
-      const subscription = await this.client.subscriptions.update(
+      const subscription = await this.client.subscriptions.cancel(
         subscriptionId,
-        { cancel_at_period_end: true }
+        { invoice_now: false, prorate: false }
       );
 
-      if (!subscription.cancel_at_period_end) {
+      if (subscription.status !== 'canceled') {
         throw new Error('Cancel subscription failed');
       }
 
@@ -857,7 +951,14 @@ export class StripeProvider implements PaymentProvider {
       // subscription canceled
       subscriptionInfo.status = SubscriptionStatus.CANCELED;
       subscriptionInfo.canceledAt = new Date(
-        (subscription.canceled_at || 0) * 1000
+        (subscription.canceled_at ||
+          subscription.ended_at ||
+          Date.now() / 1000) * 1000
+      );
+      subscriptionInfo.canceledEndAt = new Date(
+        (subscription.ended_at ||
+          subscription.canceled_at ||
+          Date.now() / 1000) * 1000
       );
       subscriptionInfo.canceledReason =
         subscription.cancellation_details?.comment || '';

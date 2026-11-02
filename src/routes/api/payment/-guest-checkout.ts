@@ -32,6 +32,7 @@ import {
   rejectGuestTrial,
 } from '@/modules/payment/service';
 import { createGuardStore } from '@/modules/playlist-guard/service';
+import { checkoutLocale } from '@/lib/backup-checkout';
 import {
   guestBackupSchema,
   guestPaths,
@@ -196,7 +197,7 @@ export async function startGuestPaidCheckout(
       retry = undefined;
     }
     const input = {
-      locale: row.locale === 'zh' ? ('zh' as const) : ('en' as const),
+      locale: checkoutLocale(row.locale),
       backup: guestBackupSchema.parse(JSON.parse(row.backup)),
     };
     if (!retry) await saveGuest(input, token, id);
@@ -286,7 +287,12 @@ export async function completeGuestCheckout(id: string) {
         const store = createGuardStore();
         const input = normalizeGuardSource({
           source: 'playlist',
-          name: row.locale === 'zh' ? '播放列表备份' : 'Playlist backup',
+          name:
+            row.locale === 'zh'
+              ? '播放列表备份'
+              : row.locale === 'de'
+                ? 'Playlist-Backup'
+                : 'Playlist backup',
           url: values.url,
           frequency: values.frequency,
           notifyMissing: values.notifyMissing,

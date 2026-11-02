@@ -32,8 +32,12 @@ for (const table of [config, credit, order, subscription, user]) {
     `CREATE TABLE "${info.name}" (${info.columns.map((c) => `"${c.name}" ${c.getSQLType()}${c.primary ? ' PRIMARY KEY' : ''}`).join(',')})`
   );
 }
-const { handleWebhook, createUserBillingPortal, guardCheckoutOptionsFor } =
-  await import('./service');
+const {
+  handleWebhook,
+  createUserBillingPortal,
+  guardCheckoutOptionsFor,
+  cancelUserSubscription,
+} = await import('./service');
 const originalFetch = globalThis.fetch;
 let providerStatus = 'active';
 let providerId = 'sub_test';
@@ -65,8 +69,16 @@ const providerSub = () => ({
     ],
   },
 });
-globalThis.fetch = async (input) => {
+const welcomeMessages: any[] = [];
+let failWelcome = false;
+let cancellationFetch: typeof fetch | undefined;
+globalThis.fetch = async (input, init) => {
+  if (cancellationFetch) return cancellationFetch(input, init);
   const url = String(input);
+  if (url === 'http://localhost:3103/mail') {
+    welcomeMessages.push(JSON.parse(String(init?.body)));
+    return new Response('', { status: failWelcome ? 503 : 200 });
+  }
   assert.match(url, /api\.stripe\.com\/v1\/subscriptions\/sub_/);
   return Response.json(providerSub());
 };
@@ -469,4 +481,256 @@ test('trial activation records zero charged, renews after seven days and cancell
     )!.status,
     'canceled'
   );
+});
+
+for (const originalStatus of ['active', 'trialing']) {
+  test(`canceling an ${originalStatus} subscription immediately removes paid access and retries are idempotent`, async (t) => {
+    const { getCurrentSubscription, getPlaylistExportAccess } =
+      await import('@/modules/subscriptions/service');
+    const { entitlementFor } = await import('@/modules/playlist-guard/service');
+    const userId = `cancel-${originalStatus}`;
+    const subscriptionNo = `SUB_CANCEL_${originalStatus}`;
+    const canceledAt = Math.floor(Date.now() / 1000);
+    const periodEnd = new Date((canceledAt + 30 * 86400) * 1000);
+    await database.insert(user).values({
+      id: userId,
+      name: 'Cancellation fixture',
+      email: `${userId}@example.invalid`,
+    });
+    await database.insert(subscription).values({
+      id: subscriptionNo,
+      subscriptionNo,
+      userId,
+      status: originalStatus,
+      paymentProvider: 'stripe',
+      subscriptionId: `sub_${userId}`,
+      productId: 'guard_lite_yearly',
+      currentPeriodStart: new Date((canceledAt - 86400) * 1000),
+      currentPeriodEnd: periodEnd,
+    });
+    assert.equal((await getPlaylistExportAccess(userId)).subscribed, true);
+    let requests = 0;
+    t.after(() => {
+      cancellationFetch = undefined;
+    });
+    cancellationFetch = async (input, init) => {
+      const req = new Request(input, init);
+      assert.ok(['DELETE', 'GET'].includes(req.method));
+      assert.equal(
+        new URL(req.url).pathname,
+        `/v1/subscriptions/sub_${userId}`
+      );
+      if (req.method === 'DELETE') requests++;
+      return Response.json({
+        ...providerSub(),
+        id: `sub_${userId}`,
+        status: 'canceled',
+        canceled_at: canceledAt,
+        ended_at: canceledAt,
+      });
+    };
+    await assert.rejects(
+      cancelUserSubscription({ userId: 'not-the-owner', subscriptionNo }),
+      /Forbidden/
+    );
+    assert.equal(requests, 0);
+    const result = await cancelUserSubscription({ userId, subscriptionNo });
+    assert.equal(result.status, 'canceled');
+    assert.equal(result.canceledEndAt?.getTime(), canceledAt * 1000);
+    assert.equal(result.currentPeriodEnd?.getTime(), periodEnd.getTime());
+    assert.equal(await getCurrentSubscription(userId), undefined);
+    assert.equal((await getPlaylistExportAccess(userId)).subscribed, false);
+    assert.equal(entitlementFor([result], undefined, Date.now()).limit, 0);
+    assert.equal(
+      (await cancelUserSubscription({ userId, subscriptionNo })).status,
+      'canceled'
+    );
+    assert.equal(requests, 1);
+    await handleWebhook(
+      event('customer.subscription.deleted', { id: `sub_${userId}` })
+    );
+    assert.equal(await getCurrentSubscription(userId), undefined);
+    assert.equal((await getPlaylistExportAccess(userId)).subscribed, false);
+  });
+}
+
+test('an unconfirmed provider cancellation leaves paid access intact', async (t) => {
+  const { getPlaylistExportAccess } =
+    await import('@/modules/subscriptions/service');
+  const userId = 'cancel-failure';
+  const subscriptionNo = 'SUB_CANCEL_FAILURE';
+  await database.insert(user).values({
+    id: userId,
+    name: 'Failure fixture',
+    email: 'cancel-failure@example.invalid',
+  });
+  await database.insert(subscription).values({
+    id: subscriptionNo,
+    subscriptionNo,
+    userId,
+    status: 'active',
+    paymentProvider: 'stripe',
+    subscriptionId: 'sub_cancel_failure',
+    productId: 'guard_lite_yearly',
+    currentPeriodStart: new Date(Date.now() - 86400_000),
+    currentPeriodEnd: new Date(Date.now() + 86400_000),
+  });
+  t.after(() => {
+    cancellationFetch = undefined;
+  });
+  cancellationFetch = async () =>
+    Response.json({
+      ...providerSub(),
+      id: 'sub_cancel_failure',
+      status: 'active',
+      cancel_at_period_end: true,
+    });
+  await assert.rejects(
+    cancelUserSubscription({ userId, subscriptionNo }),
+    /Cancel subscription failed/
+  );
+  const [unchanged] = await database
+    .select()
+    .from(subscription)
+    .where(eq(subscription.subscriptionNo, subscriptionNo));
+  assert.equal(unchanged.status, 'active');
+  assert.equal(unchanged.canceledAt, null);
+  assert.equal((await getPlaylistExportAccess(userId)).subscribed, true);
+});
+
+test('new trial welcome retries after provider failure and sends once across repeated payment callbacks', async () => {
+  process.env.PLAYLIST_GUARD_MAIL_PREVIEW_URL = 'http://localhost:3103/mail';
+  const id = 'welcome-trial';
+  providerId = 'sub_welcome_trial';
+  providerStatus = 'trialing';
+  trialStart = start;
+  trialEnd = start + 7 * 86400;
+  await database
+    .insert(user)
+    .values({ id, name: 'Welcome', email: 'welcome@example.invalid' });
+  await database.insert(order).values({
+    id,
+    orderNo: 'WELCOME_TRIAL',
+    userId: id,
+    userEmail: 'welcome@example.invalid',
+    status: 'created',
+    amount: 990,
+    currency: 'usd',
+    productId: 'guard_lite_yearly',
+    planName: 'Lite',
+    paymentType: 'subscription',
+    paymentProvider: 'stripe',
+    paymentSessionId: 'cs_welcome_trial',
+    checkoutInfo: JSON.stringify({
+      subscriptionEmail: { status: 'pending', locale: 'de' },
+    }),
+  });
+  const session = {
+    ...checkout,
+    id: 'cs_welcome_trial',
+    subscription: providerId,
+    payment_status: 'no_payment_required',
+    amount_total: 0,
+  };
+  failWelcome = true;
+  await handleWebhook(event('checkout.session.completed', session));
+  let [purchase] = await database.select().from(order).where(eq(order.id, id));
+  assert.equal(
+    purchase.status,
+    'trialing',
+    'a mail failure never rolls back entitlement'
+  );
+  assert.equal(purchase.paidAt, null);
+  assert.equal(
+    JSON.parse(purchase.checkoutInfo).subscriptionEmail.status,
+    'pending'
+  );
+  assert.equal(welcomeMessages.length, 1);
+  const info = JSON.parse(purchase.checkoutInfo);
+  info.subscriptionEmail.attemptedAt = Date.now() - 180000;
+  await database
+    .update(order)
+    .set({ checkoutInfo: JSON.stringify(info) })
+    .where(eq(order.id, id));
+  failWelcome = false;
+  await Promise.all([
+    handleWebhook(event('checkout.session.completed', session)),
+    handleWebhook(event('checkout.session.completed', session)),
+  ]);
+  [purchase] = await database.select().from(order).where(eq(order.id, id));
+  assert.equal(
+    JSON.parse(purchase.checkoutInfo).subscriptionEmail.status,
+    'sent'
+  );
+  assert.equal(
+    welcomeMessages.length,
+    2,
+    'concurrent retries claim one delivery'
+  );
+  assert.match(welcomeMessages.at(-1).text, /Testphase endet/);
+  assert.match(welcomeMessages.at(-1).text, /Erste geplante Abbuchung/);
+  assert.match(welcomeMessages.at(-1).text, /0,00/);
+  const { handlePaymentCallback } = await import('./service');
+  await handlePaymentCallback('WELCOME_TRIAL');
+  await handleWebhook(event('checkout.session.completed', session));
+  assert.equal(welcomeMessages.length, 2);
+  delete process.env.PLAYLIST_GUARD_MAIL_PREVIEW_URL;
+});
+
+test('new paid subscription receives activation email; historical orders and canceled plans are not mailed', async () => {
+  process.env.PLAYLIST_GUARD_MAIL_PREVIEW_URL = 'http://localhost:3103/mail';
+  const id = 'welcome-paid';
+  providerId = 'sub_welcome_paid';
+  providerStatus = 'active';
+  trialStart = null;
+  trialEnd = null;
+  await database
+    .insert(user)
+    .values({ id, name: 'Paid', email: 'paid@example.invalid' });
+  await database.insert(order).values({
+    id,
+    orderNo: 'WELCOME_PAID',
+    userId: id,
+    userEmail: 'paid@example.invalid',
+    status: 'created',
+    amount: 990,
+    currency: 'usd',
+    productId: 'guard_lite_yearly',
+    planName: 'Lite',
+    paymentType: 'subscription',
+    paymentProvider: 'stripe',
+    paymentSessionId: 'cs_welcome_paid',
+    checkoutInfo: JSON.stringify({
+      subscriptionEmail: { status: 'pending', locale: 'en' },
+    }),
+  });
+  const before = welcomeMessages.length;
+  await handleWebhook(
+    event('checkout.session.completed', {
+      ...checkout,
+      id: 'cs_welcome_paid',
+      subscription: providerId,
+    })
+  );
+  assert.equal(welcomeMessages.length, before + 1);
+  assert.match(welcomeMessages.at(-1).text, /Charged today: \$9.90/);
+  assert.match(welcomeMessages.at(-1).text, /Next scheduled renewal/);
+  const { retrySubscriptionWelcomes, sendSubscriptionWelcome } =
+    await import('./welcome');
+  await database
+    .update(subscription)
+    .set({ status: 'canceled' })
+    .where(eq(subscription.subscriptionNo, 'SUBWELCOME_PAID'));
+  await database
+    .update(order)
+    .set({
+      checkoutInfo: JSON.stringify({
+        subscriptionEmail: { status: 'pending', locale: 'en' },
+      }),
+    })
+    .where(eq(order.id, id));
+  await retrySubscriptionWelcomes();
+  await sendSubscriptionWelcome('ASYNC_FUNNEL');
+  assert.equal(welcomeMessages.length, before + 1);
+  delete process.env.PLAYLIST_GUARD_MAIL_PREVIEW_URL;
 });

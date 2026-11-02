@@ -1,8 +1,5 @@
 import { envConfigs } from '@/config';
-import {
-  FREE_PLAYLIST_EXPORT_LIMIT,
-  SUBSCRIBER_PLAYLIST_EXPORT_LIMIT,
-} from '@/config/playlist-export';
+import { FREE_PLAYLIST_EXPORT_LIMIT } from '@/config/playlist-export';
 
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3/';
 const REQUEST_TIMEOUT_MS = 15_000;
@@ -98,7 +95,7 @@ export type PlaylistExport = {
   scannedCount: number;
   skippedCount: number;
   truncated: boolean;
-  limit: number;
+  limit: number | null;
 };
 
 type YouTubeErrorResponse = {
@@ -475,20 +472,19 @@ type PlaylistReadParams = {
 };
 
 export async function getPlaylistExport(
-  params: PlaylistReadParams & { maxItems?: number }
+  params: PlaylistReadParams & { maxItems?: number | null }
 ): Promise<PlaylistExport> {
   const maxItems =
-    params.maxItems !== undefined &&
-    Number.isFinite(params.maxItems) &&
-    params.maxItems > 0
-      ? Math.max(
-          1,
-          Math.min(
-            SUBSCRIBER_PLAYLIST_EXPORT_LIMIT,
-            Math.floor(params.maxItems)
+    params.maxItems === null
+      ? Infinity
+      : params.maxItems !== undefined &&
+          Number.isFinite(params.maxItems) &&
+          params.maxItems > 0
+        ? Math.max(
+            1,
+            Math.min(Number.MAX_SAFE_INTEGER, Math.floor(params.maxItems))
           )
-        )
-      : FREE_PLAYLIST_EXPORT_LIMIT;
+        : FREE_PLAYLIST_EXPORT_LIMIT;
   return readPlaylist(params, maxItems);
 }
 
@@ -516,7 +512,10 @@ async function readPlaylist(
     () => controller.abort(),
     fullScan
       ? 150_000
-      : REQUEST_TIMEOUT_MS * Math.ceil(maxItems / FREE_PLAYLIST_EXPORT_LIMIT)
+      : Math.min(
+          150_000,
+          REQUEST_TIMEOUT_MS * Math.ceil(maxItems / FREE_PLAYLIST_EXPORT_LIMIT)
+        )
   );
 
   try {
@@ -646,7 +645,7 @@ async function readPlaylist(
       scannedCount: rawItems.length,
       skippedCount: rawItems.length - items.length,
       truncated: hasMoreItems || totalCount > rawItems.length,
-      limit: maxItems,
+      limit: fullScan ? null : maxItems,
     };
   } finally {
     clearTimeout(timeout);

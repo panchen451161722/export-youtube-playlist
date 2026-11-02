@@ -16,6 +16,7 @@ export const YOUTUBE_RETURN_PATHS = [
   '/zh/settings/collections',
   '/youtube-playlist-backup',
   '/zh/youtube-playlist-backup',
+  '/de/youtube-playlist-backup',
 ] as const;
 export type YoutubeReturnPath = (typeof YOUTUBE_RETURN_PATHS)[number];
 

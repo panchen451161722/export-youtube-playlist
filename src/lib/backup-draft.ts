@@ -14,7 +14,7 @@ export type BackupPreferences = {
   notifyRestored: boolean;
 };
 export const DEFAULT_BACKUP_PREFERENCES: BackupPreferences = {
-  planId: 'pro',
+  planId: 'lite',
   frequency: 'daily',
   notifyMissing: true,
   notifyAdded: true,
@@ -25,7 +25,7 @@ export type BackupDraft = {
   source: 'playlist' | 'private_playlist';
   savedAt: number;
   preferences?: BackupPreferences;
-  resume?: 'entry' | 'auth' | 'checkout';
+  resume?: 'entry' | 'auth' | 'auth-checkout' | 'checkout';
   checkout?: { userId: string; returned: boolean };
 };
 
@@ -97,7 +97,7 @@ export function readBackupDraft(): BackupDraft | null {
         data.source === 'private_playlist' ? 'private_playlist' : 'playlist',
       savedAt: data.savedAt,
     };
-    if (['entry', 'auth', 'checkout'].includes(data.resume))
+    if (['entry', 'auth', 'auth-checkout', 'checkout'].includes(data.resume))
       draft.resume = data.resume;
     const prefs = data.preferences;
     if (
@@ -149,6 +149,14 @@ export function writeBackupDraft(draft: BackupDraft): boolean {
 export function backupArrival(search: string) {
   let draft = readBackupDraft();
   const returned = new URLSearchParams(search).get('setup');
+  // Only the main CTA's saved intent can resume checkout after authentication.
+  // A callback URL, ordinary sign-in, or an existing payment return cannot.
+  let checkoutAfterAuth = !!(
+    returned === 'auth' &&
+    draft?.resume === 'auth-checkout' &&
+    draft.preferences &&
+    !draft.checkout
+  );
   if (draft && returned === 'cancel') {
     draft = { ...draft, checkout: undefined, resume: 'entry' };
   } else if (draft?.checkout && returned === 'success') {
@@ -166,9 +174,10 @@ export function backupArrival(search: string) {
       ...draft,
       resume: draft.checkout?.returned ? 'checkout' : undefined,
     };
-    writeBackupDraft(draft);
+    // Do not start checkout if its one-shot intent could not be consumed.
+    if (!writeBackupDraft(draft)) checkoutAfterAuth = false;
   }
-  return { draft, open, cancelled: returned === 'cancel' };
+  return { draft, open, cancelled: returned === 'cancel', checkoutAfterAuth };
 }
 
 export function mayCompleteBackup(

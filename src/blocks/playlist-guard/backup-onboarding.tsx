@@ -13,7 +13,7 @@ import {
 import { z } from 'zod';
 
 import { useSession } from '@/core/auth/client';
-import { Link } from '@/core/i18n/navigation';
+import { Link, useRouter } from '@/core/i18n/navigation';
 import {
   GUARD_PLANS,
   GUARD_TRIAL_DAYS,
@@ -37,8 +37,9 @@ import {
 } from '@/lib/playlist-guard/types';
 import { cn } from '@/lib/utils';
 import { m } from '@/paraglide/messages.js';
-import { getLocale } from '@/paraglide/runtime.js';
+import { getLocale, localizeHref } from '@/paraglide/runtime.js';
 import { usePublicConfig } from '@/hooks/use-public-config';
+import { guardPlanFeatures } from '@/blocks/playlist-guard/plan-features';
 import { TextField } from '@/components/form-field';
 import { CollectionDialog } from '@/components/playlist-guard/collection-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -48,12 +49,14 @@ type SetupValues = BackupPreferences & { url: string };
 export function BackupOnboarding({
   initialDraft,
   cancelled,
+  checkoutAfterAuth = false,
   onClose,
   onCreated,
   onConnectPrivate,
 }: {
   initialDraft: BackupDraft | null;
   cancelled: boolean;
+  checkoutAfterAuth?: boolean;
   onClose: () => void;
   onCreated: () => void;
   onConnectPrivate: () => void;
@@ -63,11 +66,18 @@ export function BackupOnboarding({
   const privatePlaylist = initialDraft?.source === 'private_playlist';
   const config = usePublicConfig();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const formId = useId();
   const [confirmedDraft, setConfirmedDraft] = useState(initialDraft);
   const [error, setError] = useState('');
   const [pollCount, setPollCount] = useState(0);
   const autoStarted = useRef(false);
+  const authCheckoutStarted = useRef(false);
+  const [authCheckoutPending, setAuthCheckoutPending] =
+    useState(checkoutAfterAuth);
+  const signInHref = `/sign-in?${new URLSearchParams({
+    callbackUrl: localizeHref('/youtube-playlist-backup?setup=auth'),
+  })}`;
   const returning = !!(
     user &&
     confirmedDraft?.checkout?.returned &&
@@ -124,8 +134,10 @@ export function BackupOnboarding({
     },
     onSubmit: async ({ value }) => {
       setError('');
+      if (sessionPending || checkout.isPending || create.isPending) return;
       if (!user) {
-        guestCheckout.mutate(value);
+        if (!persist(value, 'auth-checkout')) clearBackupDraft();
+        router.push(signInHref);
         return;
       }
       if (overview.isFetching || !overview.data) return;
@@ -169,6 +181,7 @@ export function BackupOnboarding({
   }
   function edited(values: SetupValues) {
     persist(values);
+    setAuthCheckoutPending(false);
     setConfirmedDraft(null);
     setError('');
   }
@@ -252,44 +265,49 @@ export function BackupOnboarding({
       void eligibility.refetch();
     },
   });
-  const guestCheckout = useMutation({
-    mutationFn: async (values: SetupValues) => {
-      persist(values);
-      const backup = {
-        ...values,
-        source: privatePlaylist ? 'private_playlist' : 'playlist',
-      };
-      return apiPost<{
-        id: string;
-        checkout_url?: string;
-        return_path?: string;
-      }>('/api/payment/guest-checkout', {
-        action: 'checkout',
-        input: { locale: getLocale(), backup },
-      });
-    },
-    onSuccess: (result) => {
-      if (result.return_path) {
-        window.location.assign(result.return_path);
-        return;
-      }
-      try {
-        const url = new URL(result.checkout_url!);
-        if (url.protocol !== 'https:') throw new Error('invalid_checkout');
-        window.location.assign(url.href);
-      } catch {
-        setError(m['guardPricing.checkout_error']());
-      }
-    },
-    onError: (cause: Error) =>
-      setError(
-        cause.message === 'checkout_exists'
-          ? m['guestFlow.existing']()
-          : cause.message === 'email_unavailable'
-            ? m['guestFlow.email_unavailable']()
-            : m['guardPricing.checkout_error']()
-      ),
-  });
+  useEffect(() => {
+    // Only the explicit checkout CTA saves this one-use intent. Ordinary sign-in,
+    // cancellation and URL flags alone never start checkout.
+    if (
+      !authCheckoutPending ||
+      authCheckoutStarted.current ||
+      cancelled ||
+      sessionPending ||
+      !user ||
+      !confirmedDraft?.preferences ||
+      returning ||
+      !overview.isSuccess ||
+      overview.isFetching ||
+      !needsPlan ||
+      !config.isSuccess ||
+      config.data.guard_checkout_provider !== 'stripe' ||
+      !eligibility.isSuccess ||
+      eligibility.isFetching ||
+      eligibility.data.hasSubscription
+    )
+      return;
+    authCheckoutStarted.current = true;
+    setAuthCheckoutPending(false);
+    checkout.mutate({
+      url: confirmedDraft.url,
+      ...confirmedDraft.preferences,
+    });
+  }, [
+    authCheckoutPending,
+    cancelled,
+    sessionPending,
+    user?.id,
+    confirmedDraft,
+    returning,
+    overview.isSuccess,
+    overview.isFetching,
+    needsPlan,
+    config.isSuccess,
+    config.data?.guard_checkout_provider,
+    eligibility.isSuccess,
+    eligibility.isFetching,
+    eligibility.data,
+  ]);
   useEffect(() => {
     if (
       !autoStarted.current &&
@@ -332,8 +350,7 @@ export function BackupOnboarding({
     limit,
   ]);
 
-  const busy =
-    checkout.isPending || guestCheckout.isPending || create.isPending;
+  const busy = checkout.isPending || create.isPending;
   const loading =
     sessionPending ||
     config.isPending ||
@@ -379,12 +396,17 @@ export function BackupOnboarding({
             <div className="space-y-3">
               {(needsPlan || !user) && !statusBlocked && !loading && (
                 <p className="text-muted-foreground text-xs leading-5">
-                  {trial
-                    ? m['backupFlow.trial_terms']({
+                  {!user
+                    ? m['backupFlow.auth_terms']({
                         days: GUARD_TRIAL_DAYS,
                         price,
                       })
-                    : m['backupFlow.paid_terms']({ price })}
+                    : trial
+                      ? m['backupFlow.trial_terms']({
+                          days: GUARD_TRIAL_DAYS,
+                          price,
+                        })
+                      : m['backupFlow.paid_terms']({ price })}
                 </p>
               )}
               {blockedQuota || statusBlocked ? (
@@ -432,18 +454,12 @@ export function BackupOnboarding({
                     ) : null}
                     {create.isPending
                       ? m['backupFlow.creating']()
-                      : checkout.isPending || guestCheckout.isPending
+                      : checkout.isPending
                         ? m['guardPricing.buying']()
                         : loading
                           ? m['guard.loading']()
                           : !user
-                            ? privatePlaylist
-                              ? m['privateCheckout.start_trial']({
-                                  days: GUARD_TRIAL_DAYS,
-                                })
-                              : m['backupFlow.start_trial']({
-                                  days: GUARD_TRIAL_DAYS,
-                                })
+                            ? m['backupFlow.signin_checkout']()
                             : !needsPlan
                               ? existing
                                 ? m['backupFlow.view_backup']()
@@ -464,19 +480,18 @@ export function BackupOnboarding({
                   {!user && (
                     <div className="space-y-2 text-center">
                       <Link
-                        href="/sign-in?callbackUrl=%2Fyoutube-playlist-backup%3Fsetup%3Dauth"
+                        href={signInHref}
                         className="text-muted-foreground text-xs underline underline-offset-4"
-                        onClick={(event) => {
-                          if (!persist(values, 'auth')) {
-                            event.preventDefault();
-                            setError(m['backupFlow.storage_error']());
-                          }
+                        onClick={() => {
+                          // Sign-in does not require a playlist or browser storage.
+                          // Clear an older draft if the current input cannot be saved.
+                          if (!persist(values, 'auth')) clearBackupDraft();
                         }}
                       >
                         {m['guestFlow.signin']()}
                       </Link>
                       <p className="text-muted-foreground text-xs leading-5">
-                        {m['guestFlow.claim_note']()}
+                        {m['backupFlow.auth_note']()}
                       </p>
                     </div>
                   )}
@@ -699,6 +714,30 @@ export function BackupOnboarding({
                         )}
                       </form.Field>
                     </fieldset>
+                  )}
+                  {(needsPlan || !user) && !statusBlocked && (
+                    <section className="rounded-xl border p-4">
+                      <h3 className="mb-3 text-sm font-semibold">
+                        {m['backupFlow.plan_features_title']()}
+                      </h3>
+                      <ul className="grid gap-x-5 gap-y-3 sm:grid-cols-2">
+                        {guardPlanFeatures().map((feature) => (
+                          <li
+                            key={feature}
+                            className="flex items-start gap-2 text-sm leading-5"
+                          >
+                            <Check
+                              className="mt-0.5 size-4 shrink-0"
+                              aria-hidden="true"
+                            />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="text-muted-foreground mt-3 border-t pt-3 text-xs leading-5">
+                        {m['backupFlow.plan_limits_note']()}
+                      </p>
+                    </section>
                   )}
                   {user && !needsPlan && !blockedQuota && (
                     <p className="flex items-center gap-2 rounded-lg bg-emerald-500/10 p-3 text-sm">

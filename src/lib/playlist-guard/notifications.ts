@@ -1,11 +1,22 @@
 import type { EmailMessage } from '@/core/email';
+import {
+  brandedEmail,
+  emailDetails,
+  emailStats,
+  emailUrl,
+  escapeEmail,
+  type EmailBrand,
+} from '@/core/email/templates/branded';
+import { checkoutLocale } from '@/lib/backup-checkout';
+import { emailDate } from '@/lib/emails/subscription';
+import { m } from '@/paraglide/messages.js';
 
 import type { GuardCollectionDetail, GuardSnapshot } from './types';
 
 export type GuardNotificationPayload = {
   name: string;
   url: string;
-  locale: 'zh' | 'en';
+  locale: 'zh' | 'en' | 'de';
   snapshot: GuardSnapshot;
   notifyMissing: boolean;
   notifyAdded: boolean;
@@ -31,7 +42,7 @@ export function notificationPayload(
   return {
     name: collection.name,
     url: collection.url,
-    locale: locale === 'zh' ? 'zh' : 'en',
+    locale: checkoutLocale(locale),
     snapshot,
     notifyMissing: collection.notifyMissing,
     notifyAdded: collection.notifyAdded,
@@ -43,80 +54,95 @@ export function notificationPayload(
 export function guardNotificationEmail(
   payload: GuardNotificationPayload,
   recipient: string,
-  app: { name: string; url: string },
+  app: EmailBrand,
   id: string
 ): EmailMessage {
-  const zh = payload.locale === 'zh';
+  const locale = checkoutLocale(payload.locale);
+  const t = (
+    key:
+      | Extract<keyof typeof m, `email.brand.${string}`>
+      | 'guestClaim.email_body'
+      | 'privateCheckout.email_body'
+      | 'guestClaim.email_action'
+  ) => m[key]({}, { locale });
   const snapshot = payload.snapshot;
+  const changed =
+    (payload.notifyAdded && snapshot.added > 0) ||
+    (payload.notifyMissing && snapshot.removed > 0) ||
+    (payload.notifyRestored && (snapshot.restored ?? 0) > 0);
+  const title = changed
+    ? t('email.brand.title_changes')
+    : t('email.brand.title_report');
+  const intro = changed
+    ? t('email.brand.intro_changes')
+    : t('email.brand.intro_report');
   const itemLabel =
     payload.kind === 'channel'
-      ? zh
-        ? '频道'
-        : 'channels'
-      : zh
-        ? '视频'
-        : 'videos';
-  const link = `${app.url.replace(/\/$/, '')}${zh ? '/zh' : ''}/settings/collections`;
-  const lines = [
-    payload.name,
-    zh
-      ? `自动检查已完成：${snapshot.createdAt}`
-      : `Scheduled check completed: ${snapshot.createdAt}`,
-    zh
-      ? `当前${itemLabel}：${snapshot.itemCount}`
-      : `Current ${itemLabel}: ${snapshot.itemCount}`,
-    ...(payload.notifyMissing
-      ? [
-          zh
-            ? `丢失${itemLabel}：${snapshot.removed}`
-            : `Missing ${itemLabel}: ${snapshot.removed}`,
-        ]
-      : []),
+      ? t('email.brand.channels')
+      : t('email.brand.videos');
+  const stats = [
     ...(payload.notifyAdded
-      ? [
-          zh
-            ? `新增${itemLabel}：${snapshot.added}`
-            : `New ${itemLabel}: ${snapshot.added}`,
-        ]
+      ? [{ label: t('email.brand.new'), value: snapshot.added }]
+      : []),
+    ...(payload.notifyMissing
+      ? [{ label: t('email.brand.missing'), value: snapshot.removed }]
       : []),
     ...(payload.notifyRestored
-      ? [
-          zh
-            ? `恢复${itemLabel}：${snapshot.restored ?? 0}`
-            : `Restored ${itemLabel}: ${snapshot.restored ?? 0}`,
-        ]
+      ? [{ label: t('email.brand.restored'), value: snapshot.restored ?? 0 }]
       : []),
-    '',
-    `${zh ? '来源' : 'Source'}: ${payload.url}`,
-    `${zh ? '查看收藏与管理通知' : 'View collection and manage notifications'}: ${link}`,
-    payload.emailDelivery
-      ? zh
-        ? '附件为本次元数据备份，不包含视频或音频文件。'
-        : 'The attached backup contains metadata, not video or audio files.'
-      : zh
-        ? '已保存的版本可在工作台中查看。'
-        : 'Saved snapshots are available in your workspace.',
   ];
-  const escape = (value: string) =>
-    value.replace(
-      /[&<>"']/g,
-      (c) =>
-        ({
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#39;',
-        })[c]!
-    );
+  const link = `${app.url.replace(/\/$/, '')}${locale === 'zh' ? '/zh' : ''}/settings/collections`;
+  const details: [string, string][] = [
+    [t('email.brand.collection'), payload.name],
+    [t('email.brand.checked'), emailDate(snapshot.createdAt, locale)],
+    [t('email.brand.current'), `${snapshot.itemCount} ${itemLabel}`],
+  ];
+  const attachmentNote = payload.emailDelivery
+    ? t('email.brand.attachment')
+    : t('email.brand.saved');
+  const note = [
+    attachmentNote,
+    ...(payload.notifyMissing && snapshot.removed > 0
+      ? [t('email.brand.missing_note')]
+      : []),
+  ].join(' ');
+  const footer = t('email.brand.why_changes');
   return {
     to: recipient,
-    subject: `${app.name}: ${payload.name.replace(/[\r\n]/g, ' ').slice(0, 100)} — ${zh ? '收藏检查报告' : 'collection report'}`,
-    text: lines.join('\n'),
-    html: `<div style="font-family:Arial,sans-serif;line-height:1.7;color:#1a213c"><h2>${escape(payload.name)}</h2>${lines
-      .slice(1)
-      .map((line) => `<p>${escape(line)}</p>`)
-      .join('')}</div>`,
+    subject: `${app.name}: ${payload.name.replace(/[\r\n]/g, ' ').slice(0, 100)} — ${title}`,
+    text: [
+      title,
+      intro,
+      ...details.map(([label, value]) => `${label}: ${value}`),
+      ...stats.map(({ label, value }) =>
+        locale === 'zh'
+          ? `${label}${itemLabel}：${value}`
+          : `${label} ${itemLabel}: ${value}`
+      ),
+      `${t('email.brand.source')}: ${payload.url}`,
+      note,
+      `${t('email.brand.view_changes')}: ${link}`,
+      footer,
+    ].join('\n\n'),
+    html: brandedEmail({
+      brand: app,
+      locale,
+      title,
+      intro,
+      eyebrow: t('email.brand.eyebrow_changes'),
+      preheader: `${payload.name} · ${snapshot.itemCount} ${itemLabel}`,
+      content:
+        emailDetails(details) +
+        emailStats(stats) +
+        `<p style="margin:16px 0 0;font-size:12px;line-height:20px"><a href="${emailUrl(payload.url, app.url)}" style="color:#a52b5d;overflow-wrap:anywhere">${escapeEmail(t('email.brand.source'))}</a></p>`,
+      action: t('email.brand.view_changes'),
+      actionUrl: link,
+      note,
+      footer,
+      footerLink: t('email.brand.manage_notifications'),
+      footerUrl: link,
+      visit: t('email.brand.visit'),
+    }),
     idempotencyKey: `playlist-guard/${id}`,
     attachments: payload.emailDelivery
       ? [

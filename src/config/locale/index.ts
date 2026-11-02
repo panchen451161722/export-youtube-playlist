@@ -7,11 +7,19 @@ export const localeNames: Record<string, string> = {
   de: 'Deutsch',
 };
 
-/** Public routes with authored German content; account workflows still fall back to English. */
+/** Routes with authored German content; untranslated account pages fall back to English. */
 export const GERMAN_PAGE_PATHS = [
   '/',
   '/tools',
   '/pricing',
+  '/youtube-playlist-backup',
+  '/claim-backup',
+  '/sign-in',
+  '/sign-up',
+  '/forgot-password',
+  '/reset-password',
+  '/verify-email',
+  '/redeem-invite',
   '/blog',
   '/about',
   '/contact',

@@ -295,6 +295,7 @@ export async function guardRuntime() {
         {
           name: configs.app_name || envConfigs.app_name,
           url: configs.app_url || envConfigs.app_url,
+          logo: configs.app_logo || envConfigs.app_logo,
         },
         id
       )
